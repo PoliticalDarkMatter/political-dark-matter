@@ -221,19 +221,19 @@ export default function OrbitHub() {
                 }}
               >
                 <div
-                  className={`relative flex h-28 w-28 items-center justify-center rounded-full border bg-[#0b0f2e]/90 p-4 shadow-[0_0_40px_rgba(99,102,241,0.15)] backdrop-blur transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_60px_rgba(147,51,234,0.35)] ${
+                  className={`relative flex h-28 w-28 items-center justify-center rounded-2xl border bg-white p-3 shadow-[0_0_40px_rgba(99,102,241,0.15)] transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_60px_rgba(147,51,234,0.35)] ${
                     m.status === "live"
                       ? "border-indigo-400/60"
-                      : "border-slate-600/50"
+                      : "border-slate-300/60"
                   }`}
                 >
                   <Image
                     src={m.logo}
                     alt={m.name}
-                    width={200}
-                    height={60}
+                    width={300}
+                    height={280}
                     className={`h-auto w-full object-contain ${
-                      m.status === "building" ? "opacity-60 grayscale" : ""
+                      m.status === "building" ? "opacity-70" : ""
                     }`}
                   />
                   <span

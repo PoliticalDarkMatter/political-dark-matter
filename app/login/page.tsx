@@ -50,7 +50,7 @@ export default function LoginPage() {
         {/* Logo — duże, białe tło */}
         <div className="relative z-10">
           <div className="inline-block bg-white rounded-2xl px-8 py-5 shadow-2xl">
-            <Image src="/logo.png" alt="NarrativeScope" width={280} height={78} className="h-16 w-auto" priority />
+            <Image src="/logo.png" alt="NarrativeScope" width={200} height={158} className="h-16 w-auto object-contain" priority />
           </div>
           <p className="text-white/40 text-xs tracking-widest uppercase mt-5 ml-1">Narrative Intelligence Platform</p>
         </div>
@@ -80,7 +80,7 @@ export default function LoginPage() {
         {/* Mobile logo — duże */}
         <div className="flex lg:hidden mb-10">
           <div className="bg-white border border-slate-200 shadow-md rounded-2xl px-7 py-4">
-            <Image src="/logo.png" alt="NarrativeScope" width={240} height={68} className="h-14 w-auto" priority />
+            <Image src="/logo.png" alt="NarrativeScope" width={200} height={158} className="h-14 w-auto object-contain" priority />
           </div>
         </div>
 

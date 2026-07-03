@@ -37,8 +37,8 @@ export default function ComingSoon({
       </Link>
 
       <div className="relative z-10 flex max-w-md flex-col items-center text-center">
-        <div className="mb-6 flex h-32 w-32 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] p-6 shadow-[0_0_60px_rgba(99,102,241,0.15)]">
-          <Image src={logo} alt={name} width={220} height={70} className="h-auto w-full object-contain" />
+        <div className="mb-6 flex h-36 w-36 items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_0_60px_rgba(99,102,241,0.15)]">
+          <Image src={logo} alt={name} width={300} height={280} className="h-auto w-full object-contain" />
         </div>
 
         <span className="mb-3 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-slate-400">

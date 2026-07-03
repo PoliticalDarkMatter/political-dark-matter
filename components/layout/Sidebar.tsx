@@ -31,9 +31,9 @@ export default function Sidebar({ onClose }: SidebarProps) {
           <Image
             src="/logo.png"
             alt="NarrativeScope"
-            width={180}
-            height={52}
-            className="h-12 w-auto"
+            width={200}
+            height={158}
+            className="h-12 w-auto object-contain"
             priority
           />
         </Link>
