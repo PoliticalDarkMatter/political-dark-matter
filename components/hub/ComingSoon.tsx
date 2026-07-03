@@ -37,7 +37,7 @@ export default function ComingSoon({
       </Link>
 
       <div className="relative z-10 flex max-w-md flex-col items-center text-center">
-        <div className="mb-6 flex h-36 w-36 items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_0_60px_rgba(99,102,241,0.15)]">
+        <div className="mb-6 flex h-36 w-36 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white p-4 shadow-[0_0_60px_rgba(99,102,241,0.15)]">
           <Image src={logo} alt={name} width={300} height={280} className="h-auto w-full object-contain" />
         </div>
 

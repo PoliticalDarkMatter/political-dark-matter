@@ -221,7 +221,7 @@ export default function OrbitHub() {
                 }}
               >
                 <div
-                  className={`relative flex h-28 w-28 items-center justify-center rounded-2xl border bg-white p-3 shadow-[0_0_40px_rgba(99,102,241,0.15)] transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_60px_rgba(147,51,234,0.35)] ${
+                  className={`relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border bg-white p-3 shadow-[0_0_40px_rgba(99,102,241,0.15)] transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_60px_rgba(147,51,234,0.35)] ${
                     m.status === "live"
                       ? "border-indigo-400/60"
                       : "border-slate-300/60"
