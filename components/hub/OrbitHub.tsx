@@ -86,8 +86,15 @@ export default function OrbitHub() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#05060f] text-white">
-      {/* Gwiazdy w tle */}
-      <div className="pointer-events-none absolute inset-0 opacity-70 [background-image:radial-gradient(1px_1px_at_20px_30px,#fff,transparent),radial-gradient(1px_1px_at_140px_80px,#fff,transparent),radial-gradient(1px_1px_at_90px_180px,#fff,transparent),radial-gradient(1.5px_1.5px_at_230px_60px,#fff,transparent),radial-gradient(1px_1px_at_300px_220px,#fff,transparent),radial-gradient(1.5px_1.5px_at_360px_120px,#fff,transparent)] [background-size:400px_400px] [background-repeat:repeat]" />
+      {/* Gwiazdy w tle — trzy warstwy o różnej wielkości i gęstości, dla wrażenia głębi */}
+      <div className="pointer-events-none absolute inset-0 opacity-50 [background-image:radial-gradient(0.6px_0.6px_at_15px_25px,#fff,transparent),radial-gradient(0.6px_0.6px_at_75px_95px,#fff,transparent),radial-gradient(0.6px_0.6px_at_130px_45px,#fff,transparent),radial-gradient(0.6px_0.6px_at_190px_150px,#fff,transparent),radial-gradient(0.6px_0.6px_at_250px_70px,#fff,transparent),radial-gradient(0.6px_0.6px_at_310px_190px,#fff,transparent),radial-gradient(0.6px_0.6px_at_20px_210px,#fff,transparent)] [background-size:340px_340px] [background-repeat:repeat]" />
+      <div className="pointer-events-none absolute inset-0 opacity-70 [background-image:radial-gradient(1.4px_1.4px_at_40px_60px,#fff,transparent),radial-gradient(1.3px_1.3px_at_160px_20px,#fff,transparent),radial-gradient(1.5px_1.5px_at_100px_180px,#fff,transparent),radial-gradient(1.3px_1.3px_at_230px_120px,#fff,transparent),radial-gradient(1.4px_1.4px_at_300px_240px,#fff,transparent)] [background-size:460px_460px] [background-repeat:repeat]" />
+      <div className="pointer-events-none absolute inset-0 opacity-90 [background-image:radial-gradient(2.4px_2.4px_at_70px_130px,#fff,transparent),radial-gradient(2.6px_2.6px_at_260px_50px,#fff,transparent),radial-gradient(2.2px_2.2px_at_340px_230px,#fff,transparent),radial-gradient(2.5px_2.5px_at_50px_300px,#fff,transparent)] [background-size:620px_620px] [background-repeat:repeat]" />
+
+      {/* Komety — rzadko przelatują po niebie */}
+      <div className="pdm-comet pdm-comet--a" />
+      <div className="pdm-comet pdm-comet--b" />
+      <div className="pdm-comet pdm-comet--c" />
 
       {/* Poświata centralna */}
       <div className="pointer-events-none absolute left-1/2 top-[38%] h-[700px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(99,102,241,0.25)_0%,rgba(147,51,234,0.12)_35%,transparent_70%)] blur-2xl" />
@@ -221,7 +228,7 @@ export default function OrbitHub() {
                 }}
               >
                 <div
-                  className={`relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border bg-white p-3 shadow-[0_0_40px_rgba(99,102,241,0.15)] transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_60px_rgba(147,51,234,0.35)] ${
+                  className={`relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border bg-[radial-gradient(circle_at_32%_28%,#ffffff_0%,#f2f4fb_42%,#dadfec_75%,#b7bdd1_100%)] p-3 shadow-[inset_-10px_-10px_22px_rgba(15,23,42,0.3),inset_7px_7px_16px_rgba(255,255,255,0.95),0_0_40px_rgba(99,102,241,0.2)] transition-all duration-300 group-hover:scale-110 group-hover:shadow-[inset_-10px_-10px_22px_rgba(15,23,42,0.3),inset_7px_7px_16px_rgba(255,255,255,0.95),0_0_60px_rgba(147,51,234,0.4)] ${
                     m.status === "live"
                       ? "border-indigo-400/60"
                       : "border-slate-300/60"
@@ -298,6 +305,40 @@ export default function OrbitHub() {
         }
         .orbit-flow--feedback {
           animation-duration: 2.6s;
+        }
+        .pdm-comet {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 140px;
+          height: 2px;
+          border-radius: 999px;
+          background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.85) 85%, #ffffff 100%);
+          box-shadow: 0 0 6px 1px rgba(255,255,255,0.7);
+          opacity: 0;
+          pointer-events: none;
+          will-change: transform, opacity;
+        }
+        .pdm-comet--a { animation: pdm-comet-a 16s ease-in infinite; animation-delay: 2s; }
+        .pdm-comet--b { animation: pdm-comet-b 23s ease-in infinite; animation-delay: 9s; }
+        .pdm-comet--c { animation: pdm-comet-c 31s ease-in infinite; animation-delay: 17s; }
+        @keyframes pdm-comet-a {
+          0%, 88%, 100% { opacity: 0; transform: translate(-10vw, 8vh) rotate(18deg); }
+          89% { opacity: 1; }
+          93% { opacity: 1; transform: translate(65vw, 48vh) rotate(18deg); }
+          94% { opacity: 0; transform: translate(72vw, 53vh) rotate(18deg); }
+        }
+        @keyframes pdm-comet-b {
+          0%, 91%, 100% { opacity: 0; transform: translate(105vw, 5vh) rotate(200deg); }
+          92% { opacity: 1; }
+          96% { opacity: 1; transform: translate(15vw, 60vh) rotate(200deg); }
+          97% { opacity: 0; transform: translate(8vw, 65vh) rotate(200deg); }
+        }
+        @keyframes pdm-comet-c {
+          0%, 93%, 100% { opacity: 0; transform: translate(20vw, -10vh) rotate(60deg); }
+          94% { opacity: 1; }
+          97% { opacity: 1; transform: translate(85vw, 45vh) rotate(60deg); }
+          98% { opacity: 0; transform: translate(90vw, 52vh) rotate(60deg); }
         }
       `}</style>
     </div>
