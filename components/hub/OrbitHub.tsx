@@ -80,24 +80,18 @@ const bottomCards = [
 
 // Geometria dokładnie wg wzorca: układ diamentowy (góra/dół/lewo/prawo
 // w tych samych odległościach od centrum, lewo/prawo na wysokości centrum),
-// zmierzone proporcje z obrazu: RX:RY ≈ 1.94.
-const VB_W = 900;
-const VB_H = 550;
-const CX = 450;
-const CY = 270;
-const RX = 290;
-const RY = 150;
+// zmierzone proporcje z obrazu: RX:RY ≈ 1.94. RY powiększone względem
+// promieni "planet", żeby sfera centrum nigdy nie zachodziła na moduły.
+const VB_W = 940;
+const VB_H = 620;
+const CX = 470;
+const CY = 310;
+const RX = 350;
+const RY = 180;
 
 function pointOnEllipse(angleDeg: number, rx: number, ry: number) {
   const rad = (angleDeg * Math.PI) / 180;
   return { x: CX + rx * Math.cos(rad), y: CY + ry * Math.sin(rad) };
-}
-
-// proste, przerywane "szprychy" łączące każdy moduł wprost z centrum —
-// dokładnie tak jak we wzorcu (krzyż, nie pętla między sąsiednimi modułami)
-function spokePath(angleDeg: number) {
-  const p = pointOnEllipse(angleDeg, RX, RY);
-  return `M ${p.x} ${p.y} L ${CX} ${CY}`;
 }
 
 function NeonIcon({ type }: { type: string }) {
@@ -346,40 +340,58 @@ export default function OrbitHub() {
                 <stop offset="0%" stopColor="#38bdf8" />
                 <stop offset="100%" stopColor="#a78bfa" />
               </linearGradient>
+              <linearGradient id="hBeamGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#38bdf8" stopOpacity={0} />
+                <stop offset="15%" stopColor="#38bdf8" stopOpacity={0.9} />
+                <stop offset="50%" stopColor="#e0e7ff" stopOpacity={1} />
+                <stop offset="85%" stopColor="#a78bfa" stopOpacity={0.9} />
+                <stop offset="100%" stopColor="#a78bfa" stopOpacity={0} />
+              </linearGradient>
+              <filter id="hBeamBlur" x="-20%" y="-200%" width="140%" height="500%">
+                <feGaussianBlur stdDeviation="6" />
+              </filter>
             </defs>
 
-            {/* statyczny pierścień prowadzący — elipsa orbity przechodząca przez centra modułów */}
+            {/* pierścień orbity — jedna, płynąca (animowana) przerywana elipsa spajająca wszystkie moduły, jak we wzorcu */}
             <ellipse
               cx={CX}
               cy={CY}
               rx={RX}
               ry={RY}
               fill="none"
-              stroke="#818cf8"
-              strokeOpacity={0.3}
-              strokeWidth={1}
-              strokeDasharray="2 7"
+              stroke="url(#flowGrad)"
+              strokeOpacity={0.55}
+              strokeWidth={1.5}
+              strokeDasharray="6 10"
+              className="orbit-flow"
             />
 
-            {/* szprychy — każdy moduł łączy się prostą przerywaną linią wprost z centrum (krzyż), jak we wzorcu */}
-            {modules.map((m, i) => (
-              <path
-                key={m.key}
-                d={spokePath(m.angle)}
-                fill="none"
-                stroke="url(#flowGrad)"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeDasharray="6 10"
-                className="orbit-flow"
-                style={{ animationDelay: `${i * 0.2}s` }}
-              />
-            ))}
+            {/* świecąca belka pozioma — łączy Pulse Field, Profil projektu i Apex Grid (ta sama wysokość) */}
+            <line
+              x1={CX - RX}
+              y1={CY}
+              x2={CX + RX}
+              y2={CY}
+              stroke="url(#hBeamGrad)"
+              strokeWidth={10}
+              filter="url(#hBeamBlur)"
+              opacity={0.8}
+              className="pdm-hbeam-glow"
+            />
+            <line
+              x1={CX - RX}
+              y1={CY}
+              x2={CX + RX}
+              y2={CY}
+              stroke="url(#hBeamGrad)"
+              strokeWidth={2}
+              className="pdm-hbeam-glow"
+            />
           </svg>
 
           {/* Centrum — Profil projektu, tętniące */}
           <div
-            className="absolute left-1/2 top-1/2 z-10 flex h-36 w-36 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-violet-300/70 bg-slate-950/80 text-center"
+            className="absolute left-1/2 top-1/2 z-10 flex h-32 w-32 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-violet-300/70 bg-slate-950/80 text-center"
             style={{ boxShadow: "0 0 70px rgba(124,58,237,.8), 0 0 120px rgba(37,99,235,.35)" }}
           >
             <div className="pdm-core-breathe absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(124,58,237,0.55)_0%,transparent_70%)]" />
@@ -457,6 +469,13 @@ export default function OrbitHub() {
         }
         @keyframes pdm-pulse-bar {
           0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+        .pdm-hbeam-glow {
+          animation: pdm-hbeam-glow 3.4s ease-in-out infinite;
+        }
+        @keyframes pdm-hbeam-glow {
+          0%, 100% { opacity: 0.55; }
           50% { opacity: 1; }
         }
         .pdm-radar-dot {
