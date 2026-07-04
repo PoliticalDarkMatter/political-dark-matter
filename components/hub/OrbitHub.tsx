@@ -270,21 +270,18 @@ function ModuleOrb({ module: m }: { module: ModuleDef }) {
 export default function OrbitHub() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#05070d] text-white">
-      {/* Tło bazowe — gradienty pod mapą świata (gradient jest nieprzezroczysty,
-          więc mapa musi być narysowana NAD nim, inaczej znika pod spodem) */}
+      {/* Tło bazowe — mgławice/poświata, żadnej geografii, to jest kosmos, nie mapa */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(79,70,229,0.34),transparent_30%),radial-gradient(circle_at_50%_15%,rgba(14,165,233,0.18),transparent_24%),linear-gradient(180deg,#05070d_0%,#07101f_52%,#05070d_100%)]" />
 
-      {/* Mapa świata z kropek — jak we wzorcu, pełna szerokość górnej sekcji */}
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-[900px] opacity-[0.28]"
-        style={{
-          backgroundImage: "url(/world-map-dots.svg)",
-          backgroundSize: "100% auto",
-          backgroundPosition: "center top",
-          backgroundRepeat: "no-repeat",
-        }}
-      />
-      <div className="absolute inset-0 opacity-60 [background-image:radial-gradient(circle_at_20%_20%,rgba(255,255,255,.55)_1px,transparent_1.4px),radial-gradient(circle_at_70%_30%,rgba(147,197,253,.55)_1px,transparent_1.5px),radial-gradient(circle_at_85%_70%,rgba(255,255,255,.45)_1px,transparent_1.3px)] [background-size:140px_140px,220px_220px,180px_180px]" />
+      {/* Gwiazdy — trzy warstwy o różnej wielkości i gęstości, dla wrażenia głębi kosmosu */}
+      <div className="pointer-events-none absolute inset-0 opacity-50 [background-image:radial-gradient(0.6px_0.6px_at_15px_25px,#fff,transparent),radial-gradient(0.6px_0.6px_at_75px_95px,#fff,transparent),radial-gradient(0.6px_0.6px_at_130px_45px,#fff,transparent),radial-gradient(0.6px_0.6px_at_190px_150px,#fff,transparent),radial-gradient(0.6px_0.6px_at_250px_70px,#fff,transparent),radial-gradient(0.6px_0.6px_at_310px_190px,#fff,transparent)] [background-size:340px_340px]" />
+      <div className="pointer-events-none absolute inset-0 opacity-70 [background-image:radial-gradient(1.4px_1.4px_at_40px_60px,#fff,transparent),radial-gradient(1.3px_1.3px_at_160px_20px,#fff,transparent),radial-gradient(1.5px_1.5px_at_100px_180px,#fff,transparent),radial-gradient(1.3px_1.3px_at_230px_120px,#fff,transparent),radial-gradient(1.4px_1.4px_at_300px_240px,#fff,transparent)] [background-size:460px_460px]" />
+      <div className="pointer-events-none absolute inset-0 opacity-90 [background-image:radial-gradient(2.2px_2.2px_at_70px_130px,#a5b4fc,transparent),radial-gradient(2.4px_2.4px_at_260px_50px,#c4b5fd,transparent),radial-gradient(2px_2px_at_340px_230px,#a5b4fc,transparent),radial-gradient(2.3px_2.3px_at_50px_300px,#c4b5fd,transparent)] [background-size:620px_620px]" />
+
+      {/* Komety — rzadko przelatują przez pole widzenia */}
+      <div className="pdm-comet pdm-comet--a" />
+      <div className="pdm-comet pdm-comet--b" />
+      <div className="pdm-comet pdm-comet--c" />
 
       {/* Cztery narożne widgety — kotwiczone do krawędzi całej sekcji, jak we wzorcu */}
       <div className="pointer-events-none absolute inset-0 z-[6]">
@@ -459,6 +456,43 @@ export default function OrbitHub() {
         @keyframes pdm-radar-dot {
           0%, 100% { transform: scale(1); opacity: 1; }
           50% { transform: scale(1.4); opacity: 0.6; }
+        }
+
+        .pdm-comet {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 140px;
+          height: 2px;
+          border-radius: 999px;
+          background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.85) 85%, #ffffff 100%);
+          box-shadow: 0 0 6px 1px rgba(255,255,255,0.7);
+          opacity: 0;
+          pointer-events: none;
+          will-change: transform, opacity;
+        }
+        .pdm-comet--a { animation: pdm-comet-a 16s ease-in infinite; animation-delay: 2s; }
+        .pdm-comet--b { animation: pdm-comet-b 23s ease-in infinite; animation-delay: 9s; }
+        .pdm-comet--c { animation: pdm-comet-c 31s ease-in infinite; animation-delay: 17s; }
+        /* Pozycje w vmin (nie vw/vh) — X i Y skalują się identycznie, więc kąt rotate()
+           zawsze pokrywa się z realnym kierunkiem lotu, a ogon leży dokładnie na torze. */
+        @keyframes pdm-comet-a {
+          0%, 88%, 100% { opacity: 0; transform: translate(-15vmin, -45vmin) rotate(12.85deg); }
+          89% { opacity: 1; }
+          93% { opacity: 1; transform: translate(95vmin, -20vmin) rotate(12.85deg); }
+          94% { opacity: 0; transform: translate(102.8vmin, -18.2vmin) rotate(12.85deg); }
+        }
+        @keyframes pdm-comet-b {
+          0%, 91%, 100% { opacity: 0; transform: translate(115vmin, -40vmin) rotate(148deg); }
+          92% { opacity: 1; }
+          96% { opacity: 1; transform: translate(-5vmin, 35vmin) rotate(148deg); }
+          97% { opacity: 0; transform: translate(-11.8vmin, 39.2vmin) rotate(148deg); }
+        }
+        @keyframes pdm-comet-c {
+          0%, 93%, 100% { opacity: 0; transform: translate(-10vmin, -70vmin) rotate(53.6deg); }
+          94% { opacity: 1; }
+          97% { opacity: 1; transform: translate(60vmin, 25vmin) rotate(53.6deg); }
+          98% { opacity: 0; transform: translate(64.75vmin, 31.43vmin) rotate(53.6deg); }
         }
       `}</style>
     </main>
