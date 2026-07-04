@@ -118,7 +118,7 @@ export default function OrbitHub() {
           żeby zawsze było widać cały zarys kontynentów, a nie zbliżenie na jeden ląd
           (background-size: cover przy wąskim kontenerze obcinało boki mapy) */}
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-[900px] opacity-[0.3]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[900px] opacity-[0.22]"
         style={{
           backgroundImage: "url(/world-map-dots.svg)",
           backgroundSize: "100% auto",
