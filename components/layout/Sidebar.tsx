@@ -24,24 +24,28 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 shrink-0 flex flex-col bg-white border-r border-slate-200 h-screen shadow-sm">
-      {/* Logo */}
-      <div className="flex items-center justify-between px-5 py-5 border-b border-slate-100">
-        <Link href="/dashboard" className="flex items-center">
-          <Image
-            src="/logo.png"
-            alt="NarrativeScope"
-            width={200}
-            height={158}
-            className="h-12 w-auto object-contain"
-            priority
-          />
+    <aside className="w-64 shrink-0 flex flex-col bg-[#080b14] border-r border-sky-400/10 h-screen">
+      {/* Logo — planeta, spójna z hubem */}
+      <div className="flex items-center justify-between px-5 py-5 border-b border-sky-400/10">
+        <Link href="/dashboard" className="flex items-center gap-2.5">
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_25%,#ffffff,#dbeafe_55%,#b8c7e8)] ring-1 ring-sky-300/70"
+            style={{ boxShadow: "0 0 16px rgba(56,189,248,.45)" }}>
+            <Image
+              src="/logos/narrative-scope.png"
+              alt="NarrativeScope"
+              width={30}
+              height={30}
+              className="h-[26px] w-[26px] object-contain"
+              priority
+            />
+          </div>
+          <span className="text-sm font-bold text-white tracking-tight">NarrativeScope</span>
         </Link>
         {/* Close button — mobile only */}
         {onClose && (
           <button
             onClick={onClose}
-            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
             aria-label="Zamknij menu"
           >
             <X size={18} />
@@ -51,12 +55,12 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
       {/* Label + powrót do ekosystemu */}
       <div className="px-5 pt-3 pb-1 flex items-center justify-between">
-        <span className="text-[10px] font-semibold text-slate-400 tracking-widest uppercase">
+        <span className="text-[10px] font-semibold text-blue-200/40 tracking-widest uppercase">
           Narrative Intelligence
         </span>
         <Link
           href="/"
-          className="text-[10px] font-medium text-brand-600 hover:text-brand-700 transition-colors"
+          className="text-[10px] font-medium text-sky-400 hover:text-sky-300 transition-colors"
           title="Wróć do Political Dark Matter"
         >
           Ekosystem
@@ -75,8 +79,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
               className={clsx(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
                 active
-                  ? "bg-brand-500/10 text-brand-600 font-semibold"
-                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+                  ? "bg-sky-400/10 text-sky-300 font-semibold shadow-[0_0_18px_rgba(56,189,248,0.1)] ring-1 ring-sky-400/20"
+                  : "text-slate-400 hover:text-white hover:bg-white/5"
               )}
             >
               <Icon size={16} strokeWidth={active ? 2.5 : 2} />
@@ -87,22 +91,22 @@ export default function Sidebar({ onClose }: SidebarProps) {
       </nav>
 
       {/* Bottom */}
-      <div className="px-3 pb-4 border-t border-slate-100 pt-3">
+      <div className="px-3 pb-4 border-t border-sky-400/10 pt-3">
         <Link
           href="/settings"
           onClick={onClose}
           className={clsx(
             "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
             pathname === "/settings"
-              ? "bg-brand-500/10 text-brand-600 font-semibold"
-              : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+              ? "bg-sky-400/10 text-sky-300 font-semibold"
+              : "text-slate-400 hover:text-white hover:bg-white/5"
           )}
         >
           <Settings size={16} />
           Ustawienia
         </Link>
         <div className="mt-3 mx-2">
-          <div className="text-[10px] text-slate-300 text-center">© 2026 NarrativeScope</div>
+          <div className="text-[10px] text-slate-600 text-center">© 2026 NarrativeScope</div>
         </div>
       </div>
     </aside>
