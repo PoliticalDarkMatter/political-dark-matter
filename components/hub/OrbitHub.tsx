@@ -114,14 +114,15 @@ export default function OrbitHub() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#05060f] text-white">
-      {/* Mapa świata z kropek w tle — ograniczona do górnej sekcji (hero + orbita),
-          żeby "cover" nie rozciągał jej na wysokość całej, dłuższej strony */}
+      {/* Mapa świata z kropek w tle — skalowana do pełnej szerokości (100% auto),
+          żeby zawsze było widać cały zarys kontynentów, a nie zbliżenie na jeden ląd
+          (background-size: cover przy wąskim kontenerze obcinało boki mapy) */}
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-[1100px] opacity-[0.4]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[900px] opacity-[0.3]"
         style={{
           backgroundImage: "url(/world-map-dots.svg)",
-          backgroundSize: "cover",
-          backgroundPosition: "center 30%",
+          backgroundSize: "100% auto",
+          backgroundPosition: "center top",
           backgroundRepeat: "no-repeat",
         }}
       />
