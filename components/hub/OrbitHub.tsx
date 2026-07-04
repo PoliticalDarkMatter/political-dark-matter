@@ -270,9 +270,13 @@ function ModuleOrb({ module: m }: { module: ModuleDef }) {
 export default function OrbitHub() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#05070d] text-white">
+      {/* Tło bazowe — gradienty pod mapą świata (gradient jest nieprzezroczysty,
+          więc mapa musi być narysowana NAD nim, inaczej znika pod spodem) */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(79,70,229,0.34),transparent_30%),radial-gradient(circle_at_50%_15%,rgba(14,165,233,0.18),transparent_24%),linear-gradient(180deg,#05070d_0%,#07101f_52%,#05070d_100%)]" />
+
       {/* Mapa świata z kropek — jak we wzorcu, pełna szerokość górnej sekcji */}
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-[900px] opacity-[0.22]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[900px] opacity-[0.28]"
         style={{
           backgroundImage: "url(/world-map-dots.svg)",
           backgroundSize: "100% auto",
@@ -280,7 +284,6 @@ export default function OrbitHub() {
           backgroundRepeat: "no-repeat",
         }}
       />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(79,70,229,0.34),transparent_30%),radial-gradient(circle_at_50%_15%,rgba(14,165,233,0.18),transparent_24%),linear-gradient(180deg,#05070d_0%,#07101f_52%,#05070d_100%)]" />
       <div className="absolute inset-0 opacity-60 [background-image:radial-gradient(circle_at_20%_20%,rgba(255,255,255,.55)_1px,transparent_1.4px),radial-gradient(circle_at_70%_30%,rgba(147,197,253,.55)_1px,transparent_1.5px),radial-gradient(circle_at_85%_70%,rgba(255,255,255,.45)_1px,transparent_1.3px)] [background-size:140px_140px,220px_220px,180px_180px]" />
 
       {/* Cztery narożne widgety — kotwiczone do krawędzi całej sekcji, jak we wzorcu */}
