@@ -1,7 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const modules = [
+interface ModuleDef {
+  key: string;
+  name: string;
+  logo: string;
+  role: string;
+  status: string;
+  active: boolean;
+  angle: number; // stopnie: -90 góra, 0 prawo, 90 dół, 180 lewo
+  href: string;
+}
+
+const modules: ModuleDef[] = [
   {
     key: "narrative",
     name: "Narrative Scope",
@@ -9,7 +20,7 @@ const modules = [
     role: "Słuchanie",
     status: "AKTYWNY",
     active: true,
-    position: "top",
+    angle: -90,
     href: "/dashboard",
   },
   {
@@ -19,7 +30,7 @@ const modules = [
     role: "Analiza",
     status: "W BUDOWIE",
     active: false,
-    position: "right",
+    angle: 0,
     href: "/apex-grid",
   },
   {
@@ -29,7 +40,7 @@ const modules = [
     role: "Przekaz",
     status: "W BUDOWIE",
     active: false,
-    position: "bottom",
+    angle: 90,
     href: "/volt-stream",
   },
   {
@@ -39,7 +50,7 @@ const modules = [
     role: "Emisja",
     status: "W BUDOWIE",
     active: false,
-    position: "left",
+    angle: 180,
     href: "/pulse-field",
   },
 ];
@@ -67,20 +78,38 @@ const bottomCards = [
   },
 ];
 
-function getModulePosition(position: string) {
-  switch (position) {
-    case "top":
-      return "left-1/2 top-[2%] -translate-x-1/2";
-    case "right":
-      return "right-[4%] top-1/2 -translate-y-1/2";
-    case "bottom":
-      return "left-1/2 bottom-[0%] -translate-x-1/2";
-    case "left":
-      return "left-[4%] top-1/2 -translate-y-1/2";
-    default:
-      return "";
-  }
+// Geometria orbity — elipsa szeroka i płaska (jak we wzorcu), nie okrąg.
+// viewBox 1000x600 (proporcja 5:3), moduły leżą na elipsie RX/RY,
+// łuki łączące moduły wybrzuszają się na większej elipsie ARC_RX/ARC_RY.
+const VB_W = 1000;
+const VB_H = 600;
+const CX = 500;
+const CY = 300;
+const RX = 200;
+const RY = 115;
+const ARC_RX = 235;
+const ARC_RY = 148;
+
+function pointOnEllipse(angleDeg: number, rx: number, ry: number) {
+  const rad = (angleDeg * Math.PI) / 180;
+  return { x: CX + rx * Math.cos(rad), y: CY + ry * Math.sin(rad) };
 }
+
+function arcPath(fromAngle: number, toAngle: number) {
+  const from = pointOnEllipse(fromAngle, RX, RY);
+  const to = pointOnEllipse(toAngle, RX, RY);
+  const mid = (fromAngle + toAngle) / 2;
+  const ctrl = pointOnEllipse(mid, ARC_RX, ARC_RY);
+  return `M ${from.x} ${from.y} Q ${ctrl.x} ${ctrl.y} ${to.x} ${to.y}`;
+}
+
+// kolejność pętli: Narrative Scope -> Apex Grid -> Volt Stream -> Pulse Field -> z powrotem
+const FLOWS = [
+  { from: modules[0], to: modules[1] },
+  { from: modules[1], to: modules[2] },
+  { from: modules[2], to: modules[3] },
+  { from: modules[3], to: modules[0] },
+];
 
 function NeonIcon({ type }: { type: string }) {
   if (type === "chart") {
@@ -134,7 +163,7 @@ function HudPanel({
         className,
       ].join(" ")}
     >
-      <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-200/45">
+      <div className="mb-3 whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-200/45">
         {title}
       </div>
       {type === "line" && (
@@ -163,7 +192,7 @@ function HudPanel({
         <div className="relative h-14 w-44 overflow-hidden rounded-lg">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(56,189,248,.35),transparent_2px),radial-gradient(circle_at_60%_35%,rgba(124,58,237,.35),transparent_2px),radial-gradient(circle_at_70%_70%,rgba(56,189,248,.25),transparent_2px)] bg-[length:18px_18px]" />
           <div className="absolute bottom-2 left-2 h-1 w-20 rounded-full bg-sky-500/70" />
-          <div className="absolute bottom-2 left-24 h-1 w-10 rounded-full bg-violet-500/70" />
+          <div className="pdm-pulse-bar absolute bottom-2 left-24 h-1 w-10 rounded-full bg-violet-500/70" />
         </div>
       )}
       {type === "radar" && (
@@ -171,7 +200,7 @@ function HudPanel({
           <circle cx="28" cy="27" r="20" fill="none" stroke="currentColor" strokeWidth="1" opacity=".4" />
           <circle cx="28" cy="27" r="11" fill="none" stroke="currentColor" strokeWidth="1" opacity=".6" />
           <path d="M28 27L44 15" stroke="currentColor" strokeWidth="2" />
-          <circle cx="28" cy="27" r="3" fill="currentColor" />
+          <circle cx="28" cy="27" r="3" fill="currentColor" className="pdm-radar-dot" />
           <path d="M65 14H88M65 27H82M65 40H90" stroke="currentColor" strokeWidth="2" opacity=".45" />
         </svg>
       )}
@@ -179,16 +208,23 @@ function HudPanel({
   );
 }
 
-function ModuleOrb({ module }: { module: (typeof modules)[number] }) {
+function ModuleOrb({ module: m }: { module: ModuleDef }) {
+  const pos = pointOnEllipse(m.angle, RX, RY);
+  const leftPct = (pos.x / VB_W) * 100;
+  const topPct = (pos.y / VB_H) * 100;
   return (
-    <Link href={module.href} className={`absolute z-20 ${getModulePosition(module.position)}`}>
+    <Link
+      href={m.href}
+      className="absolute z-20 -translate-x-1/2 -translate-y-1/2"
+      style={{ left: `${leftPct}%`, top: `${topPct}%` }}
+    >
       <div className="group flex flex-col items-center">
         <div
           className={[
             "relative flex h-28 w-28 items-center justify-center rounded-full",
             "bg-[radial-gradient(circle_at_35%_25%,#ffffff,#dbeafe_55%,#b8c7e8)]",
             "shadow-[0_0_34px_rgba(96,165,250,0.45)]",
-            module.active
+            m.active
               ? "ring-2 ring-sky-300/80 shadow-[0_0_60px_rgba(59,130,246,0.75)]"
               : "ring-1 ring-sky-300/35",
           ].join(" ")}
@@ -196,8 +232,8 @@ function ModuleOrb({ module }: { module: (typeof modules)[number] }) {
           <div className="absolute -inset-3 rounded-full border border-sky-400/25" />
           <div className="absolute -inset-5 rounded-full border border-violet-500/15 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
           <Image
-            src={module.logo}
-            alt={module.name}
+            src={m.logo}
+            alt={m.name}
             width={92}
             height={92}
             className="h-[74px] w-[74px] object-contain"
@@ -207,21 +243,21 @@ function ModuleOrb({ module }: { module: (typeof modules)[number] }) {
           className={[
             "mt-3 min-w-[120px] rounded-lg border px-4 py-2 text-center backdrop-blur-md",
             "bg-slate-950/70 shadow-[0_0_28px_rgba(15,23,42,0.9)]",
-            module.active ? "border-sky-300/40" : "border-sky-300/20",
+            m.active ? "border-sky-300/40" : "border-sky-300/20",
           ].join(" ")}
         >
-          <div className="text-sm font-semibold text-white">{module.role}</div>
+          <div className="text-sm font-semibold text-white">{m.role}</div>
           <div
             className={[
               "mt-0.5 text-[11px] font-bold tracking-wide",
-              module.active ? "text-emerald-400" : "text-blue-400",
+              m.active ? "text-emerald-400" : "text-blue-400",
             ].join(" ")}
           >
-            {module.status}
+            {m.status}
             <span
               className={[
                 "ml-2 inline-block h-2 w-2 rounded-full",
-                module.active ? "bg-emerald-400 animate-pulse" : "bg-blue-500",
+                m.active ? "bg-emerald-400 animate-pulse" : "bg-blue-500",
               ].join(" ")}
             />
           </div>
@@ -234,11 +270,27 @@ function ModuleOrb({ module }: { module: (typeof modules)[number] }) {
 export default function OrbitHub() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#05070d] text-white">
+      {/* Mapa świata z kropek — jak we wzorcu, pełna szerokość górnej sekcji */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-[900px] opacity-[0.22]"
+        style={{
+          backgroundImage: "url(/world-map-dots.svg)",
+          backgroundSize: "100% auto",
+          backgroundPosition: "center top",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(79,70,229,0.34),transparent_30%),radial-gradient(circle_at_50%_15%,rgba(14,165,233,0.18),transparent_24%),linear-gradient(180deg,#05070d_0%,#07101f_52%,#05070d_100%)]" />
       <div className="absolute inset-0 opacity-60 [background-image:radial-gradient(circle_at_20%_20%,rgba(255,255,255,.55)_1px,transparent_1.4px),radial-gradient(circle_at_70%_30%,rgba(147,197,253,.55)_1px,transparent_1.5px),radial-gradient(circle_at_85%_70%,rgba(255,255,255,.45)_1px,transparent_1.3px)] [background-size:140px_140px,220px_220px,180px_180px]" />
-      <div className="absolute left-0 right-0 top-[33%] h-px bg-gradient-to-r from-transparent via-sky-400/25 to-transparent" />
-      <div className="absolute left-1/2 top-[42%] h-[620px] w-[960px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-sky-400/10" />
-      <div className="absolute left-1/2 top-[47%] h-[480px] w-[1220px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-violet-400/10" />
+
+      {/* Cztery narożne widgety — kotwiczone do krawędzi całej sekcji, jak we wzorcu */}
+      <div className="pointer-events-none absolute inset-0 z-[6]">
+        <HudPanel title="DANE NARRACYJNE" type="line" className="left-[4%] top-[30%]" />
+        <HudPanel title="ANALIZA SCENARIUSZOWA" type="bars" className="right-[4%] top-[30%]" />
+        <HudPanel title="AKTYWNOŚĆ W SIECI" type="map" className="left-[2%] top-[64%]" />
+        <HudPanel title="ZASIĘG I DYSTRYBUCJA" type="radar" className="right-[2%] top-[64%]" />
+      </div>
+
       <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 pb-8 pt-8">
         <header className="mx-auto max-w-4xl text-center">
           <div className="mb-3 text-xs font-bold uppercase tracking-[0.48em] text-blue-300/80">
@@ -258,7 +310,7 @@ export default function OrbitHub() {
           <div className="mt-7 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link
               href="/dashboard"
-              className="group rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-8 py-3 text-sm font-bold text-white shadow-[0_0_35px_rgba(37,99,235,0.6)] ring-1 ring-white/20 transition hover:scale-[1.02] hover:shadow-[0_0_50px_rgba(124,58,237,0.75)]"
+              className="pdm-cta-glow group rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-8 py-3 text-sm font-bold text-white ring-1 ring-white/20 transition hover:scale-[1.02]"
             >
               Uruchom prototyp
               <span className="ml-5 inline-block transition group-hover:translate-x-1">→</span>
@@ -272,29 +324,68 @@ export default function OrbitHub() {
             </a>
           </div>
         </header>
-        <div id="modules" className="relative mx-auto mt-6 h-[500px] w-full max-w-[980px] scroll-mt-10">
-          <div className="absolute left-1/2 top-1/2 h-[390px] w-[720px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-blue-400/40" />
-          <div className="absolute left-1/2 top-1/2 h-[300px] w-[540px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-violet-400/25" />
-          <div className="absolute left-1/2 top-1/2 h-[215px] w-[390px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-sky-400/10" />
-          <div className="absolute left-1/2 top-1/2 h-px w-[760px] -translate-x-1/2 bg-gradient-to-r from-transparent via-violet-400/60 to-transparent" />
-          <div className="absolute left-1/2 top-1/2 h-[430px] w-px -translate-y-1/2 bg-gradient-to-b from-transparent via-sky-400/45 to-transparent" />
+
+        {/* Orbita — elipsa proporcjonalna do wzorca (VB_W x VB_H), z animowanymi
+            przepływami między modułami i pulsującym centrum */}
+        <div id="modules" className="relative mx-auto mt-10 w-full max-w-[1100px] aspect-[5/3] scroll-mt-10">
+          <svg
+            viewBox={`0 0 ${VB_W} ${VB_H}`}
+            className="absolute inset-0 h-full w-full"
+            style={{ overflow: "visible" }}
+          >
+            <defs>
+              <linearGradient id="flowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#38bdf8" />
+                <stop offset="100%" stopColor="#a78bfa" />
+              </linearGradient>
+            </defs>
+
+            {/* statyczny pierścień prowadzący — cienka, szeroka elipsa */}
+            <ellipse
+              cx={CX}
+              cy={CY}
+              rx={RX + 22}
+              ry={RY + 22}
+              fill="none"
+              stroke="#818cf8"
+              strokeOpacity={0.3}
+              strokeWidth={1}
+              strokeDasharray="2 7"
+            />
+
+            {/* przepływy między modułami — animowana przerywana linia */}
+            {FLOWS.map((f, i) => (
+              <path
+                key={i}
+                d={arcPath(f.from.angle, f.to.angle)}
+                fill="none"
+                stroke="url(#flowGrad)"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeDasharray="6 10"
+                className="orbit-flow"
+                style={{ animationDelay: `${i * 0.2}s` }}
+              />
+            ))}
+          </svg>
+
+          {/* Centrum — Profil projektu, tętniące */}
           <div className="absolute left-1/2 top-1/2 z-10 flex h-32 w-32 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-violet-300/70 bg-slate-950/80 text-center shadow-[0_0_75px_rgba(124,58,237,0.9)]">
-            <div className="absolute -inset-5 rounded-full border border-violet-400/30" />
-            <div className="absolute -inset-10 rounded-full border border-sky-400/10" />
-            <div>
+            <div className="pdm-core-breathe absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(124,58,237,0.55)_0%,transparent_70%)]" />
+            <div className="pdm-ping absolute -inset-5 rounded-full border border-violet-400/40" />
+            <div className="pdm-ping absolute -inset-5 rounded-full border border-sky-400/30" style={{ animationDelay: "1.5s" }} />
+            <div className="relative">
               <div className="text-lg font-bold text-white">Profil</div>
               <div className="text-sm text-slate-300/70">projektu</div>
             </div>
           </div>
-          {modules.map((module) => (
-            <ModuleOrb key={module.key} module={module} />
+
+          {modules.map((m) => (
+            <ModuleOrb key={m.key} module={m} />
           ))}
-          <HudPanel title="DANE NARRACYJNE" type="line" className="left-2 top-14" />
-          <HudPanel title="ANALIZA SCENARIUSZOWA" type="bars" className="right-1 top-16" />
-          <HudPanel title="AKTYWNOŚĆ W SIECI" type="map" className="left-0 bottom-14" />
-          <HudPanel title="ZASIĘG I DYSTRYBUCJA" type="radar" className="right-0 bottom-12" />
         </div>
-        <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+
+        <div className="mx-auto mt-16 grid w-full max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {bottomCards.map((card) => (
             <div
               key={card.title}
@@ -319,6 +410,54 @@ export default function OrbitHub() {
           ))}
         </div>
       </section>
+
+      <style>{`
+        @keyframes orbit-flow-dash {
+          to { stroke-dashoffset: -160; }
+        }
+        .orbit-flow {
+          animation: orbit-flow-dash 3.5s linear infinite;
+          opacity: 0.9;
+        }
+        .pdm-core-breathe {
+          animation: pdm-core-breathe 3.2s ease-in-out infinite;
+        }
+        @keyframes pdm-core-breathe {
+          0%, 100% { transform: scale(1); opacity: 0.6; }
+          50% { transform: scale(1.18); opacity: 1; }
+        }
+        .pdm-ping {
+          animation: pdm-ping 3s ease-out infinite;
+          animation-fill-mode: both;
+        }
+        @keyframes pdm-ping {
+          0% { transform: scale(1); opacity: 0.6; }
+          100% { transform: scale(1.6); opacity: 0; }
+        }
+        .pdm-cta-glow {
+          animation: pdm-cta-glow 3s ease-in-out infinite;
+        }
+        @keyframes pdm-cta-glow {
+          0%, 100% { box-shadow: 0 0 20px rgba(37,99,235,0.45); }
+          50% { box-shadow: 0 0 34px rgba(124,58,237,0.7); }
+        }
+        .pdm-pulse-bar {
+          animation: pdm-pulse-bar 2.4s ease-in-out infinite;
+        }
+        @keyframes pdm-pulse-bar {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+        .pdm-radar-dot {
+          transform-origin: center;
+          transform-box: fill-box;
+          animation: pdm-radar-dot 2s ease-in-out infinite;
+        }
+        @keyframes pdm-radar-dot {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.4); opacity: 0.6; }
+        }
+      `}</style>
     </main>
   );
 }
