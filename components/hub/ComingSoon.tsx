@@ -76,10 +76,10 @@ export default function ComingSoon({
           animation-delay: 4s;
         }
         @keyframes pdm-comet-cs {
-          0%, 90%, 100% { opacity: 0; transform: translate(-10vw, -10vh) rotate(25deg); }
+          0%, 90%, 100% { opacity: 0; transform: translate(-15vmin, -55vmin) rotate(33deg); }
           91% { opacity: 1; }
-          95% { opacity: 1; transform: translate(70vw, 55vh) rotate(25deg); }
-          96% { opacity: 0; transform: translate(78vw, 60vh) rotate(25deg); }
+          95% { opacity: 1; transform: translate(85vmin, 10vmin) rotate(33deg); }
+          96% { opacity: 0; transform: translate(91.71vmin, 14.36vmin) rotate(33deg); }
         }
       `}</style>
     </div>

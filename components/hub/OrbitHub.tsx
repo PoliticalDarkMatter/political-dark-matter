@@ -322,23 +322,26 @@ export default function OrbitHub() {
         .pdm-comet--a { animation: pdm-comet-a 16s ease-in infinite; animation-delay: 2s; }
         .pdm-comet--b { animation: pdm-comet-b 23s ease-in infinite; animation-delay: 9s; }
         .pdm-comet--c { animation: pdm-comet-c 31s ease-in infinite; animation-delay: 17s; }
+        /* Uwaga: pozycje w vmin (nie vw/vh), żeby oś X i Y skalowały się identycznie —
+           dzięki temu kąt rotate() zawsze pokrywa się z realnym kierunkiem lotu,
+           niezależnie od proporcji okna, a ogon komety leży dokładnie na torze lotu. */
         @keyframes pdm-comet-a {
-          0%, 88%, 100% { opacity: 0; transform: translate(-10vw, 8vh) rotate(18deg); }
+          0%, 88%, 100% { opacity: 0; transform: translate(-15vmin, -45vmin) rotate(12.85deg); }
           89% { opacity: 1; }
-          93% { opacity: 1; transform: translate(65vw, 48vh) rotate(18deg); }
-          94% { opacity: 0; transform: translate(72vw, 53vh) rotate(18deg); }
+          93% { opacity: 1; transform: translate(95vmin, -20vmin) rotate(12.85deg); }
+          94% { opacity: 0; transform: translate(102.8vmin, -18.2vmin) rotate(12.85deg); }
         }
         @keyframes pdm-comet-b {
-          0%, 91%, 100% { opacity: 0; transform: translate(105vw, 5vh) rotate(200deg); }
+          0%, 91%, 100% { opacity: 0; transform: translate(115vmin, -40vmin) rotate(148deg); }
           92% { opacity: 1; }
-          96% { opacity: 1; transform: translate(15vw, 60vh) rotate(200deg); }
-          97% { opacity: 0; transform: translate(8vw, 65vh) rotate(200deg); }
+          96% { opacity: 1; transform: translate(-5vmin, 35vmin) rotate(148deg); }
+          97% { opacity: 0; transform: translate(-11.8vmin, 39.2vmin) rotate(148deg); }
         }
         @keyframes pdm-comet-c {
-          0%, 93%, 100% { opacity: 0; transform: translate(20vw, -10vh) rotate(60deg); }
+          0%, 93%, 100% { opacity: 0; transform: translate(-10vmin, -70vmin) rotate(53.6deg); }
           94% { opacity: 1; }
-          97% { opacity: 1; transform: translate(85vw, 45vh) rotate(60deg); }
-          98% { opacity: 0; transform: translate(90vw, 52vh) rotate(60deg); }
+          97% { opacity: 1; transform: translate(60vmin, 25vmin) rotate(53.6deg); }
+          98% { opacity: 0; transform: translate(64.75vmin, 31.43vmin) rotate(53.6deg); }
         }
       `}</style>
     </div>
