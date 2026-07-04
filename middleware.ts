@@ -9,6 +9,11 @@ const PUBLIC_PREFIXES = [
   "/apex-grid", "/volt-stream", "/pulse-field",
 ];
 
+// Dowolny statyczny plik z /public (obrazki, svg, itd.) ma być zawsze publiczny —
+// wcześniej brakujący wpis w PUBLIC_PREFIXES (np. nowy plik .svg) powodował
+// ciche przekierowanie zasobu na /login, przez co np. tło mapy świata się nie ładowało.
+const STATIC_FILE_RE = /\.(png|jpe?g|svg|webp|gif|ico|avif|css|js|map|txt|json|woff2?|ttf)$/i;
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -17,8 +22,8 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Przepuść publiczne ścieżki
-  if (PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))) {
+  // Przepuść publiczne ścieżki i wszystkie statyczne pliki
+  if (PUBLIC_PREFIXES.some((p) => pathname.startsWith(p)) || STATIC_FILE_RE.test(pathname)) {
     return NextResponse.next();
   }
 
