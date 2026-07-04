@@ -114,13 +114,14 @@ export default function OrbitHub() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#05060f] text-white">
-      {/* Mapa świata z kropek w tle */}
+      {/* Mapa świata z kropek w tle — ograniczona do górnej sekcji (hero + orbita),
+          żeby "cover" nie rozciągał jej na wysokość całej, dłuższej strony */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.15]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[1100px] opacity-[0.4]"
         style={{
           backgroundImage: "url(/world-map-dots.svg)",
           backgroundSize: "cover",
-          backgroundPosition: "center 42%",
+          backgroundPosition: "center 30%",
           backgroundRepeat: "no-repeat",
         }}
       />
@@ -140,8 +141,8 @@ export default function OrbitHub() {
 
       {/* Narożne widgety z danymi — tylko na większych ekranach, jak w referencji */}
       <div className="pointer-events-none absolute inset-0 z-[6] hidden lg:block">
-        <div className="absolute left-[4%] top-[33%] w-44 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 backdrop-blur-sm">
-          <div className="mb-1.5 text-[9px] font-semibold uppercase tracking-widest text-slate-400">
+        <div className="absolute left-[4%] top-[33%] w-[210px] rounded-xl border border-white/10 bg-white/[0.05] px-3.5 py-2.5 backdrop-blur-sm">
+          <div className="mb-1.5 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-slate-400">
             Dane narracyjne
           </div>
           <svg viewBox="0 0 100 30" className="h-6 w-full">
@@ -156,8 +157,8 @@ export default function OrbitHub() {
           </svg>
         </div>
 
-        <div className="absolute right-[4%] top-[33%] w-44 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 backdrop-blur-sm">
-          <div className="mb-1.5 text-[9px] font-semibold uppercase tracking-widest text-slate-400">
+        <div className="absolute right-[4%] top-[33%] w-[210px] rounded-xl border border-white/10 bg-white/[0.05] px-3.5 py-2.5 backdrop-blur-sm">
+          <div className="mb-1.5 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-slate-400">
             Analiza scenariuszowa
           </div>
           <svg viewBox="0 0 100 30" className="h-6 w-full">
@@ -167,8 +168,8 @@ export default function OrbitHub() {
           </svg>
         </div>
 
-        <div className="absolute left-[2%] top-[62%] w-44 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 backdrop-blur-sm">
-          <div className="mb-1.5 text-[9px] font-semibold uppercase tracking-widest text-slate-400">
+        <div className="absolute left-[2%] top-[62%] w-[210px] rounded-xl border border-white/10 bg-white/[0.05] px-3.5 py-2.5 backdrop-blur-sm">
+          <div className="mb-1.5 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-slate-400">
             Aktywność w sieci
           </div>
           <div className="flex items-center gap-2">
@@ -182,8 +183,8 @@ export default function OrbitHub() {
           </div>
         </div>
 
-        <div className="absolute right-[2%] top-[62%] w-44 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 backdrop-blur-sm">
-          <div className="mb-1.5 text-[9px] font-semibold uppercase tracking-widest text-slate-400">
+        <div className="absolute right-[2%] top-[62%] w-[210px] rounded-xl border border-white/10 bg-white/[0.05] px-3.5 py-2.5 backdrop-blur-sm">
+          <div className="mb-1.5 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-slate-400">
             Zasięg i dystrybucja
           </div>
           <svg viewBox="0 0 40 40" className="h-7 w-7">
@@ -350,17 +351,6 @@ export default function OrbitHub() {
                 style={{ animationDelay: `${i * 0.15}s` }}
               />
             ))}
-
-            {/* etykieta pętli zwrotnej */}
-            <text
-              x={CENTER - 40}
-              y={CENTER - 210}
-              textAnchor="middle"
-              className="fill-fuchsia-300/80"
-              style={{ fontSize: 10, fontStyle: "italic" }}
-            >
-              pętla zwrotna
-            </text>
           </svg>
 
           {/* Węzły modułów — nakładka HTML nad SVG, pozycjonowana procentowo */}
