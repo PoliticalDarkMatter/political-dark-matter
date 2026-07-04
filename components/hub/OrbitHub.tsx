@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Waves, LineChart as LineChartIcon, MessageSquare, Radio, ArrowRight } from "lucide-react";
 
 type ModuleStatus = "live" | "building";
 
@@ -55,6 +56,33 @@ const MODULES: ModuleDef[] = [
   },
 ];
 
+const FEATURES = [
+  {
+    title: "Słuchanie",
+    desc: "monitoring narracji w czasie rzeczywistym",
+    Icon: Waves,
+    badge: "border-blue-400/30 bg-blue-500/15 text-blue-300",
+  },
+  {
+    title: "Analiza",
+    desc: "scenariusze i rekomendacje strategiczne",
+    Icon: LineChartIcon,
+    badge: "border-emerald-400/30 bg-emerald-500/15 text-emerald-300",
+  },
+  {
+    title: "Przekaz",
+    desc: "komunikacja skrojona pod projekt",
+    Icon: MessageSquare,
+    badge: "border-purple-400/30 bg-purple-500/15 text-purple-300",
+  },
+  {
+    title: "Emisja",
+    desc: "własne medium i dystrybucja",
+    Icon: Radio,
+    badge: "border-orange-400/30 bg-orange-500/15 text-orange-300",
+  },
+];
+
 const CENTER = 400;
 const RADIUS = 300;
 const ARC_R = 345;
@@ -86,6 +114,17 @@ export default function OrbitHub() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#05060f] text-white">
+      {/* Mapa świata z kropek w tle */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.15]"
+        style={{
+          backgroundImage: "url(/world-map-dots.svg)",
+          backgroundSize: "cover",
+          backgroundPosition: "center 42%",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
+
       {/* Gwiazdy w tle — trzy warstwy o różnej wielkości i gęstości, dla wrażenia głębi */}
       <div className="pointer-events-none absolute inset-0 opacity-50 [background-image:radial-gradient(0.6px_0.6px_at_15px_25px,#fff,transparent),radial-gradient(0.6px_0.6px_at_75px_95px,#fff,transparent),radial-gradient(0.6px_0.6px_at_130px_45px,#fff,transparent),radial-gradient(0.6px_0.6px_at_190px_150px,#fff,transparent),radial-gradient(0.6px_0.6px_at_250px_70px,#fff,transparent),radial-gradient(0.6px_0.6px_at_310px_190px,#fff,transparent),radial-gradient(0.6px_0.6px_at_20px_210px,#fff,transparent)] [background-size:340px_340px] [background-repeat:repeat]" />
       <div className="pointer-events-none absolute inset-0 opacity-70 [background-image:radial-gradient(1.4px_1.4px_at_40px_60px,#fff,transparent),radial-gradient(1.3px_1.3px_at_160px_20px,#fff,transparent),radial-gradient(1.5px_1.5px_at_100px_180px,#fff,transparent),radial-gradient(1.3px_1.3px_at_230px_120px,#fff,transparent),radial-gradient(1.4px_1.4px_at_300px_240px,#fff,transparent)] [background-size:460px_460px] [background-repeat:repeat]" />
@@ -98,6 +137,62 @@ export default function OrbitHub() {
 
       {/* Poświata centralna */}
       <div className="pointer-events-none absolute left-1/2 top-[38%] h-[700px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(99,102,241,0.25)_0%,rgba(147,51,234,0.12)_35%,transparent_70%)] blur-2xl" />
+
+      {/* Narożne widgety z danymi — tylko na większych ekranach, jak w referencji */}
+      <div className="pointer-events-none absolute inset-0 z-[6] hidden lg:block">
+        <div className="absolute left-[4%] top-[33%] w-44 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 backdrop-blur-sm">
+          <div className="mb-1.5 text-[9px] font-semibold uppercase tracking-widest text-slate-400">
+            Dane narracyjne
+          </div>
+          <svg viewBox="0 0 100 30" className="h-6 w-full">
+            <polyline
+              points="0,22 15,18 30,20 45,10 60,14 75,4 90,8 100,2"
+              fill="none"
+              stroke="#818cf8"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+
+        <div className="absolute right-[4%] top-[33%] w-44 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 backdrop-blur-sm">
+          <div className="mb-1.5 text-[9px] font-semibold uppercase tracking-widest text-slate-400">
+            Analiza scenariuszowa
+          </div>
+          <svg viewBox="0 0 100 30" className="h-6 w-full">
+            {[8, 18, 12, 24, 16, 28, 20].map((h, i) => (
+              <rect key={i} x={i * 14} y={30 - h} width="8" height={h} rx="1.5" fill="#c084fc" opacity={0.5 + i * 0.06} />
+            ))}
+          </svg>
+        </div>
+
+        <div className="absolute left-[2%] top-[62%] w-44 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 backdrop-blur-sm">
+          <div className="mb-1.5 text-[9px] font-semibold uppercase tracking-widest text-slate-400">
+            Aktywność w sieci
+          </div>
+          <div className="flex items-center gap-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="1.4">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M3 12h18M12 3c2.5 2.6 4 6 4 9s-1.5 6.4-4 9c-2.5-2.6-4-6-4-9s1.5-6.4 4-9Z" />
+            </svg>
+            <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
+              <div className="pdm-pulse-bar absolute inset-y-0 left-0 w-2/3 rounded-full bg-gradient-to-r from-blue-400 to-indigo-400" />
+            </div>
+          </div>
+        </div>
+
+        <div className="absolute right-[2%] top-[62%] w-44 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 backdrop-blur-sm">
+          <div className="mb-1.5 text-[9px] font-semibold uppercase tracking-widest text-slate-400">
+            Zasięg i dystrybucja
+          </div>
+          <svg viewBox="0 0 40 40" className="h-7 w-7">
+            <circle cx="20" cy="20" r="16" fill="none" stroke="#f472b6" strokeOpacity="0.25" strokeWidth="1.5" />
+            <circle cx="20" cy="20" r="10" fill="none" stroke="#f472b6" strokeOpacity="0.4" strokeWidth="1.5" />
+            <circle cx="20" cy="20" r="3" fill="#f472b6" className="pdm-radar-dot" />
+          </svg>
+        </div>
+      </div>
 
       <div className="relative z-10 mx-auto flex max-w-6xl flex-col items-center px-6 pb-24 pt-16">
         {/* Wordmark */}
@@ -112,13 +207,34 @@ export default function OrbitHub() {
           <h1 className="bg-gradient-to-r from-indigo-300 via-blue-300 to-fuchsia-300 bg-clip-text text-5xl font-extrabold tracking-tight text-transparent sm:text-6xl">
             Political Dark Matter
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-sm text-slate-400 sm:text-base">
-            Niewidoczna warstwa, która decyduje o tym, kto wygrywa.
+          <p className="mx-auto mt-4 max-w-xl text-base font-medium text-slate-200 sm:text-lg">
+            Niewidoczna infrastruktura zwycięskiej komunikacji politycznej.
           </p>
+          <p className="mx-auto mt-3 max-w-lg text-sm text-slate-400">
+            Monitoring narracji, analiza scenariuszowa, generowanie przekazu i dystrybucja w jednym
+            systemie wspieranym przez AI.
+          </p>
+
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/dashboard"
+              className="pdm-cta-glow group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 px-6 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.03]"
+            >
+              Uruchom prototyp
+              <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+            </Link>
+            <a
+              href="#modules"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.03] px-6 py-3 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/[0.08]"
+            >
+              Zobacz moduły
+              <ArrowRight size={16} />
+            </a>
+          </div>
         </div>
 
         {/* Orbit diagram */}
-        <div className="relative mt-12 w-full max-w-[720px]">
+        <div id="modules" className="relative mt-14 w-full max-w-[720px] scroll-mt-10">
           <svg
             viewBox="0 0 800 800"
             className="w-full"
@@ -140,6 +256,33 @@ export default function OrbitHub() {
               </radialGradient>
             </defs>
 
+            {/* podwójna aureola orbity — szeroka elipsa + druga obrócona, jak na wzorcu */}
+            <ellipse
+              cx={CENTER}
+              cy={CENTER}
+              rx={380}
+              ry={250}
+              fill="none"
+              stroke="#6366f1"
+              strokeOpacity={0.22}
+              strokeWidth={1.2}
+              className="pdm-halo"
+            />
+            <g transform={`rotate(58 ${CENTER} ${CENTER})`}>
+              <ellipse
+                cx={CENTER}
+                cy={CENTER}
+                rx={380}
+                ry={250}
+                fill="none"
+                stroke="#c084fc"
+                strokeOpacity={0.18}
+                strokeWidth={1.2}
+                className="pdm-halo"
+                style={{ animationDelay: "1.6s" }}
+              />
+            </g>
+
             {/* orbita — pierścień prowadzący */}
             <circle
               cx={CENTER}
@@ -153,7 +296,18 @@ export default function OrbitHub() {
             />
 
             {/* rdzeń: profil projektu */}
-            <circle cx={CENTER} cy={CENTER} r={130} fill="url(#coreGlow)" />
+            <circle cx={CENTER} cy={CENTER} r={130} fill="url(#coreGlow)" className="pdm-core-breathe" />
+            <circle className="pdm-ping" cx={CENTER} cy={CENTER} r={54} fill="none" stroke="#818cf8" strokeWidth={1.5} />
+            <circle
+              className="pdm-ping"
+              cx={CENTER}
+              cy={CENTER}
+              r={54}
+              fill="none"
+              stroke="#818cf8"
+              strokeWidth={1.5}
+              style={{ animationDelay: "1.5s" }}
+            />
             <circle
               cx={CENTER}
               cy={CENTER}
@@ -264,26 +418,22 @@ export default function OrbitHub() {
           })}
         </div>
 
-        {/* Pasek opisu ekosystemu */}
+        {/* Karty funkcji */}
         <div
-          className={`mt-16 grid w-full max-w-3xl grid-cols-1 gap-4 transition-all duration-1000 sm:grid-cols-4 ${
+          className={`mt-16 grid w-full max-w-4xl grid-cols-1 gap-4 transition-all duration-1000 sm:grid-cols-2 lg:grid-cols-4 ${
             mounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
           }`}
           style={{ transitionDelay: "700ms" }}
         >
-          {[
-            ["Słuchanie", "monitoring narracji w czasie rzeczywistym"],
-            ["Analiza", "scenariusze i rekomendacje strategiczne"],
-            ["Przekaz", "komunikacja skrojona pod projekt"],
-            ["Emisja", "własne medium i dystrybucja"],
-          ].map(([title, desc]) => (
+          {FEATURES.map(({ title, desc, Icon, badge }) => (
             <div
               key={title}
-              className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-center"
+              className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-left"
             >
-              <div className="text-xs font-semibold uppercase tracking-wide text-indigo-300">
-                {title}
+              <div className={`mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg border ${badge}`}>
+                <Icon size={16} />
               </div>
+              <div className="text-xs font-bold uppercase tracking-wide text-white">{title}</div>
               <div className="mt-1 text-[11px] leading-snug text-slate-400">{desc}</div>
             </div>
           ))}
@@ -306,6 +456,62 @@ export default function OrbitHub() {
         .orbit-flow--feedback {
           animation-duration: 2.6s;
         }
+
+        .pdm-halo {
+          animation: pdm-halo-breathe 6s ease-in-out infinite;
+        }
+        @keyframes pdm-halo-breathe {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 1; }
+        }
+
+        .pdm-core-breathe {
+          transform-origin: center;
+          transform-box: fill-box;
+          animation: pdm-core-breathe 4.5s ease-in-out infinite;
+        }
+        @keyframes pdm-core-breathe {
+          0%, 100% { transform: scale(1); opacity: 0.85; }
+          50% { transform: scale(1.06); opacity: 1; }
+        }
+
+        .pdm-ping {
+          transform-origin: center;
+          transform-box: fill-box;
+          animation: pdm-ping 3s ease-out infinite;
+          animation-fill-mode: both;
+        }
+        @keyframes pdm-ping {
+          0% { transform: scale(1); opacity: 0.6; }
+          100% { transform: scale(2.2); opacity: 0; }
+        }
+
+        .pdm-cta-glow {
+          animation: pdm-cta-glow 3s ease-in-out infinite;
+        }
+        @keyframes pdm-cta-glow {
+          0%, 100% { box-shadow: 0 0 20px rgba(99,102,241,0.35), 0 4px 14px rgba(0,0,0,0.3); }
+          50% { box-shadow: 0 0 34px rgba(147,51,234,0.55), 0 4px 14px rgba(0,0,0,0.3); }
+        }
+
+        .pdm-pulse-bar {
+          animation: pdm-pulse-bar 2.4s ease-in-out infinite;
+        }
+        @keyframes pdm-pulse-bar {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+
+        .pdm-radar-dot {
+          transform-origin: center;
+          transform-box: fill-box;
+          animation: pdm-radar-dot 2s ease-in-out infinite;
+        }
+        @keyframes pdm-radar-dot {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.4); opacity: 0.6; }
+        }
+
         .pdm-comet {
           position: absolute;
           top: 0;
