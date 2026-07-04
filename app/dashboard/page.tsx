@@ -9,6 +9,7 @@ type QueryMode = string;
 interface Article {
   id: string; title: string; url: string;
   source: string; publishedAt: string; sentiment: Sent; weight?: number;
+  enriched?: boolean;
 }
 interface EntityInfo {
   name: string; count: number; weightedCount?: number; velocity?: number | null;
@@ -281,6 +282,11 @@ function ArticleCard(p: { article: Article }) {
       <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 4 }}>
         <div style={{ width: 6, height: 6, borderRadius: "50%", background: color }} />
         <span style={{ fontSize: 9, color: color, fontWeight: 600 }}>{SENT_LABEL[p.article.sentiment]}</span>
+        {p.article.enriched && (
+          <span title="Sentyment liczony z pełnej treści artykułu, nie tylko tytułu" style={{ fontSize: 8, color: "#a78bfa", background: "rgba(167,139,250,0.12)", borderRadius: 4, padding: "1px 5px", marginLeft: 2 }}>
+            📄 pełna treść
+          </span>
+        )}
       </div>
     </a>
   );
@@ -398,6 +404,34 @@ export default function DashboardPage() {
     fetchNews(buildQuery(loadedChips), p2, undefined, undefined, mode);
   }
 
+  // Wzbogacanie sentymentu o pełną treść — w TLE, nie blokuje głównego widoku.
+  // Ogranicza się do pierwszych 30 artykułów (koszt/czas pod kontrolą); wynik
+  // podmienia sentyment na kartach już wyrenderowanych i oznacza je "pełna treść".
+  function enrichSentiment(articles: Article[]) {
+    const urls = articles.slice(0, 30).map(function (a) { return a.url; }).filter(Boolean);
+    if (urls.length === 0) return;
+    fetch("/api/enrich-sentiment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ urls }),
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (j) {
+        const results = (j.results || {}) as Record<string, Sent>;
+        if (Object.keys(results).length === 0) return;
+        setData(function (prev) {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            articles: prev.articles.map(function (a) {
+              return results[a.url] ? { ...a, sentiment: results[a.url], enriched: true } : a;
+            }),
+          };
+        });
+      })
+      .catch(function () { /* najlepszy wysiłek — cichy fallback na sentyment z tytułu */ });
+  }
+
   const fetchNews = useCallback(function (q: string, p: string, f?: string, t?: string, autoMode?: string) {
     setLoading(true);
     setHasError(false);
@@ -416,6 +450,7 @@ export default function DashboardPage() {
             setSelNarr(fd.narratives[0].label); setSelEntity("");
           } else { setSelNarr(""); setSelEntity(""); }
         }
+        enrichSentiment(fd.articles);
       })
       .catch(function () { setHasError(true); })
       .finally(function () { setLoading(false); });
@@ -470,6 +505,7 @@ export default function DashboardPage() {
         setData(r.j.feed as FeedData);
         setSelNarr(""); setSelEntity("");
         setChips(r.j.extractedPhrases || []);
+        enrichSentiment((r.j.feed as FeedData).articles);
       })
       .catch(function () { setPasteError("Błąd sieci — spróbuj ponownie."); })
       .finally(function () { setPasteLoading(false); });
