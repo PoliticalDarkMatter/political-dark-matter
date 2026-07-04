@@ -8,15 +8,15 @@ type QueryMode = string;
 
 interface Article {
   id: string; title: string; url: string;
-  source: string; publishedAt: string; sentiment: Sent;
+  source: string; publishedAt: string; sentiment: Sent; weight?: number;
 }
 interface EntityInfo {
-  name: string; count: number;
+  name: string; count: number; weightedCount?: number; velocity?: number | null;
   sentimentBreakdown: { positive: number; negative: number; neutral: number };
   dominantSentiment: Sent;
 }
 interface NarrativeCluster {
-  label: string; icon: string; count: number; percentage: number;
+  label: string; icon: string; count: number; weightedCount?: number; velocity?: number | null; percentage: number;
   dominantSentiment: Sent;
   topArticles: Array<{ title: string; url: string; source: string }>;
 }
@@ -24,6 +24,8 @@ interface TimelineItem { hour: string; count: number }
 interface FeedData {
   articles: Article[]; total: number; totalAvailable: number;
   bySource: Record<string, number>;
+  bySourceWeighted?: Record<string, number>;
+  totalWeightedReach?: number;
   sentimentCounts: { positive: number; negative: number; neutral: number };
   entities: EntityInfo[]; narratives: NarrativeCluster[];
   timeline: TimelineItem[];
@@ -32,6 +34,28 @@ interface FeedData {
   fetchedAt: string;
 }
 interface SavedSearch { label: string; chips: string[]; period: string }
+
+interface SimulationResult {
+  attackLines: Array<{ from: string; attack: string }>;
+  riskyPhrases: Array<{ phrase: string; why: string }>;
+  audienceReactions: Array<{ group: string; reaction: string }>;
+  mediaFraming: string;
+  recommendation: "publikuj" | "zmodyfikuj" | "nie publikuj";
+  recommendationReasoning: string;
+}
+
+// ── VelocityBadge ──────────────────────────────────────────────────
+function VelocityBadge(p: { velocity?: number | null }) {
+  if (p.velocity == null) return null;
+  const up = p.velocity > 0;
+  const flat = p.velocity === 0;
+  const color = flat ? "#94a3b8" : up ? "#f87171" : "#4ade80";
+  return (
+    <span style={{ fontSize: 10, fontWeight: 700, color, marginLeft: 6 }}>
+      {flat ? "→ 0%" : up ? `↑ +${p.velocity}%` : `↓ ${p.velocity}%`}
+    </span>
+  );
+}
 
 // ── Mobile hook ──────────────────────────────────────────────────
 function useIsMobile(): boolean {
@@ -177,6 +201,7 @@ function NarrativeBar(p: { cluster: NarrativeCluster; selected: boolean; onClick
         </span>
         <span style={{ fontSize: 11, color: "#94a3b8" }}>
           {p.cluster.count} ({p.cluster.percentage}%)
+          <VelocityBadge velocity={p.cluster.velocity} />
         </span>
       </div>
       <div style={{ height: 5, borderRadius: 3, background: "rgba(255,255,255,0.07)", overflow: "hidden" }}>
@@ -207,6 +232,7 @@ function EntityRow(p: { entity: EntityInfo; maxCount: number; selected: boolean;
         <span style={{ fontSize: 13, color: "#f1f5f9", fontWeight: 500 }}>{p.entity.name}</span>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           <span style={{ fontSize: 11, color: color, fontWeight: 700 }}>{p.entity.count}×</span>
+          <VelocityBadge velocity={p.entity.velocity} />
           <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 10, background: bg, color: color, border: "1px solid " + color + "33" }}>
             {SENT_LABEL[p.entity.dominantSentiment]}
           </span>
@@ -307,6 +333,20 @@ export default function DashboardPage() {
   const [savedSearches, setSavedSearches] = useState([] as SavedSearch[]);
   const [recentSearches, setRecentSearches] = useState([] as string[][]);
   const [starAnim, setStarAnim]         = useState(false);
+
+  // Analiza wklejonego tekstu (wypowiedź / afera) — szuka REALNYCH artykułów
+  const [pasteOpen, setPasteOpen]       = useState(false);
+  const [pasteText, setPasteText]       = useState("");
+  const [pasteLoading, setPasteLoading] = useState(false);
+  const [pasteError, setPasteError]     = useState("");
+  const [extractedPhrases, setExtractedPhrases] = useState([] as string[]);
+
+  // Symulator reakcji AI — HIPOTEZA, osobny od prawdziwych danych
+  const [simOpen, setSimOpen]     = useState(false);
+  const [simText, setSimText]     = useState("");
+  const [simLoading, setSimLoading] = useState(false);
+  const [simError, setSimError]   = useState("");
+  const [simResult, setSimResult] = useState(null as SimulationResult | null);
 
   useEffect(function () {
     try {
@@ -413,6 +453,43 @@ export default function DashboardPage() {
   function clearQuery() {
     setChips([]); setChipInput(""); setSelNarr(""); setSelEntity("");
     fetchNews("", period, fromTs || undefined, toTs || undefined);
+  }
+
+  function runPasteAnalysis() {
+    if (!pasteText.trim()) return;
+    setPasteLoading(true); setPasteError(""); setExtractedPhrases([]);
+    fetch("/api/analyze-text", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: pasteText, period: "30d" }),
+    })
+      .then(function (res) { return res.json().then(function (j) { return { ok: res.ok, j }; }); })
+      .then(function (r) {
+        if (!r.ok) { setPasteError(r.j.error || "Błąd analizy."); return; }
+        setExtractedPhrases(r.j.extractedPhrases || []);
+        setData(r.j.feed as FeedData);
+        setSelNarr(""); setSelEntity("");
+        setChips(r.j.extractedPhrases || []);
+      })
+      .catch(function () { setPasteError("Błąd sieci — spróbuj ponownie."); })
+      .finally(function () { setPasteLoading(false); });
+  }
+
+  function runSimulation() {
+    if (!simText.trim()) return;
+    setSimLoading(true); setSimError(""); setSimResult(null);
+    fetch("/api/simulate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: simText }),
+    })
+      .then(function (res) { return res.json().then(function (j) { return { ok: res.ok, j }; }); })
+      .then(function (r) {
+        if (!r.ok) { setSimError(r.j.error || "Błąd symulacji."); return; }
+        setSimResult(r.j.result as SimulationResult);
+      })
+      .catch(function () { setSimError("Błąd sieci — spróbuj ponownie."); })
+      .finally(function () { setSimLoading(false); });
   }
 
   const visibleArticles = (function () {
@@ -545,15 +622,21 @@ export default function DashboardPage() {
 
   function renderSources() {
     if (!data) return null;
+    const weighted = data.bySourceWeighted || {};
     return (
-      <Panel title="Aktywność źródeł" subtitle="Pobrane artykuły">
+      <Panel title="Aktywność źródeł" subtitle={"Pobrane artykuły" + (data.totalWeightedReach ? " · ważony zasięg: " + data.totalWeightedReach : "")}>
         <ColumnChart data={data.bySource} />
         <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 2 }}>
           {Object.entries(data.bySource).map(function (entry) {
             return (
-              <div key={entry[0]} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#94a3b8", padding: "2px 0", borderBottom: "1px solid rgba(148,163,184,0.1)" }}>
+              <div key={entry[0]} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, color: "#94a3b8", padding: "2px 0", borderBottom: "1px solid rgba(148,163,184,0.1)" }}>
                 <span>{entry[0]}</span>
-                <span style={{ color: "#38bdf8", fontWeight: 600 }}>{entry[1]}</span>
+                <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <span style={{ color: "#38bdf8", fontWeight: 600 }}>{entry[1]}</span>
+                  {weighted[entry[0]] != null && (
+                    <span title="ważony zasięg" style={{ color: "#a78bfa", fontSize: 10 }}>zasięg {weighted[entry[0]]}</span>
+                  )}
+                </span>
               </div>
             );
           })}
@@ -855,6 +938,158 @@ export default function DashboardPage() {
               style={{ padding: "4px 11px", background: "rgba(56,189,248,0.12)", border: "1px solid rgba(56,189,248,0.5)", borderRadius: 7, color: "#7dd3fc", fontSize: 11, cursor: "pointer" }}>
               Szukaj
             </button>
+          </div>
+        )}
+      </div>
+
+      {/* Analiza wypowiedzi / afery — szuka realnych artykułów po wklejonym tekście */}
+      <div style={{ marginBottom: 10, borderRadius: 12, border: "1px solid rgba(56,189,248,0.15)", background: "rgba(15,23,42,0.5)", overflow: "hidden" }}>
+        <button
+          onClick={function () { setPasteOpen(function (v) { return !v; }); }}
+          style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "none", border: "none", cursor: "pointer" }}
+        >
+          <span style={{ fontSize: 12, fontWeight: 700, color: "#7dd3fc", letterSpacing: "0.03em" }}>
+            🔎 Analiza wypowiedzi / afery — wklej tekst, znajdę powiązane artykuły
+          </span>
+          <span style={{ color: "#64748b", fontSize: 12 }}>{pasteOpen ? "▲" : "▼"}</span>
+        </button>
+        {pasteOpen && (
+          <div style={{ padding: "0 14px 14px" }}>
+            <p style={{ fontSize: 11, color: "#64748b", margin: "0 0 8px" }}>
+              Wklej wypowiedź, cytat albo opis sytuacji/afery. AI wyciągnie kluczowe nazwiska i frazy, a narzędzie wyszuka realne artykuły z tym powiązane (nie jest to symulacja — to prawdziwe wyszukiwanie).
+            </p>
+            <textarea
+              value={pasteText}
+              onChange={function (e) { setPasteText(e.target.value); }}
+              placeholder="np. wklej cytat wypowiedzi polityka albo opis afery do zweryfikowania…"
+              rows={3}
+              style={{ width: "100%", background: "rgba(8,11,20,0.6)", border: "1px solid rgba(148,163,184,0.2)", borderRadius: 8, padding: "8px 10px", color: "#f1f5f9", fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit" }}
+            />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+              <div>
+                {extractedPhrases.length > 0 && (
+                  <span style={{ fontSize: 11, color: "#94a3b8" }}>
+                    Wyodrębnione frazy: {extractedPhrases.map(function (p, i) {
+                      return <span key={i} style={{ background: "rgba(56,189,248,0.12)", color: "#7dd3fc", borderRadius: 4, padding: "1px 6px", marginRight: 4, fontSize: 11 }}>{p}</span>;
+                    })}
+                  </span>
+                )}
+                {pasteError && <span style={{ fontSize: 11, color: "#f87171" }}>⚠ {pasteError}</span>}
+              </div>
+              <button
+                onClick={runPasteAnalysis}
+                disabled={pasteLoading || !pasteText.trim()}
+                style={{
+                  padding: "7px 16px", borderRadius: 8, border: "none",
+                  background: "linear-gradient(135deg, #2563eb, #7c3aed)",
+                  color: "#fff", fontSize: 12, fontWeight: 600,
+                  cursor: pasteLoading ? "default" : "pointer",
+                  opacity: (pasteLoading || !pasteText.trim()) ? 0.5 : 1,
+                }}
+              >
+                {pasteLoading ? "Analizuję…" : "Analizuj"}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Symulator reakcji AI — HIPOTEZA, wyraźnie oddzielona od prawdziwych danych */}
+      <div style={{ marginBottom: 12, borderRadius: 12, border: "1px dashed rgba(251,191,36,0.35)", background: "rgba(120,53,15,0.08)", overflow: "hidden" }}>
+        <button
+          onClick={function () { setSimOpen(function (v) { return !v; }); }}
+          style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "none", border: "none", cursor: "pointer" }}
+        >
+          <span style={{ fontSize: 12, fontWeight: 700, color: "#fbbf24", letterSpacing: "0.03em" }}>
+            ⚠ Symulator reakcji AI — testuj DRAFT przed publikacją (hipoteza, nie dane)
+          </span>
+          <span style={{ color: "#a78754", fontSize: 12 }}>{simOpen ? "▲" : "▼"}</span>
+        </button>
+        {simOpen && (
+          <div style={{ padding: "0 14px 14px" }}>
+            <p style={{ fontSize: 11, color: "#c2996a", margin: "0 0 8px" }}>
+              To NIE jest monitoring realnych reakcji — dla niepublikowanej wypowiedzi żadna reakcja jeszcze nie istnieje. To hipoteza AI (adwokat diabła): możliwe linie ataku, ryzykowne sformułowania, prawdopodobny odbiór. Punkt wyjścia do dyskusji w sztabie, nie fakt.
+            </p>
+            <textarea
+              value={simText}
+              onChange={function (e) { setSimText(e.target.value); }}
+              placeholder="Wklej draft wypowiedzi, który planujesz opublikować…"
+              rows={3}
+              style={{ width: "100%", background: "rgba(8,11,20,0.6)", border: "1px solid rgba(251,191,36,0.25)", borderRadius: 8, padding: "8px 10px", color: "#f1f5f9", fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit" }}
+            />
+            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginTop: 8, gap: 10 }}>
+              {simError && <span style={{ fontSize: 11, color: "#f87171" }}>⚠ {simError}</span>}
+              <button
+                onClick={runSimulation}
+                disabled={simLoading || !simText.trim()}
+                style={{
+                  padding: "7px 16px", borderRadius: 8, border: "1px solid rgba(251,191,36,0.4)",
+                  background: "rgba(251,191,36,0.15)",
+                  color: "#fbbf24", fontSize: 12, fontWeight: 700,
+                  cursor: simLoading ? "default" : "pointer",
+                  opacity: (simLoading || !simText.trim()) ? 0.5 : 1,
+                }}
+              >
+                {simLoading ? "Symuluję…" : "Symuluj reakcję"}
+              </button>
+            </div>
+
+            {simResult && (
+              <div style={{ marginTop: 14, padding: "12px 14px", background: "rgba(8,11,20,0.5)", border: "1px solid rgba(251,191,36,0.2)", borderRadius: 10 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#fbbf24", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }}>
+                  ⚠ Symulacja AI — nie traktuj jako faktu
+                </div>
+
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#e2e8f0", marginBottom: 5 }}>Prawdopodobne linie ataku</div>
+                  {simResult.attackLines.map(function (a, i) {
+                    return (
+                      <div key={i} style={{ fontSize: 12, color: "#cbd5e1", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid rgba(248,113,113,0.4)" }}>
+                        <span style={{ color: "#f87171", fontWeight: 600 }}>{a.from}:</span> {a.attack}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#e2e8f0", marginBottom: 5 }}>Ryzykowne sformułowania</div>
+                  {simResult.riskyPhrases.map(function (r, i) {
+                    return (
+                      <div key={i} style={{ fontSize: 12, color: "#cbd5e1", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid rgba(251,191,36,0.4)" }}>
+                        <span style={{ color: "#fbbf24", fontWeight: 600 }}>„{r.phrase}”</span> — {r.why}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#e2e8f0", marginBottom: 5 }}>Reakcje grup odbiorców</div>
+                  {simResult.audienceReactions.map(function (a, i) {
+                    return (
+                      <div key={i} style={{ fontSize: 12, color: "#cbd5e1", marginBottom: 4, paddingLeft: 10, borderLeft: "2px solid rgba(56,189,248,0.4)" }}>
+                        <span style={{ color: "#7dd3fc", fontWeight: 600 }}>{a.group}:</span> {a.reaction}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#e2e8f0", marginBottom: 5 }}>Co wyrwą z kontekstu media nieprzychylne</div>
+                  <div style={{ fontSize: 12, color: "#cbd5e1" }}>{simResult.mediaFraming}</div>
+                </div>
+
+                <div style={{
+                  padding: "8px 12px", borderRadius: 8,
+                  background: simResult.recommendation === "publikuj" ? "rgba(74,222,128,0.1)" : simResult.recommendation === "nie publikuj" ? "rgba(248,113,113,0.1)" : "rgba(251,191,36,0.1)",
+                  border: "1px solid " + (simResult.recommendation === "publikuj" ? "rgba(74,222,128,0.3)" : simResult.recommendation === "nie publikuj" ? "rgba(248,113,113,0.3)" : "rgba(251,191,36,0.3)"),
+                }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: simResult.recommendation === "publikuj" ? "#4ade80" : simResult.recommendation === "nie publikuj" ? "#f87171" : "#fbbf24" }}>
+                    Rekomendacja: {simResult.recommendation}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#cbd5e1", marginTop: 4 }}>{simResult.recommendationReasoning}</div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

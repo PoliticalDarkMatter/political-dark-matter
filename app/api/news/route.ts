@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { DEFAULT_RSS_FEEDS } from "@/lib/sources";
+
+export const maxDuration = 30;
 
 export interface Article {
   id: string;
@@ -7,11 +10,14 @@ export interface Article {
   source: string;
   publishedAt: string;
   sentiment: "positive" | "negative" | "neutral";
+  weight: number; // przybliżona waga realnego zasięgu źródła (patrz weightForSource)
 }
 
 export interface EntityInfo {
   name: string;
   count: number;
+  weightedCount: number;
+  velocity: number | null;
   sentimentBreakdown: { positive: number; negative: number; neutral: number };
   dominantSentiment: "positive" | "negative" | "neutral";
 }
@@ -20,6 +26,8 @@ export interface NarrativeCluster {
   label: string;
   icon: string;
   count: number;
+  weightedCount: number;
+  velocity: number | null;
   percentage: number;
   dominantSentiment: "positive" | "negative" | "neutral";
   topArticles: Array<{ title: string; url: string; source: string }>;
@@ -36,6 +44,29 @@ function sentiment(text: string): Article["sentiment"] {
   if (p > n) return "positive";
   if (n > p) return "negative";
   return "neutral";
+}
+
+// ── Waga źródeł ──────────────────────────────────────────────────
+// Skala 1–10, przybliżony rząd wielkości realnego zasięgu. To NIE są dokładne
+// dane z pomiarów (Gemius/PBI/Wirtualne Media) — to robocza hierarchia ważności,
+// żeby duży portal ogólnopolski nie liczył się tak samo jak niszowy blog czy
+// pojedynczy post. Do precyzyjnych liczb zasięgu trzeba sięgnąć po ranking PBI/Gemius.
+const MEDIA_WEIGHT: Record<string, number> = {
+  "PAP": 9, "PAP — Biznes": 8,
+  "TVN24": 10, "TVP Info": 9, "Polsat News": 8,
+  "RMF24": 9, "Onet": 10, "WP": 10, "Interia": 9, "Gazeta.pl": 9,
+  "Rzeczpospolita": 7, "Polityka": 6, "Newsweek Polska": 6, "Do Rzeczy": 5,
+  "Bankier": 6,
+  "Guardian": 7, "GDELT": 4, "Mastodon": 3,
+  "Google News": 7,
+};
+
+function weightForSource(source: string): number {
+  if (MEDIA_WEIGHT[source] != null) return MEDIA_WEIGHT[source];
+  if (source.startsWith("Reddit")) return 3;
+  if (source.startsWith("Telegram")) return 5;
+  if (source.startsWith("Mastodon")) return 3;
+  return 4; // nieznany portal z Google News — przybliżenie: średnia prasa krajowa
 }
 
 // ── RSS parser (ogólny) ──────────────────────────────────────────
@@ -73,26 +104,25 @@ function parseRSS(xml: string, defaultSource: string, limit = 15): Article[] {
       source,
       publishedAt: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
       sentiment: sentiment(title),
+      weight: weightForSource(source),
     } as Article;
   }).filter(Boolean) as Article[];
 }
 
 // ── Polskie RSS feeds (tryb monitorowania) ───────────────────────
-const POLISH_FEEDS: { name: string; url: string }[] = [
-  { name: "PAP",     url: "https://www.pap.pl/aktualnosci/feed" },
-  { name: "TVN24",   url: "https://tvn24.pl/najnowsze.xml" },
-  { name: "RMF24",   url: "https://www.rmf24.pl/fakty/feed" },
-  { name: "Onet",    url: "https://wiadomosci.onet.pl/.feed" },
-  { name: "WP",      url: "https://wiadomosci.wp.pl/rss.xml" },
-  { name: "Bankier", url: "https://www.bankier.pl/rss/wiadomosci.xml" },
-];
+// Źródło listy: lib/sources.ts (DEFAULT_RSS_FEEDS) — katalog był już
+// przygotowany, ale nie podłączony do faktycznego fetchowania. Bierzemy
+// wszystkie oznaczone enabled:true zamiast twardo zaszytych 6 portali.
+const POLISH_FEEDS: { name: string; url: string }[] = DEFAULT_RSS_FEEDS
+  .filter((f) => f.enabled)
+  .map((f) => ({ name: f.name, url: f.url }));
 
 async function fetchFeed(feed: { name: string; url: string }): Promise<Article[]> {
   try {
     const res = await fetch(feed.url, {
       cache: "no-store",
       headers: { "User-Agent": "NarrativeScope/1.0 (+https://narrativescope.com)" },
-      signal: AbortSignal.timeout(6000),
+      signal: AbortSignal.timeout(7000),
     });
     if (!res.ok) return [];
     return parseRSS(await res.text(), feed.name, 15);
@@ -102,11 +132,8 @@ async function fetchFeed(feed: { name: string; url: string }): Promise<Article[]
 }
 
 // ── Google News RSS Search (tryb wyszukiwania) ───────────────────
-// Gdy użytkownik wpisuje zapytanie, przeszukujemy Google News zamiast
-// filtrować 6 feedów. Zwraca do 100 artykułów z całej polskiej prasy.
 async function searchGoogleNews(query: string): Promise<Article[]> {
   const encoded = encodeURIComponent(query + " site:*.pl OR język:pl");
-  // Dwie wersje URL — z i bez filtra językowego (fallback)
   const urls = [
     `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=pl&gl=PL&ceid=PL:pl`,
     `https://news.google.com/rss/search?q=${encoded}&hl=pl&gl=PL&ceid=PL:pl`,
@@ -150,7 +177,6 @@ async function searchGoogleNews(query: string): Promise<Article[]> {
 }
 
 // ── Reddit JSON API (darmowe, bez klucza) ────────────────────────
-// Subreddity: r/poland (po polsku), r/europe (kontekst), r/worldnews (Polska tematy)
 const REDDIT_SUBS_MONITOR = ["poland", "europe"];
 
 interface RedditPost { title: string; url: string; permalink: string; created_utc: number; subreddit: string }
@@ -174,13 +200,15 @@ async function fetchRedditJSON(url: string): Promise<Article[]> {
       const postUrl = p.url.startsWith("/r/")
         ? "https://www.reddit.com" + p.url
         : p.url;
+      const source = "Reddit r/" + p.subreddit;
       return {
         id: "reddit-" + p.subreddit + "-" + i,
         title: p.title,
         url: postUrl,
-        source: "Reddit r/" + p.subreddit,
+        source,
         publishedAt: new Date(p.created_utc * 1000).toISOString(),
         sentiment: sentiment(p.title),
+        weight: weightForSource(source),
       } as Article;
     }).filter(Boolean) as Article[];
   } catch {
@@ -203,6 +231,154 @@ async function fetchRedditMonitor(): Promise<Article[]> {
   });
   const results = await Promise.allSettled(urls.map(fetchRedditJSON));
   return results.flatMap(function (r) { return r.status === "fulfilled" ? r.value : []; });
+}
+
+// ── Mastodon (pol.social) — publiczne posty, bez klucza ──────────
+interface MastodonStatus { id: string; content: string; url: string; created_at: string }
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\s+/g, " ").trim();
+}
+
+async function fetchMastodon(query?: string): Promise<Article[]> {
+  try {
+    const url = query
+      ? `https://pol.social/api/v2/search?q=${encodeURIComponent(query)}&type=statuses&limit=25`
+      : `https://pol.social/api/v1/timelines/public?limit=25`;
+    const res = await fetch(url, {
+      cache: "no-store",
+      headers: { "User-Agent": "NarrativeScope/1.0", "Accept": "application/json" },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const statuses: MastodonStatus[] = query ? (data?.statuses ?? []) : (Array.isArray(data) ? data : []);
+    return statuses.map(function (s, i) {
+      const text = stripHtml(s.content || "");
+      if (!text) return null;
+      return {
+        id: "mastodon-" + i,
+        title: text.slice(0, 240),
+        url: s.url,
+        source: "Mastodon",
+        publishedAt: s.created_at || new Date().toISOString(),
+        sentiment: sentiment(text),
+        weight: weightForSource("Mastodon"),
+      } as Article;
+    }).filter(Boolean) as Article[];
+  } catch {
+    return [];
+  }
+}
+
+// ── GDELT (globalny, filtr Polska) — bez klucza ──────────────────
+interface GdeltArticle { title: string; url: string; seendate: string; sourcecountry?: string }
+
+async function fetchGDELT(query: string): Promise<Article[]> {
+  try {
+    const q = query ? `${query} sourcecountry:POL` : "sourcecountry:POL";
+    const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(q)}&mode=artlist&maxrecords=50&format=json`;
+    const res = await fetch(url, {
+      cache: "no-store",
+      headers: { "User-Agent": "NarrativeScope/1.0", "Accept": "application/json" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return [];
+    const data = await res.json() as { articles?: GdeltArticle[] };
+    const arts = data?.articles ?? [];
+    return arts.map(function (a, i) {
+      if (!a.title || !a.url) return null;
+      // seendate format: 20260704T191400Z
+      const iso = a.seendate
+        ? `${a.seendate.slice(0,4)}-${a.seendate.slice(4,6)}-${a.seendate.slice(6,8)}T${a.seendate.slice(9,11)}:${a.seendate.slice(11,13)}:${a.seendate.slice(13,15)}Z`
+        : new Date().toISOString();
+      return {
+        id: "gdelt-" + i,
+        title: a.title,
+        url: a.url,
+        source: "GDELT",
+        publishedAt: iso,
+        sentiment: sentiment(a.title),
+        weight: weightForSource("GDELT"),
+      } as Article;
+    }).filter(Boolean) as Article[];
+  } catch {
+    return [];
+  }
+}
+
+// ── The Guardian (klucz testowy "test" działa od razu) ───────────
+interface GuardianResult { webTitle: string; webUrl: string; webPublicationDate: string }
+
+async function fetchGuardian(query: string): Promise<Article[]> {
+  try {
+    const q = query ? `${query} AND Poland` : "Poland";
+    const url = `https://content.guardianapis.com/search?q=${encodeURIComponent(q)}&api-key=test&page-size=20`;
+    const res = await fetch(url, {
+      cache: "no-store",
+      headers: { "Accept": "application/json" },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!res.ok) return [];
+    const data = await res.json() as { response?: { results?: GuardianResult[] } };
+    const results = data?.response?.results ?? [];
+    return results.map(function (r, i) {
+      return {
+        id: "guardian-" + i,
+        title: r.webTitle,
+        url: r.webUrl,
+        source: "Guardian",
+        publishedAt: r.webPublicationDate || new Date().toISOString(),
+        sentiment: sentiment(r.webTitle),
+        weight: weightForSource("Guardian"),
+      } as Article;
+    }).filter((a) => a.title && a.url);
+  } catch {
+    return [];
+  }
+}
+
+// ── Telegram (t.me/s/, publiczne kanały, bez klucza) ─────────────
+// CELOWO pusta lista: monitoring polityczny wymaga zweryfikowanych,
+// realnych uchwytów kanałów — nie zgadujemy nazw. Jan podaje listę
+// (@nazwa_kanalu), potem od razu zaczyna działać bez zmian w kodzie.
+const TELEGRAM_CHANNELS: string[] = [];
+
+async function fetchTelegramChannel(handle: string): Promise<Article[]> {
+  try {
+    const res = await fetch(`https://t.me/s/${handle}`, {
+      cache: "no-store",
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; NarrativeScope/1.0)" },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!res.ok) return [];
+    const html = await res.text();
+    const blocks = html.match(/<div class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/g) ?? [];
+    const dateMatches = Array.from(html.matchAll(/<time[^>]*datetime="([^"]+)"/g));
+    const source = `Telegram @${handle}`;
+    return blocks.slice(0, 20).map(function (block, i) {
+      const text = stripHtml(block);
+      if (!text) return null;
+      const iso = dateMatches[i]?.[1] || new Date().toISOString();
+      return {
+        id: `tg-${handle}-${i}`,
+        title: text.slice(0, 240),
+        url: `https://t.me/s/${handle}`,
+        source,
+        publishedAt: new Date(iso).toISOString(),
+        sentiment: sentiment(text),
+        weight: weightForSource(source),
+      } as Article;
+    }).filter(Boolean) as Article[];
+  } catch {
+    return [];
+  }
+}
+
+async function fetchTelegramAll(): Promise<Article[]> {
+  if (TELEGRAM_CHANNELS.length === 0) return [];
+  const results = await Promise.allSettled(TELEGRAM_CHANNELS.map(fetchTelegramChannel));
+  return results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
 }
 
 // ── Stop words ───────────────────────────────────────────────────
@@ -242,19 +418,31 @@ function filterByTime(articles: Article[], period: string, from?: string, to?: s
   return articles; // 1y i brak = wszystko
 }
 
+// ── Velocity ─────────────────────────────────────────────────────
+// Uwaga: to jest trend WEWNĄTRZ wybranego okna (starsza połowa vs nowsza
+// połowa wyników, po czasie publikacji), nie porównanie dzień-do-dnia
+// względem historii — na to potrzeba by danych ze snapshotów Supabase,
+// których dashboard jeszcze nie odpytuje. Zwraca null gdy próbka za mała
+// (<4 artykuły), żeby nie sugerować trendu z szumu.
+function computeVelocity(articles: { publishedAt: string }[]): number | null {
+  if (articles.length < 4) return null;
+  const sorted = [...articles].sort((a, b) => new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime());
+  const mid = Math.floor(sorted.length / 2);
+  const older = sorted.slice(0, mid).length;
+  const newer = sorted.slice(mid).length;
+  if (older === 0) return newer > 0 ? 100 : null;
+  return Math.round(((newer - older) / older) * 100);
+}
+
 // ── Ekstrakcja aktorów ───────────────────────────────────────────
 const ENTITY_BLACKLIST = new Set([
-  // Miejsca i instytucje ogólne
   "Polska","Polacy","Warszawa","Europa","Unia","Europejska","Minister","Premier",
   "Sejm","Senat","PiS","KO","PSL","TD","Lewica","NBP","GUS","NIK","PKB","USA",
   "NATO","UE","ONZ","RP","TVP","TVN","RMF","Rząd","Policja","Google","News",
   "Koalicja","Alert","Breaking","Ekstra","Super","Nowy","Nowa","Wielki","Wielka",
-  // Formy deklinacyjne miejsc
   "Poland","Niemiec","Niemcy","Francji","Berlinie","Moskwie","Kijowie","Londynie",
   "Brukseli","Waszyngtonie","Wielkopolsce","Mazowszu","Pomorzu",
-  // Pospolite rzeczowniki z wielkiej litery po kropce
   "Szef","Szefem","Firma","Spółka","Kraj","Miasto","Region","Rynek","Fundusz",
-  // Przymiotniki narodowościowe i opisowe — często mylone z nazwami własnymi
   "Polski","Polskie","Polskim","Polskiego","Polskiej","Polskich",
   "Rosyjski","Rosyjska","Rosyjskie","Rosyjskim","Rosyjskiego",
   "Ukrainski","Ukraiński","Ukraińska","Ukraińskie","Ukraińskim",
@@ -268,25 +456,18 @@ const ENTITY_BLACKLIST = new Set([
   "Wielki","Wielka","Wielkie","Wielkim","Wielkiego","Wielkiej",
 ]);
 
-// Czasowniki / wyrazy które błędnie łapie regex gdy zdanie zaczyna się wielką literą.
-// Regex w extractEntities obsługuje formy morfologiczne; tu zostają formy nieregularne
-// i wyrazy pospolite, których regex nie wyłapuje (za krótka końcówka).
 const VERB_BLACKLIST = new Set([
-  // Formy regularne (backup – regex je też łapie)
   "Trwa","Trwają","Trwało","Ruszyła","Ruszył","Ruszają","Będzie","Będą",
   "Wygrał","Wygrała","Zginął","Zginęła","Powiedział","Stwierdziła",
   "Ogłosił","Ogłosiła","Podpisał","Zatrzymał","Aresztowano","Zakończył",
   "Odbył","Odbędzie","Rozpoczął","Zajął","Zajęła","Wróci","Wrócił",
   "Wzrósł","Spadł","Rośnie","Spada","Planuje","Chce","Musi","Może",
-  // Formy nieregularne / krótkie – regex ich nie łapie
   "Zostaje","Zostają","Zostało","Pozostaje","Pozostają","Istnieje","Istnieją",
   "Rośnie","Maleje","Wzrasta","Opada","Zmienia","Zmieniają","Zmieniło",
   "Dotyczy","Dotyczą","Wynika","Wynikają","Pochodzi","Pochodzą",
   "Liczy","Liczą","Kosztuje","Kosztują","Wynosi","Wynoszą",
-  // Przymiotniki i przysłówki pospolite z dużej litery
   "Pierwsza","Pierwsze","Pierwszego","Pierwszej","Pierwszym","Pierwszy",
   "Całej","Całego","Całym","Całą","Całe","Cały",
-  // Przysłówki temporalne i spójniki często zaczynające zdanie
   "Wtedy","Teraz","Jednak","Tylko","Także","Natomiast","Ponadto",
   "Niestety","Ostatecznie","Tymczasem","Wcześniej","Później","Dalej",
   "Dziś","Dzisiaj","Jutro","Wczoraj","Właśnie","Oczywiście","Wprost",
@@ -294,8 +475,6 @@ const VERB_BLACKLIST = new Set([
   "Przez","Przed","Między","Wśród","Według","Wobec","Wokół",
 ]);
 
-// Normalizacja diakrytyków do celów porównywania prefiksów.
-// Kluczowe: ó→o łączy "Lwów" z "Lwowa", ą→a łączy "Kraków" z "Krakowa", itp.
 function normalizeForKey(s: string): string {
   return s.toLowerCase()
     .replace(/ó/g, "o").replace(/ą/g, "a").replace(/ę/g, "e")
@@ -303,88 +482,54 @@ function normalizeForKey(s: string): string {
     .replace(/ć/g, "c").replace(/ń/g, "n").replace(/ł/g, "l");
 }
 
-// Wybiera kanoniczną (mianownikową) formę z grupy odmian polskich.
-// Strategia:
-//   1. -ski/-cki/-dzki → nazwisko przymiotnikowe (Kowalski, Tusk)
-//   2. Odrzuć silnie odmienione: -ego/-iego (dop.przym.), -owi/-emu (cel.), -iu (miejs. n.)
-//   3. Gdy pool pusty po odfiltrowaniu, spróbuj zrekonstruować mianownik:
-//      -iu → -ie (Jastrzębiu → Jastrzębie), -ach → odetnij (Katowicach → Katowice)
-//   4. OBIE grupy (spółgłoska i -a) → spółgłoskowa wygrywa (Trump > Trumpa)
-//   5. Tylko -a → mianownik żeński (Ukraina, Rosja)
-//   6. Fallback: najkrótsza z puli
 function pickCanonical(names: string[]): string {
-  // 1. Nazwiska przymiotnikowe (-ski/-cki/-dzki/-zki)
   const adj = names.find(function(n) { return /(?:ski|cki|dzki|zki)$/i.test(n); });
   if (adj) return adj;
 
-  // 2. Odrzuć silnie odmienione formy
-  //    -iego/-ego: dopełniacz przymiotnikowy (Zełenskiego)
-  //    -owi/-emu:  celownik (Putinowi)
-  //    -ową/-owej: celownik/dopełniacz żeński
-  //    -iem:       narzędnik (Putinem)
-  //    [spółgłoska]iu: miejscownik nijaki (Jastrzębiu, Poznaniu, Gdańsku→Gdańskiu nie, ale -niu tak)
-  // -ji$: dopełniacz żeński -ja→-ji (Rosji, Francji, Anglii, Brytanii)
-  // [spółgłoska]iu$: miejscownik nijaki (Jastrzębiu, Poznaniu)
   const DECLINED_RE = /(?:iego|ego|owi|emu|ową|owej|owego|iem|[bcdfghjklłmnprstw]iu|ji)$/;
   const undeclined = names.filter(function(n) { return !DECLINED_RE.test(n); });
 
-  // 3. Jeśli wszystkie formy zostały odfiltrowane → zrekonstruuj mianownik
   if (undeclined.length === 0) {
     const reconstructed = names.map(function(n) {
-      if (/[bcdfghjklłmnprstw]iu$/.test(n)) return n.slice(0, -2) + "ie"; // Jastrzębiu→Jastrzębie
-      if (/ji$/.test(n))                     return n.slice(0, -2) + "ja"; // Rosji→Rosja, Francji→Francja
-      if (/ach$/.test(n) && n.length > 5)    return n.slice(0, -2);        // Katowicach→Katowice (przybliżenie)
+      if (/[bcdfghjklłmnprstw]iu$/.test(n)) return n.slice(0, -2) + "ie";
+      if (/ji$/.test(n))                     return n.slice(0, -2) + "ja";
+      if (/ach$/.test(n) && n.length > 5)    return n.slice(0, -2);
       return n;
     });
     return reconstructed.sort(function(a, b) { return a.length - b.length; })[0];
   }
 
   const pool = undeclined;
-
-  // 4. Podział: formy na spółgłosce lub -ów (mianownik m.) vs formy na -a (ale nie -ą)
   const consonantForms = pool.filter(function(n) {
     return /[bcdfghjklłmnpqrstvwxzńśźżć]$|ów$/i.test(n);
   });
   const aForms = pool.filter(function(n) { return /[^ą]a$/.test(n); });
 
-  // Obie grupy → spółgłoskowa jest mianownikiem (Trump > Trumpa, Lwów > Lwowa)
   if (consonantForms.length > 0 && aForms.length > 0) {
     return consonantForms.sort(function(a, b) { return a.length - b.length; })[0];
   }
-  // Tylko formy na -a → mianownik żeński (Ukraina, Rosja)
   if (aForms.length > 0) {
     return aForms.sort(function(a, b) { return a.length - b.length; })[0];
   }
-  // 5. Fallback: najkrótsza z puli
   return [...pool].sort(function(a, b) { return a.length - b.length; })[0];
 }
 
 function prefixKey(name: string): string {
-  if (name.includes(" ")) return normalizeForKey(name); // imię+nazwisko: normalizuj całość
-  // Stały 4-znakowy prefix na znormalizowanym stringu (bez diakrytyków).
-  // Klucz: normalizacja przed cięciem — ó→o grupuje "Lwów"(lwow) z "Lwowa"(lwow) ✓
-  // Poprzedni błąd: min(4, length-1) dawał 3-znakowy prefix dla 4-znakowego "Lwów" → zła grupa
+  if (name.includes(" ")) return normalizeForKey(name);
   return normalizeForKey(name).slice(0, 4);
 }
 
 function extractEntities(articles: Article[]): EntityInfo[] {
-  // Krok 1: zbierz surowe formy
-  const raw: Map<string, { count: number; pos: number; neg: number; neu: number }> = new Map();
-  // Regex: min 4 znaki (filtruje krótkie czasowniki jak "Trwa")
+  const raw: Map<string, { count: number; weighted: number; pos: number; neg: number; neu: number; times: string[] }> = new Map();
   const NAME_RE = /(?:^|\s)([A-ZŁŚŹŻĆĄĘÓ][a-złśźżćąęó]{3,}(?:\s+[A-ZŁŚŹŻĆĄĘÓ][a-złśźżćąęó]{2,}){0,2})/g;
 
   for (const article of articles) {
-    // Pomiń pierwsze słowo (zawsze wielka litera = tytuł)
     const titleBody = article.title.replace(/^[^\s]+\s+/, "");
     let m: RegExpExecArray | null;
     NAME_RE.lastIndex = 0;
     while ((m = NAME_RE.exec(titleBody)) !== null) {
       const name = m[1].trim();
-      // Odrzuć czasowniki po końcówkach morfologicznych (działa bez słownika)
-      // 3 os. l.mn. teraźniejszy: -ją/-ają/-eją/-ują; czas przeszły: -ły/-ło/-ła/-li
-      // imiesłowy: -ący/-ąca/-ące; nieodmienione: -ując/-ając
       const isVerb = /(?:ają|eją|ują|[^i]ją|[^a-z]ły|[^a-z]ło|[^a-z]ła|[^a-z]li|ący|ąca|ące|ując|ając)$/.test(name);
-      // Odrzuć pospolite przymiotniki z wielkiej litery (np. "Nowych", "Nowym")
       const isAdj = /(?:owych|owym|owej|owego|alny|alna|alne|alnej)$/.test(name);
       if (
         name.length >= 4
@@ -394,8 +539,10 @@ function extractEntities(articles: Article[]): EntityInfo[] {
         && !isAdj
         && !/^\d/.test(name)
       ) {
-        const ex = raw.get(name) ?? { count: 0, pos: 0, neg: 0, neu: 0 };
+        const ex = raw.get(name) ?? { count: 0, weighted: 0, pos: 0, neg: 0, neu: 0, times: [] };
         ex.count++;
+        ex.weighted += article.weight;
+        ex.times.push(article.publishedAt);
         if (article.sentiment === "positive") ex.pos++;
         else if (article.sentiment === "negative") ex.neg++;
         else ex.neu++;
@@ -404,44 +551,48 @@ function extractEntities(articles: Article[]): EntityInfo[] {
     }
   }
 
-  // Krok 2: grupuj po prefiksie (obsługa deklinacji)
-  const groups: Map<string, Array<[string, { count: number; pos: number; neg: number; neu: number }]>> = new Map();
+  const groups: Map<string, Array<[string, { count: number; weighted: number; pos: number; neg: number; neu: number; times: string[] }]>> = new Map();
   for (const entry of Array.from(raw.entries())) {
     const key = prefixKey(entry[0]);
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(entry);
   }
 
-  // Krok 3: scal grupy, wybierz formę kanoniczną (mianownik)
-  const merged: Array<{ name: string; count: number; pos: number; neg: number; neu: number }> = [];
+  const merged: Array<{ name: string; count: number; weighted: number; pos: number; neg: number; neu: number; times: string[] }> = [];
   for (const group of Array.from(groups.values())) {
     const names = group.map(function (e) { return e[0]; });
-    const canonical = pickCanonical(names); // mianownik zamiast najczęstszej formy
-    let total = { count: 0, pos: 0, neg: 0, neu: 0 };
+    const canonical = pickCanonical(names);
+    let total = { count: 0, weighted: 0, pos: 0, neg: 0, neu: 0, times: [] as string[] };
     for (const [, v] of group) {
       total.count += v.count;
+      total.weighted += v.weighted;
       total.pos += v.pos;
       total.neg += v.neg;
       total.neu += v.neu;
+      total.times.push(...v.times);
     }
     if (total.count >= 2) merged.push({ name: canonical, ...total });
   }
 
   return merged
-    .sort((a, b) => b.count - a.count)
+    .sort((a, b) => b.weighted - a.weighted)
     .slice(0, 20)
     .map(function (v) {
       let dom: "positive" | "negative" | "neutral" = "neutral";
       if (v.pos > v.neg && v.pos > v.neu) dom = "positive";
       else if (v.neg > v.pos && v.neg > v.neu) dom = "negative";
-      return { name: v.name, count: v.count, sentimentBreakdown: { positive: v.pos, negative: v.neg, neutral: v.neu }, dominantSentiment: dom };
+      return {
+        name: v.name,
+        count: v.count,
+        weightedCount: Math.round(v.weighted),
+        velocity: computeVelocity(v.times.map((t) => ({ publishedAt: t }))),
+        sentimentBreakdown: { positive: v.pos, negative: v.neg, neutral: v.neu },
+        dominantSentiment: dom,
+      };
     });
 }
 
 // ── Gemini NER canonicalization (post-processing) ────────────────
-// Używa Gemini 2.0 Flash (darmowy tier: 1500 req/dzień) do korekty
-// form mianownikowych i filtrowania nie-nazw własnych.
-// Fallback: zwraca wynik regexu bez zmian.
 async function canonicalizeWithGemini(entities: EntityInfo[]): Promise<EntityInfo[]> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || entities.length === 0) return entities;
@@ -473,7 +624,6 @@ Przykład: {"Rosji":"Rosja","Trumpa":"Trump","Ukrainy":"Ukraina","Zostają":null
     const data = await res.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 
-    // Wyodrębnij JSON (Gemini czasem dodaje ```json ... ```)
     const jsonMatch = text.match(/\{[\s\S]+\}/);
     if (!jsonMatch) return entities;
 
@@ -486,7 +636,7 @@ Przykład: {"Rosji":"Rosja","Trumpa":"Trump","Ukrainy":"Ukraina","Zostają":null
         return { ...e, name: (corrected != null) ? corrected : e.name };
       });
   } catch {
-    return entities; // sieć/timeout/JSON → wynik regexu
+    return entities;
   }
 }
 
@@ -504,8 +654,8 @@ const NARRATIVE_SEEDS: NarrativeSeed[] = [
 ];
 
 function clusterNarratives(articles: Article[]): NarrativeCluster[] {
-  const counts: Map<string, { articles: Article[]; pos: number; neg: number; neu: number }> = new Map();
-  for (const s of NARRATIVE_SEEDS) counts.set(s.label, { articles: [], pos: 0, neg: 0, neu: 0 });
+  const counts: Map<string, { articles: Article[]; weighted: number; pos: number; neg: number; neu: number }> = new Map();
+  for (const s of NARRATIVE_SEEDS) counts.set(s.label, { articles: [], weighted: 0, pos: 0, neg: 0, neu: 0 });
 
   for (const article of articles) {
     const t = article.title.toLowerCase();
@@ -517,6 +667,7 @@ function clusterNarratives(articles: Article[]): NarrativeCluster[] {
     if (best && score > 0) {
       const b = counts.get(best)!;
       b.articles.push(article);
+      b.weighted += article.weight;
       if (article.sentiment === "positive") b.pos++;
       else if (article.sentiment === "negative") b.neg++;
       else b.neu++;
@@ -532,11 +683,13 @@ function clusterNarratives(articles: Article[]): NarrativeCluster[] {
     else if (b.neg > b.pos && b.neg > b.neu) dom = "negative";
     return {
       label: s.label, icon: s.icon, count,
+      weightedCount: Math.round(b.weighted),
+      velocity: computeVelocity(b.articles),
       percentage: Math.round((count / total) * 100),
       dominantSentiment: dom,
       topArticles: b.articles.slice(0, 8).map(a => ({ title: a.title, url: a.url, source: a.source })),
     };
-  }).filter(c => c.count > 0).sort((a, b) => b.count - a.count);
+  }).filter(c => c.count > 0).sort((a, b) => b.weightedCount - a.weightedCount);
 }
 
 function buildTimeline(articles: Article[]): Array<{ hour: string; count: number }> {
@@ -549,77 +702,92 @@ function buildTimeline(articles: Article[]): Array<{ hour: string; count: number
   return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0])).map(([hour, count]) => ({ hour, count }));
 }
 
-// ── Handler ──────────────────────────────────────────────────────
-export async function GET(req: NextRequest) {
-  const q      = req.nextUrl.searchParams.get("q") ?? "";
-  const period = req.nextUrl.searchParams.get("period") ?? "24h";
-  const from   = req.nextUrl.searchParams.get("from") ?? "";
-  const to     = req.nextUrl.searchParams.get("to") ?? "";
+// ── Silnik zbierania i analizy — współdzielony z /api/analyze-text ──
+export interface FeedResult {
+  articles: Article[];
+  total: number;
+  totalAvailable: number;
+  bySource: Record<string, number>;
+  bySourceWeighted: Record<string, number>;
+  totalWeightedReach: number;
+  sentimentCounts: { positive: number; negative: number; neutral: number };
+  entities: EntityInfo[];
+  narratives: NarrativeCluster[];
+  timeline: Array<{ hour: string; count: number }>;
+  query: string;
+  period: string;
+  searchMode: string;
+  searchInfo: string | null;
+  rssNote: string | null;
+  fetchedAt: string;
+}
 
-  // Tryb wyszukiwania vs monitorowania
+export async function buildFeed(q: string, period: string, from?: string, to?: string): Promise<FeedResult> {
   const isSearchMode = q.trim().length > 0;
 
   let allArticles: Article[] = [];
   let bySourceRaw: Record<string, number> = {};
   let searchMode: "google_news" | "rss_monitor" | "rss_filtered" = "rss_monitor";
 
+  function tally(arts: Article[]) {
+    for (const a of arts) bySourceRaw[a.source] = (bySourceRaw[a.source] ?? 0) + 1;
+  }
+
   if (isSearchMode) {
-    // TRYB WYSZUKIWANIA: Google News RSS + Reddit równolegle
-    const [gnArticles, redditArticles] = await Promise.all([
+    const [gnArticles, redditArticles, mastodonArticles, gdeltArticles, guardianArticles, telegramArticles] = await Promise.all([
       searchGoogleNews(q.trim()),
       searchReddit(q.trim()),
+      fetchMastodon(q.trim()),
+      fetchGDELT(q.trim()),
+      fetchGuardian(q.trim()),
+      fetchTelegramAll(),
     ]);
 
     if (gnArticles.length > 0) {
       allArticles = gnArticles;
       searchMode = "google_news";
-      for (const a of gnArticles) {
-        bySourceRaw[a.source] = (bySourceRaw[a.source] ?? 0) + 1;
-      }
+      tally(gnArticles);
     } else {
-      // Fallback: filtruj własne feedy
       searchMode = "rss_filtered";
       const results = await Promise.allSettled(POLISH_FEEDS.map(fetchFeed));
       results.forEach((r, i) => {
-        const arts = r.status === "fulfilled" ? r.value : [];
+        const arts = r.status === "fulfilled" ? filterByQuery(r.value, q) : [];
         bySourceRaw[POLISH_FEEDS[i].name] = arts.length;
         allArticles.push(...arts);
       });
     }
 
-    // Dołącz Reddit do wyniku (niezależnie od trybu)
-    for (const a of redditArticles) {
-      bySourceRaw[a.source] = (bySourceRaw[a.source] ?? 0) + 1;
+    for (const arts of [redditArticles, mastodonArticles, gdeltArticles, guardianArticles, telegramArticles]) {
+      tally(arts);
+      allArticles = [...allArticles, ...arts];
     }
-    allArticles = [...allArticles, ...redditArticles];
   } else {
-    // TRYB MONITOROWANIA: własne RSS feedy + Reddit
     searchMode = "rss_monitor";
-    const [feedResults, redditArticles] = await Promise.all([
+    const [feedResults, redditArticles, mastodonArticles, telegramArticles] = await Promise.all([
       Promise.allSettled(POLISH_FEEDS.map(fetchFeed)),
       fetchRedditMonitor(),
+      fetchMastodon(),
+      fetchTelegramAll(),
     ]);
     feedResults.forEach((r, i) => {
       const arts = r.status === "fulfilled" ? r.value : [];
       bySourceRaw[POLISH_FEEDS[i].name] = arts.length;
       allArticles.push(...arts);
     });
-    for (const a of redditArticles) {
-      bySourceRaw[a.source] = (bySourceRaw[a.source] ?? 0) + 1;
+    for (const arts of [redditArticles, mastodonArticles, telegramArticles]) {
+      tally(arts);
+      allArticles = [...allArticles, ...arts];
     }
-    allArticles = [...allArticles, ...redditArticles];
   }
 
   allArticles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
-  // Filtr czasu (dla Google News tryb 1y = wszystkie wyniki)
   const timeFiltered = (isSearchMode && searchMode === "google_news" && !from && !to && period === "1y")
     ? allArticles
     : filterByTime(allArticles, period, from || undefined, to || undefined);
 
-  // Filtr słów kluczowych (przy Google News już mamy trafne wyniki, ale filtrujemy fallback)
   const filtered = (isSearchMode && searchMode === "google_news")
-    ? timeFiltered  // Google News już przeszukał poprawnie
+    ? timeFiltered
     : filterByQuery(timeFiltered, q);
 
   const sentimentCounts = {
@@ -632,7 +800,13 @@ export async function GET(req: NextRequest) {
   const narratives = clusterNarratives(filtered);
   const timeline   = buildTimeline(filtered);
 
-  // Komunikaty o limitach
+  const bySourceWeighted: Record<string, number> = {};
+  let totalWeightedReach = 0;
+  for (const a of filtered) {
+    bySourceWeighted[a.source] = (bySourceWeighted[a.source] ?? 0) + a.weight;
+    totalWeightedReach += a.weight;
+  }
+
   const rssLimitedPeriods = ["7d", "30d", "1y"];
   const rssNote = (!isSearchMode && rssLimitedPeriods.includes(period))
     ? "RSS feeds zawierają ostatnie ~15 artykułów z każdego źródła (ok. 24-48h). Wpisz zapytanie by wyszukać w Google News."
@@ -640,15 +814,17 @@ export async function GET(req: NextRequest) {
 
   const searchInfo = isSearchMode
     ? (searchMode === "google_news"
-        ? `Wyszukano w Google News: ${allArticles.length} artykułów z polskiej prasy`
-        : `Google News niedostępny — wyniki z 6 feedów RSS (${allArticles.length} artykułów)`)
+        ? `Wyszukano w Google News + Reddit/Mastodon/GDELT/Guardian: ${allArticles.length} pozycji`
+        : `Google News niedostępny — wyniki z ${POLISH_FEEDS.length} feedów RSS + inne źródła (${allArticles.length})`)
     : null;
 
-  return NextResponse.json({
+  return {
     articles: filtered,
     total: filtered.length,
     totalAvailable: allArticles.length,
     bySource: bySourceRaw,
+    bySourceWeighted,
+    totalWeightedReach: Math.round(totalWeightedReach),
     sentimentCounts,
     entities,
     narratives,
@@ -659,5 +835,17 @@ export async function GET(req: NextRequest) {
     searchInfo,
     rssNote,
     fetchedAt: new Date().toISOString(),
-  }, { headers: { "Cache-Control": "no-store" } });
+  };
+}
+
+// ── Handler ──────────────────────────────────────────────────────
+export async function GET(req: NextRequest) {
+  const q      = req.nextUrl.searchParams.get("q") ?? "";
+  const period = req.nextUrl.searchParams.get("period") ?? "24h";
+  const from   = req.nextUrl.searchParams.get("from") ?? "";
+  const to     = req.nextUrl.searchParams.get("to") ?? "";
+
+  const result = await buildFeed(q, period, from || undefined, to || undefined);
+
+  return NextResponse.json(result, { headers: { "Cache-Control": "no-store" } });
 }
