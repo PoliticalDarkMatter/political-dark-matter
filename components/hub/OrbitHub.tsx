@@ -1,546 +1,324 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Waves, LineChart as LineChartIcon, MessageSquare, Radio, ArrowRight } from "lucide-react";
 
-type ModuleStatus = "live" | "building";
-
-interface ModuleDef {
-  key: string;
-  name: string;
-  tagline: string;
-  logo: string;
-  href: string;
-  status: ModuleStatus;
-  angle: number; // stopnie, 0 = prawo, idąc zgodnie z ruchem wskazówek zegara
-}
-
-const MODULES: ModuleDef[] = [
+const modules = [
   {
-    key: "narrative-scope",
+    key: "narrative",
     name: "Narrative Scope",
-    tagline: "Słuchanie",
-    logo: "/modules/narrative-scope.png",
+    logo: "/logos/narrative-scope.png",
+    role: "Słuchanie",
+    status: "AKTYWNY",
+    active: true,
+    position: "top",
     href: "/dashboard",
-    status: "live",
-    angle: -90, // góra
   },
   {
-    key: "apex-grid",
+    key: "apex",
     name: "Apex Grid",
-    tagline: "Analiza",
-    logo: "/modules/apex-grid.png",
+    logo: "/logos/apex-grid.png",
+    role: "Analiza",
+    status: "W BUDOWIE",
+    active: false,
+    position: "right",
     href: "/apex-grid",
-    status: "building",
-    angle: 0, // prawo
   },
   {
-    key: "volt-stream",
+    key: "volt",
     name: "Volt Stream",
-    tagline: "Przekaz",
-    logo: "/modules/volt-stream.png",
+    logo: "/logos/volt-stream.png",
+    role: "Przekaz",
+    status: "W BUDOWIE",
+    active: false,
+    position: "bottom",
     href: "/volt-stream",
-    status: "building",
-    angle: 90, // dół
   },
   {
-    key: "pulse-field",
+    key: "pulse",
     name: "Pulse Field",
-    tagline: "Emisja",
-    logo: "/modules/pulse-field.png",
+    logo: "/logos/pulse-field.png",
+    role: "Emisja",
+    status: "W BUDOWIE",
+    active: false,
+    position: "left",
     href: "/pulse-field",
-    status: "building",
-    angle: 180, // lewo
   },
 ];
 
-const FEATURES = [
+const bottomCards = [
   {
-    title: "Słuchanie",
-    desc: "monitoring narracji w czasie rzeczywistym",
-    Icon: Waves,
-    badge: "border-blue-400/30 bg-blue-500/15 text-blue-300",
+    title: "SŁUCHANIE",
+    text: ["monitoring narracji", "w czasie rzeczywistym"],
+    icon: "wave",
   },
   {
-    title: "Analiza",
-    desc: "scenariusze i rekomendacje strategiczne",
-    Icon: LineChartIcon,
-    badge: "border-emerald-400/30 bg-emerald-500/15 text-emerald-300",
+    title: "ANALIZA",
+    text: ["scenariusze i rekomendacje", "strategiczne"],
+    icon: "chart",
   },
   {
-    title: "Przekaz",
-    desc: "komunikacja skrojona pod projekt",
-    Icon: MessageSquare,
-    badge: "border-purple-400/30 bg-purple-500/15 text-purple-300",
+    title: "PRZEKAZ",
+    text: ["komunikacja skrojona", "pod projekt"],
+    icon: "message",
   },
   {
-    title: "Emisja",
-    desc: "własne medium i dystrybucja",
-    Icon: Radio,
-    badge: "border-orange-400/30 bg-orange-500/15 text-orange-300",
+    title: "EMISJA",
+    text: ["własne medium i", "dystrybucja"],
+    icon: "broadcast",
   },
 ];
 
-const CENTER = 400;
-const RADIUS = 300;
-const ARC_R = 345;
-
-function pointOnCircle(angleDeg: number, radius: number) {
-  const rad = (angleDeg * Math.PI) / 180;
-  return { x: CENTER + radius * Math.cos(rad), y: CENTER + radius * Math.sin(rad) };
+function getModulePosition(position: string) {
+  switch (position) {
+    case "top":
+      return "left-1/2 top-[2%] -translate-x-1/2";
+    case "right":
+      return "right-[4%] top-1/2 -translate-y-1/2";
+    case "bottom":
+      return "left-1/2 bottom-[0%] -translate-x-1/2";
+    case "left":
+      return "left-[4%] top-1/2 -translate-y-1/2";
+    default:
+      return "";
+  }
 }
 
-function arcPath(fromAngle: number, toAngle: number) {
-  const from = pointOnCircle(fromAngle, RADIUS);
-  const to = pointOnCircle(toAngle, RADIUS);
-  const mid = (fromAngle + toAngle) / 2;
-  const ctrl = pointOnCircle(mid, ARC_R);
-  return `M ${from.x} ${from.y} Q ${ctrl.x} ${ctrl.y} ${to.x} ${to.y}`;
-}
-
-// kolejność pętli: Narrative Scope -> Apex Grid -> Volt Stream -> Pulse Field -> (z powrotem) Narrative Scope
-const FLOWS = [
-  { from: MODULES[0], to: MODULES[1], feedback: false },
-  { from: MODULES[1], to: MODULES[2], feedback: false },
-  { from: MODULES[2], to: MODULES[3], feedback: false },
-  { from: MODULES[3], to: MODULES[0], feedback: true },
-];
-
-export default function OrbitHub() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
+function NeonIcon({ type }: { type: string }) {
+  if (type === "chart") {
+    return (
+      <svg viewBox="0 0 64 64" className="h-9 w-9">
+        <path d="M10 50V36M24 50V25M38 50V16M52 50V9" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+        <path d="M10 38L24 27L38 32L52 13" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (type === "message") {
+    return (
+      <svg viewBox="0 0 64 64" className="h-9 w-9">
+        <rect x="10" y="14" width="34" height="26" rx="5" stroke="currentColor" strokeWidth="4" fill="none" />
+        <rect x="22" y="25" width="32" height="25" rx="5" stroke="currentColor" strokeWidth="4" fill="none" />
+        <path d="M29 50L25 58L39 50" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (type === "broadcast") {
+    return (
+      <svg viewBox="0 0 64 64" className="h-9 w-9">
+        <circle cx="32" cy="32" r="5" fill="currentColor" />
+        <path d="M22 22a14 14 0 000 20M42 22a14 14 0 010 20" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+        <path d="M14 14a26 26 0 000 36M50 14a26 26 0 010 36" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" opacity=".65" />
+      </svg>
+    );
+  }
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#05060f] text-white">
-      {/* Mapa świata z kropek w tle — skalowana do pełnej szerokości (100% auto),
-          żeby zawsze było widać cały zarys kontynentów, a nie zbliżenie na jeden ląd
-          (background-size: cover przy wąskim kontenerze obcinało boki mapy) */}
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-[900px] opacity-[0.22]"
-        style={{
-          backgroundImage: "url(/world-map-dots.svg)",
-          backgroundSize: "100% auto",
-          backgroundPosition: "center top",
-          backgroundRepeat: "no-repeat",
-        }}
-      />
+    <svg viewBox="0 0 64 64" className="h-9 w-9">
+      <path d="M8 34h7l5-13 8 27 8-34 8 20h12" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M15 46h34" stroke="currentColor" strokeWidth="3" opacity=".35" strokeLinecap="round" />
+    </svg>
+  );
+}
 
-      {/* Gwiazdy w tle — trzy warstwy o różnej wielkości i gęstości, dla wrażenia głębi */}
-      <div className="pointer-events-none absolute inset-0 opacity-50 [background-image:radial-gradient(0.6px_0.6px_at_15px_25px,#fff,transparent),radial-gradient(0.6px_0.6px_at_75px_95px,#fff,transparent),radial-gradient(0.6px_0.6px_at_130px_45px,#fff,transparent),radial-gradient(0.6px_0.6px_at_190px_150px,#fff,transparent),radial-gradient(0.6px_0.6px_at_250px_70px,#fff,transparent),radial-gradient(0.6px_0.6px_at_310px_190px,#fff,transparent),radial-gradient(0.6px_0.6px_at_20px_210px,#fff,transparent)] [background-size:340px_340px] [background-repeat:repeat]" />
-      <div className="pointer-events-none absolute inset-0 opacity-70 [background-image:radial-gradient(1.4px_1.4px_at_40px_60px,#fff,transparent),radial-gradient(1.3px_1.3px_at_160px_20px,#fff,transparent),radial-gradient(1.5px_1.5px_at_100px_180px,#fff,transparent),radial-gradient(1.3px_1.3px_at_230px_120px,#fff,transparent),radial-gradient(1.4px_1.4px_at_300px_240px,#fff,transparent)] [background-size:460px_460px] [background-repeat:repeat]" />
-      <div className="pointer-events-none absolute inset-0 opacity-90 [background-image:radial-gradient(2.4px_2.4px_at_70px_130px,#fff,transparent),radial-gradient(2.6px_2.6px_at_260px_50px,#fff,transparent),radial-gradient(2.2px_2.2px_at_340px_230px,#fff,transparent),radial-gradient(2.5px_2.5px_at_50px_300px,#fff,transparent)] [background-size:620px_620px] [background-repeat:repeat]" />
-
-      {/* Komety — rzadko przelatują po niebie */}
-      <div className="pdm-comet pdm-comet--a" />
-      <div className="pdm-comet pdm-comet--b" />
-      <div className="pdm-comet pdm-comet--c" />
-
-      {/* Poświata centralna */}
-      <div className="pointer-events-none absolute left-1/2 top-[38%] h-[700px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(99,102,241,0.25)_0%,rgba(147,51,234,0.12)_35%,transparent_70%)] blur-2xl" />
-
-      {/* Narożne widgety z danymi — tylko na większych ekranach, jak w referencji */}
-      <div className="pointer-events-none absolute inset-0 z-[6] hidden lg:block">
-        <div className="absolute left-[4%] top-[33%] w-[210px] rounded-xl border border-white/10 bg-white/[0.05] px-3.5 py-2.5 backdrop-blur-sm">
-          <div className="mb-1.5 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-slate-400">
-            Dane narracyjne
-          </div>
-          <svg viewBox="0 0 100 30" className="h-6 w-full">
-            <polyline
-              points="0,22 15,18 30,20 45,10 60,14 75,4 90,8 100,2"
-              fill="none"
-              stroke="#818cf8"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+function HudPanel({
+  title,
+  className,
+  type,
+}: {
+  title: string;
+  className: string;
+  type: "line" | "bars" | "map" | "radar";
+}) {
+  return (
+    <div
+      className={[
+        "absolute hidden lg:block rounded-xl border border-sky-400/15 bg-slate-950/30 p-4",
+        "shadow-[0_0_40px_rgba(59,130,246,0.08)] backdrop-blur-md",
+        className,
+      ].join(" ")}
+    >
+      <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-200/45">
+        {title}
+      </div>
+      {type === "line" && (
+        <svg viewBox="0 0 180 54" className="h-14 w-44 text-sky-400/70">
+          <path d="M5 38L24 21L42 34L61 18L83 30L105 15L126 35L146 20L172 31" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M5 46H175" stroke="currentColor" strokeOpacity=".2" />
+        </svg>
+      )}
+      {type === "bars" && (
+        <svg viewBox="0 0 180 54" className="h-14 w-44 text-violet-400/70">
+          {Array.from({ length: 16 }).map((_, i) => (
+            <rect
+              key={i}
+              x={8 + i * 10}
+              y={44 - ((i * 7) % 32)}
+              width="5"
+              height={12 + ((i * 7) % 32)}
+              rx="2"
+              fill="currentColor"
+              opacity={i % 3 === 0 ? 1 : 0.45}
             />
-          </svg>
+          ))}
+        </svg>
+      )}
+      {type === "map" && (
+        <div className="relative h-14 w-44 overflow-hidden rounded-lg">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(56,189,248,.35),transparent_2px),radial-gradient(circle_at_60%_35%,rgba(124,58,237,.35),transparent_2px),radial-gradient(circle_at_70%_70%,rgba(56,189,248,.25),transparent_2px)] bg-[length:18px_18px]" />
+          <div className="absolute bottom-2 left-2 h-1 w-20 rounded-full bg-sky-500/70" />
+          <div className="absolute bottom-2 left-24 h-1 w-10 rounded-full bg-violet-500/70" />
         </div>
+      )}
+      {type === "radar" && (
+        <svg viewBox="0 0 90 54" className="h-14 w-44 text-sky-400/60">
+          <circle cx="28" cy="27" r="20" fill="none" stroke="currentColor" strokeWidth="1" opacity=".4" />
+          <circle cx="28" cy="27" r="11" fill="none" stroke="currentColor" strokeWidth="1" opacity=".6" />
+          <path d="M28 27L44 15" stroke="currentColor" strokeWidth="2" />
+          <circle cx="28" cy="27" r="3" fill="currentColor" />
+          <path d="M65 14H88M65 27H82M65 40H90" stroke="currentColor" strokeWidth="2" opacity=".45" />
+        </svg>
+      )}
+    </div>
+  );
+}
 
-        <div className="absolute right-[4%] top-[33%] w-[210px] rounded-xl border border-white/10 bg-white/[0.05] px-3.5 py-2.5 backdrop-blur-sm">
-          <div className="mb-1.5 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-slate-400">
-            Analiza scenariuszowa
-          </div>
-          <svg viewBox="0 0 100 30" className="h-6 w-full">
-            {[8, 18, 12, 24, 16, 28, 20].map((h, i) => (
-              <rect key={i} x={i * 14} y={30 - h} width="8" height={h} rx="1.5" fill="#c084fc" opacity={0.5 + i * 0.06} />
-            ))}
-          </svg>
+function ModuleOrb({ module }: { module: (typeof modules)[number] }) {
+  return (
+    <Link href={module.href} className={`absolute z-20 ${getModulePosition(module.position)}`}>
+      <div className="group flex flex-col items-center">
+        <div
+          className={[
+            "relative flex h-28 w-28 items-center justify-center rounded-full",
+            "bg-[radial-gradient(circle_at_35%_25%,#ffffff,#dbeafe_55%,#b8c7e8)]",
+            "shadow-[0_0_34px_rgba(96,165,250,0.45)]",
+            module.active
+              ? "ring-2 ring-sky-300/80 shadow-[0_0_60px_rgba(59,130,246,0.75)]"
+              : "ring-1 ring-sky-300/35",
+          ].join(" ")}
+        >
+          <div className="absolute -inset-3 rounded-full border border-sky-400/25" />
+          <div className="absolute -inset-5 rounded-full border border-violet-500/15 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+          <Image
+            src={module.logo}
+            alt={module.name}
+            width={92}
+            height={92}
+            className="h-[74px] w-[74px] object-contain"
+          />
         </div>
-
-        <div className="absolute left-[2%] top-[62%] w-[210px] rounded-xl border border-white/10 bg-white/[0.05] px-3.5 py-2.5 backdrop-blur-sm">
-          <div className="mb-1.5 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-slate-400">
-            Aktywność w sieci
+        <div
+          className={[
+            "mt-3 min-w-[120px] rounded-lg border px-4 py-2 text-center backdrop-blur-md",
+            "bg-slate-950/70 shadow-[0_0_28px_rgba(15,23,42,0.9)]",
+            module.active ? "border-sky-300/40" : "border-sky-300/20",
+          ].join(" ")}
+        >
+          <div className="text-sm font-semibold text-white">{module.role}</div>
+          <div
+            className={[
+              "mt-0.5 text-[11px] font-bold tracking-wide",
+              module.active ? "text-emerald-400" : "text-blue-400",
+            ].join(" ")}
+          >
+            {module.status}
+            <span
+              className={[
+                "ml-2 inline-block h-2 w-2 rounded-full",
+                module.active ? "bg-emerald-400 animate-pulse" : "bg-blue-500",
+              ].join(" ")}
+            />
           </div>
-          <div className="flex items-center gap-2">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="1.4">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M3 12h18M12 3c2.5 2.6 4 6 4 9s-1.5 6.4-4 9c-2.5-2.6-4-6-4-9s1.5-6.4 4-9Z" />
-            </svg>
-            <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
-              <div className="pdm-pulse-bar absolute inset-y-0 left-0 w-2/3 rounded-full bg-gradient-to-r from-blue-400 to-indigo-400" />
-            </div>
-          </div>
-        </div>
-
-        <div className="absolute right-[2%] top-[62%] w-[210px] rounded-xl border border-white/10 bg-white/[0.05] px-3.5 py-2.5 backdrop-blur-sm">
-          <div className="mb-1.5 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-slate-400">
-            Zasięg i dystrybucja
-          </div>
-          <svg viewBox="0 0 40 40" className="h-7 w-7">
-            <circle cx="20" cy="20" r="16" fill="none" stroke="#f472b6" strokeOpacity="0.25" strokeWidth="1.5" />
-            <circle cx="20" cy="20" r="10" fill="none" stroke="#f472b6" strokeOpacity="0.4" strokeWidth="1.5" />
-            <circle cx="20" cy="20" r="3" fill="#f472b6" className="pdm-radar-dot" />
-          </svg>
         </div>
       </div>
+    </Link>
+  );
+}
 
-      <div className="relative z-10 mx-auto flex max-w-6xl flex-col items-center px-6 pb-24 pt-16">
-        {/* Wordmark */}
-        <div
-          className={`text-center transition-all duration-1000 ease-out ${
-            mounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-          }`}
-        >
-          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-indigo-300/80">
-            Ekosystem AI dla polityki
-          </p>
-          <h1 className="bg-gradient-to-r from-indigo-300 via-blue-300 to-fuchsia-300 bg-clip-text text-5xl font-extrabold tracking-tight text-transparent sm:text-6xl">
+export default function OrbitHub() {
+  return (
+    <main className="relative min-h-screen overflow-hidden bg-[#05070d] text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(79,70,229,0.34),transparent_30%),radial-gradient(circle_at_50%_15%,rgba(14,165,233,0.18),transparent_24%),linear-gradient(180deg,#05070d_0%,#07101f_52%,#05070d_100%)]" />
+      <div className="absolute inset-0 opacity-60 [background-image:radial-gradient(circle_at_20%_20%,rgba(255,255,255,.55)_1px,transparent_1.4px),radial-gradient(circle_at_70%_30%,rgba(147,197,253,.55)_1px,transparent_1.5px),radial-gradient(circle_at_85%_70%,rgba(255,255,255,.45)_1px,transparent_1.3px)] [background-size:140px_140px,220px_220px,180px_180px]" />
+      <div className="absolute left-0 right-0 top-[33%] h-px bg-gradient-to-r from-transparent via-sky-400/25 to-transparent" />
+      <div className="absolute left-1/2 top-[42%] h-[620px] w-[960px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-sky-400/10" />
+      <div className="absolute left-1/2 top-[47%] h-[480px] w-[1220px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-violet-400/10" />
+      <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 pb-8 pt-8">
+        <header className="mx-auto max-w-4xl text-center">
+          <div className="mb-3 text-xs font-bold uppercase tracking-[0.48em] text-blue-300/80">
+            EKOSYSTEM AI DLA POLITYKI
+          </div>
+          <h1 className="bg-gradient-to-r from-blue-400 via-sky-200 to-fuchsia-300 bg-clip-text text-5xl font-black tracking-tight text-transparent drop-shadow-[0_0_30px_rgba(99,102,241,0.35)] md:text-7xl">
             Political Dark Matter
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-base font-medium text-slate-200 sm:text-lg">
+          <p className="mt-4 text-xl font-medium text-slate-100/90">
             Niewidoczna infrastruktura zwycięskiej komunikacji politycznej.
           </p>
-          <p className="mx-auto mt-3 max-w-lg text-sm text-slate-400">
-            Monitoring narracji, analiza scenariuszowa, generowanie przekazu i dystrybucja w jednym
-            systemie wspieranym przez AI.
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-300/75">
+            Monitoring narracji, analiza scenariuszowa, generowanie przekazu
+            <br className="hidden sm:block" />
+            i dystrybucja w jednym systemie wspieranym przez AI.
           </p>
-
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+          <div className="mt-7 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link
               href="/dashboard"
-              className="pdm-cta-glow group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 px-6 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.03]"
+              className="group rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-8 py-3 text-sm font-bold text-white shadow-[0_0_35px_rgba(37,99,235,0.6)] ring-1 ring-white/20 transition hover:scale-[1.02] hover:shadow-[0_0_50px_rgba(124,58,237,0.75)]"
             >
               Uruchom prototyp
-              <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+              <span className="ml-5 inline-block transition group-hover:translate-x-1">→</span>
             </Link>
             <a
               href="#modules"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.03] px-6 py-3 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/[0.08]"
+              className="group rounded-lg border border-slate-400/20 bg-slate-950/40 px-8 py-3 text-sm font-bold text-slate-100 backdrop-blur-md transition hover:border-sky-300/40 hover:bg-slate-900/60"
             >
               Zobacz moduły
-              <ArrowRight size={16} />
+              <span className="ml-5 inline-block transition group-hover:translate-x-1">→</span>
             </a>
           </div>
+        </header>
+        <div id="modules" className="relative mx-auto mt-6 h-[500px] w-full max-w-[980px] scroll-mt-10">
+          <div className="absolute left-1/2 top-1/2 h-[390px] w-[720px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-blue-400/40" />
+          <div className="absolute left-1/2 top-1/2 h-[300px] w-[540px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-violet-400/25" />
+          <div className="absolute left-1/2 top-1/2 h-[215px] w-[390px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-sky-400/10" />
+          <div className="absolute left-1/2 top-1/2 h-px w-[760px] -translate-x-1/2 bg-gradient-to-r from-transparent via-violet-400/60 to-transparent" />
+          <div className="absolute left-1/2 top-1/2 h-[430px] w-px -translate-y-1/2 bg-gradient-to-b from-transparent via-sky-400/45 to-transparent" />
+          <div className="absolute left-1/2 top-1/2 z-10 flex h-32 w-32 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-violet-300/70 bg-slate-950/80 text-center shadow-[0_0_75px_rgba(124,58,237,0.9)]">
+            <div className="absolute -inset-5 rounded-full border border-violet-400/30" />
+            <div className="absolute -inset-10 rounded-full border border-sky-400/10" />
+            <div>
+              <div className="text-lg font-bold text-white">Profil</div>
+              <div className="text-sm text-slate-300/70">projektu</div>
+            </div>
+          </div>
+          {modules.map((module) => (
+            <ModuleOrb key={module.key} module={module} />
+          ))}
+          <HudPanel title="DANE NARRACYJNE" type="line" className="left-2 top-14" />
+          <HudPanel title="ANALIZA SCENARIUSZOWA" type="bars" className="right-1 top-16" />
+          <HudPanel title="AKTYWNOŚĆ W SIECI" type="map" className="left-0 bottom-14" />
+          <HudPanel title="ZASIĘG I DYSTRYBUCJA" type="radar" className="right-0 bottom-12" />
         </div>
-
-        {/* Orbit diagram */}
-        <div id="modules" className="relative mt-14 w-full max-w-[720px] scroll-mt-10">
-          <svg
-            viewBox="0 0 800 800"
-            className="w-full"
-            style={{ overflow: "visible" }}
-          >
-            <defs>
-              <linearGradient id="flowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#818cf8" />
-                <stop offset="100%" stopColor="#c084fc" />
-              </linearGradient>
-              <linearGradient id="feedbackGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#f472b6" />
-                <stop offset="100%" stopColor="#818cf8" />
-              </linearGradient>
-              <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#4338ca" stopOpacity="0.9" />
-                <stop offset="60%" stopColor="#1e1b4b" stopOpacity="0.6" />
-                <stop offset="100%" stopColor="#05060f" stopOpacity="0" />
-              </radialGradient>
-            </defs>
-
-            {/* podwójna aureola orbity — szeroka elipsa + druga obrócona, jak na wzorcu */}
-            <ellipse
-              cx={CENTER}
-              cy={CENTER}
-              rx={380}
-              ry={250}
-              fill="none"
-              stroke="#6366f1"
-              strokeOpacity={0.22}
-              strokeWidth={1.2}
-              className="pdm-halo"
-            />
-            <g transform={`rotate(58 ${CENTER} ${CENTER})`}>
-              <ellipse
-                cx={CENTER}
-                cy={CENTER}
-                rx={380}
-                ry={250}
-                fill="none"
-                stroke="#c084fc"
-                strokeOpacity={0.18}
-                strokeWidth={1.2}
-                className="pdm-halo"
-                style={{ animationDelay: "1.6s" }}
-              />
-            </g>
-
-            {/* orbita — pierścień prowadzący */}
-            <circle
-              cx={CENTER}
-              cy={CENTER}
-              r={RADIUS}
-              fill="none"
-              stroke="#312e81"
-              strokeOpacity={0.35}
-              strokeWidth={1}
-              strokeDasharray="2 8"
-            />
-
-            {/* rdzeń: profil projektu */}
-            <circle cx={CENTER} cy={CENTER} r={130} fill="url(#coreGlow)" className="pdm-core-breathe" />
-            <circle className="pdm-ping" cx={CENTER} cy={CENTER} r={54} fill="none" stroke="#818cf8" strokeWidth={1.5} />
-            <circle
-              className="pdm-ping"
-              cx={CENTER}
-              cy={CENTER}
-              r={54}
-              fill="none"
-              stroke="#818cf8"
-              strokeWidth={1.5}
-              style={{ animationDelay: "1.5s" }}
-            />
-            <circle
-              cx={CENTER}
-              cy={CENTER}
-              r={54}
-              fill="#0b0f2e"
-              stroke="#6366f1"
-              strokeWidth={1.5}
-              strokeOpacity={0.7}
-            />
-            <text
-              x={CENTER}
-              y={CENTER - 4}
-              textAnchor="middle"
-              className="fill-indigo-200"
-              style={{ fontSize: 12, fontWeight: 600, letterSpacing: 0.5 }}
-            >
-              Profil
-            </text>
-            <text
-              x={CENTER}
-              y={CENTER + 14}
-              textAnchor="middle"
-              className="fill-indigo-300/70"
-              style={{ fontSize: 10 }}
-            >
-              projektu
-            </text>
-
-            {/* przepływy między modułami */}
-            {FLOWS.map((f, i) => (
-              <path
-                key={i}
-                d={arcPath(f.from.angle, f.to.angle)}
-                fill="none"
-                stroke={f.feedback ? "url(#feedbackGrad)" : "url(#flowGrad)"}
-                strokeWidth={f.feedback ? 2.5 : 2}
-                strokeLinecap="round"
-                strokeDasharray="6 10"
-                className={f.feedback ? "orbit-flow orbit-flow--feedback" : "orbit-flow"}
-                style={{ animationDelay: `${i * 0.15}s` }}
-              />
-            ))}
-          </svg>
-
-          {/* Węzły modułów — nakładka HTML nad SVG, pozycjonowana procentowo */}
-          {MODULES.map((m, i) => {
-            const pos = pointOnCircle(m.angle, RADIUS);
-            const leftPct = (pos.x / 800) * 100;
-            const topPct = (pos.y / 800) * 100;
-            return (
-              <Link
-                key={m.key}
-                href={m.href}
-                className={`group absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center transition-all duration-700 ease-out ${
-                  mounted ? "scale-100 opacity-100" : "scale-75 opacity-0"
-                }`}
-                style={{
-                  left: `${leftPct}%`,
-                  top: `${topPct}%`,
-                  transitionDelay: `${300 + i * 120}ms`,
-                }}
-              >
-                <div
-                  className={`relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border bg-[radial-gradient(circle_at_32%_28%,#ffffff_0%,#f2f4fb_42%,#dadfec_75%,#b7bdd1_100%)] p-3 shadow-[inset_-10px_-10px_22px_rgba(15,23,42,0.3),inset_7px_7px_16px_rgba(255,255,255,0.95),0_0_40px_rgba(99,102,241,0.2)] transition-all duration-300 group-hover:scale-110 group-hover:shadow-[inset_-10px_-10px_22px_rgba(15,23,42,0.3),inset_7px_7px_16px_rgba(255,255,255,0.95),0_0_60px_rgba(147,51,234,0.4)] ${
-                    m.status === "live"
-                      ? "border-indigo-400/60"
-                      : "border-slate-300/60"
-                  }`}
-                >
-                  <Image
-                    src={m.logo}
-                    alt={m.name}
-                    width={300}
-                    height={280}
-                    className={`h-auto w-full object-contain ${
-                      m.status === "building" ? "opacity-70" : ""
-                    }`}
-                  />
-                  <span
-                    className={`absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-[#05060f] ${
-                      m.status === "live" ? "bg-emerald-400 animate-pulse" : "bg-slate-500"
-                    }`}
-                  />
-                </div>
-                <div className="mt-2 text-center">
-                  <div className="text-[11px] font-semibold text-slate-200">{m.tagline}</div>
-                  <div
-                    className={`text-[10px] uppercase tracking-wide ${
-                      m.status === "live" ? "text-emerald-400" : "text-slate-500"
-                    }`}
-                  >
-                    {m.status === "live" ? "aktywny" : "w budowie"}
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* Karty funkcji */}
-        <div
-          className={`mt-16 grid w-full max-w-4xl grid-cols-1 gap-4 transition-all duration-1000 sm:grid-cols-2 lg:grid-cols-4 ${
-            mounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-          }`}
-          style={{ transitionDelay: "700ms" }}
-        >
-          {FEATURES.map(({ title, desc, Icon, badge }) => (
+        <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {bottomCards.map((card) => (
             <div
-              key={title}
-              className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-left"
+              key={card.title}
+              className="group rounded-2xl border border-sky-300/20 bg-slate-950/50 p-5 shadow-[0_0_32px_rgba(59,130,246,0.12)] backdrop-blur-xl transition hover:-translate-y-1 hover:border-violet-300/45 hover:shadow-[0_0_50px_rgba(124,58,237,0.22)]"
             >
-              <div className={`mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg border ${badge}`}>
-                <Icon size={16} />
+              <div className="flex items-center gap-4">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-950/80 to-violet-950/70 text-sky-300 shadow-[0_0_24px_rgba(56,189,248,0.2)]">
+                  <NeonIcon type={card.icon} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black tracking-wide text-slate-100">
+                    {card.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-300/70">
+                    {card.text[0]}
+                    <br />
+                    {card.text[1]}
+                  </p>
+                </div>
               </div>
-              <div className="text-xs font-bold uppercase tracking-wide text-white">{title}</div>
-              <div className="mt-1 text-[11px] leading-snug text-slate-400">{desc}</div>
             </div>
           ))}
         </div>
-
-        <p className="mt-10 max-w-lg text-center text-[11px] text-slate-600">
-          Cztery autonomiczne moduły. Jeden ekosystem. Kliknij aktywny moduł, żeby
-          wejść do panelu — pozostałe są w fazie developerskiej.
-        </p>
-      </div>
-
-      <style>{`
-        @keyframes orbit-flow-dash {
-          to { stroke-dashoffset: -160; }
-        }
-        .orbit-flow {
-          animation: orbit-flow-dash 3.5s linear infinite;
-          opacity: 0.85;
-        }
-        .orbit-flow--feedback {
-          animation-duration: 2.6s;
-        }
-
-        .pdm-halo {
-          animation: pdm-halo-breathe 6s ease-in-out infinite;
-        }
-        @keyframes pdm-halo-breathe {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 1; }
-        }
-
-        .pdm-core-breathe {
-          transform-origin: center;
-          transform-box: fill-box;
-          animation: pdm-core-breathe 4.5s ease-in-out infinite;
-        }
-        @keyframes pdm-core-breathe {
-          0%, 100% { transform: scale(1); opacity: 0.85; }
-          50% { transform: scale(1.06); opacity: 1; }
-        }
-
-        .pdm-ping {
-          transform-origin: center;
-          transform-box: fill-box;
-          animation: pdm-ping 3s ease-out infinite;
-          animation-fill-mode: both;
-        }
-        @keyframes pdm-ping {
-          0% { transform: scale(1); opacity: 0.6; }
-          100% { transform: scale(2.2); opacity: 0; }
-        }
-
-        .pdm-cta-glow {
-          animation: pdm-cta-glow 3s ease-in-out infinite;
-        }
-        @keyframes pdm-cta-glow {
-          0%, 100% { box-shadow: 0 0 20px rgba(99,102,241,0.35), 0 4px 14px rgba(0,0,0,0.3); }
-          50% { box-shadow: 0 0 34px rgba(147,51,234,0.55), 0 4px 14px rgba(0,0,0,0.3); }
-        }
-
-        .pdm-pulse-bar {
-          animation: pdm-pulse-bar 2.4s ease-in-out infinite;
-        }
-        @keyframes pdm-pulse-bar {
-          0%, 100% { opacity: 0.6; }
-          50% { opacity: 1; }
-        }
-
-        .pdm-radar-dot {
-          transform-origin: center;
-          transform-box: fill-box;
-          animation: pdm-radar-dot 2s ease-in-out infinite;
-        }
-        @keyframes pdm-radar-dot {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.4); opacity: 0.6; }
-        }
-
-        .pdm-comet {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 140px;
-          height: 2px;
-          border-radius: 999px;
-          background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.85) 85%, #ffffff 100%);
-          box-shadow: 0 0 6px 1px rgba(255,255,255,0.7);
-          opacity: 0;
-          pointer-events: none;
-          will-change: transform, opacity;
-        }
-        .pdm-comet--a { animation: pdm-comet-a 16s ease-in infinite; animation-delay: 2s; }
-        .pdm-comet--b { animation: pdm-comet-b 23s ease-in infinite; animation-delay: 9s; }
-        .pdm-comet--c { animation: pdm-comet-c 31s ease-in infinite; animation-delay: 17s; }
-        /* Uwaga: pozycje w vmin (nie vw/vh), żeby oś X i Y skalowały się identycznie —
-           dzięki temu kąt rotate() zawsze pokrywa się z realnym kierunkiem lotu,
-           niezależnie od proporcji okna, a ogon komety leży dokładnie na torze lotu. */
-        @keyframes pdm-comet-a {
-          0%, 88%, 100% { opacity: 0; transform: translate(-15vmin, -45vmin) rotate(12.85deg); }
-          89% { opacity: 1; }
-          93% { opacity: 1; transform: translate(95vmin, -20vmin) rotate(12.85deg); }
-          94% { opacity: 0; transform: translate(102.8vmin, -18.2vmin) rotate(12.85deg); }
-        }
-        @keyframes pdm-comet-b {
-          0%, 91%, 100% { opacity: 0; transform: translate(115vmin, -40vmin) rotate(148deg); }
-          92% { opacity: 1; }
-          96% { opacity: 1; transform: translate(-5vmin, 35vmin) rotate(148deg); }
-          97% { opacity: 0; transform: translate(-11.8vmin, 39.2vmin) rotate(148deg); }
-        }
-        @keyframes pdm-comet-c {
-          0%, 93%, 100% { opacity: 0; transform: translate(-10vmin, -70vmin) rotate(53.6deg); }
-          94% { opacity: 1; }
-          97% { opacity: 1; transform: translate(60vmin, 25vmin) rotate(53.6deg); }
-          98% { opacity: 0; transform: translate(64.75vmin, 31.43vmin) rotate(53.6deg); }
-        }
-      `}</style>
-    </div>
+      </section>
+    </main>
   );
 }
