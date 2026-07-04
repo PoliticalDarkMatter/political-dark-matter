@@ -81,14 +81,14 @@ const bottomCards = [
 // Geometria orbity — elipsa szeroka i płaska (jak we wzorcu), nie okrąg.
 // viewBox 1000x600 (proporcja 5:3), moduły leżą na elipsie RX/RY,
 // łuki łączące moduły wybrzuszają się na większej elipsie ARC_RX/ARC_RY.
-const VB_W = 1000;
-const VB_H = 600;
-const CX = 500;
-const CY = 300;
-const RX = 200;
-const RY = 115;
-const ARC_RX = 235;
-const ARC_RY = 148;
+const VB_W = 980;
+const VB_H = 500;
+const CX = 490;
+const CY = 250;
+const RX = 196;
+const RY = 96;
+const ARC_RX = 230;
+const ARC_RY = 123;
 
 function pointOnEllipse(angleDeg: number, rx: number, ry: number) {
   const rad = (angleDeg * Math.PI) / 180;
@@ -223,11 +223,13 @@ function ModuleOrb({ module: m }: { module: ModuleDef }) {
           className={[
             "relative flex h-28 w-28 items-center justify-center rounded-full",
             "bg-[radial-gradient(circle_at_35%_25%,#ffffff,#dbeafe_55%,#b8c7e8)]",
-            "shadow-[0_0_34px_rgba(96,165,250,0.45)]",
-            m.active
-              ? "ring-2 ring-sky-300/80 shadow-[0_0_60px_rgba(59,130,246,0.75)]"
-              : "ring-1 ring-sky-300/35",
+            m.active ? "ring-2 ring-sky-300/80" : "ring-1 ring-sky-300/35",
           ].join(" ")}
+          style={{
+            boxShadow: m.active
+              ? "0 0 55px rgba(56,189,248,.75)"
+              : "0 0 34px rgba(96,165,250,0.45)",
+          }}
         >
           <div className="absolute -inset-3 rounded-full border border-sky-400/25" />
           <div className="absolute -inset-5 rounded-full border border-violet-500/15 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
@@ -270,8 +272,8 @@ function ModuleOrb({ module: m }: { module: ModuleDef }) {
 export default function OrbitHub() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#05070d] text-white">
-      {/* Tło bazowe — mgławice/poświata, żadnej geografii, to jest kosmos, nie mapa */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(79,70,229,0.34),transparent_30%),radial-gradient(circle_at_50%_15%,rgba(14,165,233,0.18),transparent_24%),linear-gradient(180deg,#05070d_0%,#07101f_52%,#05070d_100%)]" />
+      {/* Tło bazowe — mgławice/poświata wg ustalonych wartości, żadnej geografii */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_48%,rgba(124,58,237,0.45),transparent_30%),radial-gradient(circle_at_50%_18%,rgba(56,189,248,0.18),transparent_28%),linear-gradient(180deg,#03050b_0%,#07101f_52%,#03050b_100%)]" />
 
       {/* Gwiazdy — trzy warstwy o różnej wielkości i gęstości, dla wrażenia głębi kosmosu */}
       <div className="pointer-events-none absolute inset-0 opacity-50 [background-image:radial-gradient(0.6px_0.6px_at_15px_25px,#fff,transparent),radial-gradient(0.6px_0.6px_at_75px_95px,#fff,transparent),radial-gradient(0.6px_0.6px_at_130px_45px,#fff,transparent),radial-gradient(0.6px_0.6px_at_190px_150px,#fff,transparent),radial-gradient(0.6px_0.6px_at_250px_70px,#fff,transparent),radial-gradient(0.6px_0.6px_at_310px_190px,#fff,transparent)] [background-size:340px_340px]" />
@@ -293,13 +295,26 @@ export default function OrbitHub() {
 
       <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 pb-8 pt-8">
         <header className="mx-auto max-w-4xl text-center">
-          <div className="mb-3 text-xs font-bold uppercase tracking-[0.48em] text-blue-300/80">
+          <div
+            className="mb-3 font-bold uppercase text-blue-300/80"
+            style={{ fontSize: "12px", letterSpacing: "0.42em" }}
+          >
             EKOSYSTEM AI DLA POLITYKI
           </div>
-          <h1 className="bg-gradient-to-r from-blue-400 via-sky-200 to-fuchsia-300 bg-clip-text text-5xl font-black tracking-tight text-transparent drop-shadow-[0_0_30px_rgba(99,102,241,0.35)] md:text-7xl">
+          <h1
+            className="bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(99,102,241,0.35)]"
+            style={{
+              fontFamily: "Inter, system-ui, sans-serif",
+              fontWeight: 900,
+              letterSpacing: "-0.04em",
+              fontSize: "clamp(56px, 6vw, 88px)",
+              lineHeight: 1.05,
+              backgroundImage: "linear-gradient(90deg, #60a5fa, #93c5fd, #e879f9)",
+            }}
+          >
             Political Dark Matter
           </h1>
-          <p className="mt-4 text-xl font-medium text-slate-100/90">
+          <p className="mt-4 font-medium text-slate-100/90" style={{ fontSize: "22px" }}>
             Niewidoczna infrastruktura zwycięskiej komunikacji politycznej.
           </p>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-300/75">
@@ -327,7 +342,11 @@ export default function OrbitHub() {
 
         {/* Orbita — elipsa proporcjonalna do wzorca (VB_W x VB_H), z animowanymi
             przepływami między modułami i pulsującym centrum */}
-        <div id="modules" className="relative mx-auto mt-10 w-full max-w-[1100px] aspect-[5/3] scroll-mt-10">
+        <div
+          id="modules"
+          className="relative mx-auto mt-10 w-full max-w-[980px] scroll-mt-10"
+          style={{ aspectRatio: `${VB_W} / ${VB_H}` }}
+        >
           <svg
             viewBox={`0 0 ${VB_W} ${VB_H}`}
             className="absolute inset-0 h-full w-full"
@@ -370,7 +389,10 @@ export default function OrbitHub() {
           </svg>
 
           {/* Centrum — Profil projektu, tętniące */}
-          <div className="absolute left-1/2 top-1/2 z-10 flex h-32 w-32 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-violet-300/70 bg-slate-950/80 text-center shadow-[0_0_75px_rgba(124,58,237,0.9)]">
+          <div
+            className="absolute left-1/2 top-1/2 z-10 flex h-32 w-32 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-violet-300/70 bg-slate-950/80 text-center"
+            style={{ boxShadow: "0 0 70px rgba(124,58,237,.8), 0 0 120px rgba(37,99,235,.35)" }}
+          >
             <div className="pdm-core-breathe absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(124,58,237,0.55)_0%,transparent_70%)]" />
             <div className="pdm-ping absolute -inset-5 rounded-full border border-violet-400/40" />
             <div className="pdm-ping absolute -inset-5 rounded-full border border-sky-400/30" style={{ animationDelay: "1.5s" }} />
