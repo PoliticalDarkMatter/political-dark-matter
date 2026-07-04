@@ -78,38 +78,27 @@ const bottomCards = [
   },
 ];
 
-// Geometria orbity — elipsa szeroka i płaska (jak we wzorcu), nie okrąg.
-// viewBox 1000x600 (proporcja 5:3), moduły leżą na elipsie RX/RY,
-// łuki łączące moduły wybrzuszają się na większej elipsie ARC_RX/ARC_RY.
-const VB_W = 980;
-const VB_H = 500;
-const CX = 490;
-const CY = 250;
-const RX = 196;
-const RY = 96;
-const ARC_RX = 230;
-const ARC_RY = 123;
+// Geometria dokładnie wg wzorca: układ diamentowy (góra/dół/lewo/prawo
+// w tych samych odległościach od centrum, lewo/prawo na wysokości centrum),
+// zmierzone proporcje z obrazu: RX:RY ≈ 1.94.
+const VB_W = 900;
+const VB_H = 550;
+const CX = 450;
+const CY = 270;
+const RX = 290;
+const RY = 150;
 
 function pointOnEllipse(angleDeg: number, rx: number, ry: number) {
   const rad = (angleDeg * Math.PI) / 180;
   return { x: CX + rx * Math.cos(rad), y: CY + ry * Math.sin(rad) };
 }
 
-function arcPath(fromAngle: number, toAngle: number) {
-  const from = pointOnEllipse(fromAngle, RX, RY);
-  const to = pointOnEllipse(toAngle, RX, RY);
-  const mid = (fromAngle + toAngle) / 2;
-  const ctrl = pointOnEllipse(mid, ARC_RX, ARC_RY);
-  return `M ${from.x} ${from.y} Q ${ctrl.x} ${ctrl.y} ${to.x} ${to.y}`;
+// proste, przerywane "szprychy" łączące każdy moduł wprost z centrum —
+// dokładnie tak jak we wzorcu (krzyż, nie pętla między sąsiednimi modułami)
+function spokePath(angleDeg: number) {
+  const p = pointOnEllipse(angleDeg, RX, RY);
+  return `M ${p.x} ${p.y} L ${CX} ${CY}`;
 }
-
-// kolejność pętli: Narrative Scope -> Apex Grid -> Volt Stream -> Pulse Field -> z powrotem
-const FLOWS = [
-  { from: modules[0], to: modules[1] },
-  { from: modules[1], to: modules[2] },
-  { from: modules[2], to: modules[3] },
-  { from: modules[3], to: modules[0] },
-];
 
 function NeonIcon({ type }: { type: string }) {
   if (type === "chart") {
@@ -287,10 +276,10 @@ export default function OrbitHub() {
 
       {/* Cztery narożne widgety — kotwiczone do krawędzi całej sekcji, jak we wzorcu */}
       <div className="pointer-events-none absolute inset-0 z-[6]">
-        <HudPanel title="DANE NARRACYJNE" type="line" className="left-[4%] top-[30%]" />
-        <HudPanel title="ANALIZA SCENARIUSZOWA" type="bars" className="right-[4%] top-[30%]" />
-        <HudPanel title="AKTYWNOŚĆ W SIECI" type="map" className="left-[2%] top-[64%]" />
-        <HudPanel title="ZASIĘG I DYSTRYBUCJA" type="radar" className="right-[2%] top-[64%]" />
+        <HudPanel title="DANE NARRACYJNE" type="line" className="left-[18%] top-[35%]" />
+        <HudPanel title="ANALIZA SCENARIUSZOWA" type="bars" className="right-[21%] top-[35%]" />
+        <HudPanel title="AKTYWNOŚĆ W SIECI" type="map" className="left-[14%] top-[68%]" />
+        <HudPanel title="ZASIĘG I DYSTRYBUCJA" type="radar" className="right-[14%] top-[68%]" />
       </div>
 
       <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 pb-8 pt-8">
@@ -359,12 +348,12 @@ export default function OrbitHub() {
               </linearGradient>
             </defs>
 
-            {/* statyczny pierścień prowadzący — cienka, szeroka elipsa */}
+            {/* statyczny pierścień prowadzący — elipsa orbity przechodząca przez centra modułów */}
             <ellipse
               cx={CX}
               cy={CY}
-              rx={RX + 22}
-              ry={RY + 22}
+              rx={RX}
+              ry={RY}
               fill="none"
               stroke="#818cf8"
               strokeOpacity={0.3}
@@ -372,11 +361,11 @@ export default function OrbitHub() {
               strokeDasharray="2 7"
             />
 
-            {/* przepływy między modułami — animowana przerywana linia */}
-            {FLOWS.map((f, i) => (
+            {/* szprychy — każdy moduł łączy się prostą przerywaną linią wprost z centrum (krzyż), jak we wzorcu */}
+            {modules.map((m, i) => (
               <path
-                key={i}
-                d={arcPath(f.from.angle, f.to.angle)}
+                key={m.key}
+                d={spokePath(m.angle)}
                 fill="none"
                 stroke="url(#flowGrad)"
                 strokeWidth={2}
@@ -390,7 +379,7 @@ export default function OrbitHub() {
 
           {/* Centrum — Profil projektu, tętniące */}
           <div
-            className="absolute left-1/2 top-1/2 z-10 flex h-32 w-32 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-violet-300/70 bg-slate-950/80 text-center"
+            className="absolute left-1/2 top-1/2 z-10 flex h-36 w-36 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-violet-300/70 bg-slate-950/80 text-center"
             style={{ boxShadow: "0 0 70px rgba(124,58,237,.8), 0 0 120px rgba(37,99,235,.35)" }}
           >
             <div className="pdm-core-breathe absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(124,58,237,0.55)_0%,transparent_70%)]" />
