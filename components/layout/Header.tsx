@@ -1,8 +1,16 @@
 "use client";
 
-import { Bell, Search, X, ExternalLink, Loader2, Clock, Menu } from "lucide-react";
+import { Bell, Search, X, ExternalLink, Loader2, Clock, Menu, LogOut } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import LanguageSwitcher from "./LanguageSwitcher";
+
+function initialsOf(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 interface Article {
   id: string;
@@ -37,12 +45,28 @@ function timeAgo(iso: string) {
 }
 
 export default function Header({ onMenuClick }: HeaderProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([] as Article[]);
   const [loading, setLoading] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const debouncedQuery = useDebounce(query, 400);
+
+  useEffect(function () {
+    fetch("/api/me")
+      .then(function (r) { return r.json(); })
+      .then(function (d) { setUserName(d.name ?? null); })
+      .catch(function () { setUserName(null); });
+  }, []);
+
+  const handleLogout = useCallback(function () {
+    fetch("/api/logout", { method: "POST" })
+      .then(function () { router.push("/login"); router.refresh(); })
+      .catch(function () {});
+  }, [router]);
 
   const openModal = useCallback(function () {
     setOpen(true);
@@ -110,8 +134,39 @@ export default function Header({ onMenuClick }: HeaderProps) {
             <Bell size={16} />
             <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-sky-400" />
           </button>
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center text-xs font-bold text-white ring-1 ring-white/20">
-            J
+          <div className="relative">
+            <button
+              onClick={function () { setUserMenuOpen(function (v) { return !v; }); }}
+              className="flex items-center gap-2 group"
+              aria-label="Konto"
+            >
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center text-xs font-bold text-white ring-1 ring-white/20">
+                {userName ? initialsOf(userName) : "?"}
+              </div>
+              {userName && (
+                <span className="hidden lg:block text-xs text-slate-300 group-hover:text-white transition-colors max-w-[120px] truncate">
+                  {userName}
+                </span>
+              )}
+            </button>
+            {userMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={function () { setUserMenuOpen(false); }} />
+                <div className="absolute right-0 top-full mt-2 w-48 bg-slate-950/95 border border-sky-400/20 rounded-xl shadow-[0_0_40px_rgba(56,189,248,0.1)] backdrop-blur-xl overflow-hidden z-50">
+                  <div className="px-3.5 py-2.5 border-b border-sky-400/10">
+                    <p className="text-xs text-slate-500">Zalogowano jako</p>
+                    <p className="text-sm text-slate-200 font-medium truncate">{userName ?? "Nieznany użytkownik"}</p>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 px-3.5 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                  >
+                    <LogOut size={14} />
+                    Wyloguj się
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </header>
