@@ -90,9 +90,10 @@ export async function runOrchestration(
     stage: StageId,
     prompt: string,
     validate: (d: unknown) => T | null,
-    mockFn: () => T
+    mockFn: () => T,
+    maxTokens = 2000
   ): Promise<T> {
-    const raw = provider.isReal ? await provider.generateText(prompt) : null;
+    const raw = provider.isReal ? await provider.generateText(prompt, { maxTokens }) : null;
     const parsed = extractJson(raw);
     const validated = parsed ? validate(parsed) : null;
     if (validated) {
@@ -101,16 +102,21 @@ export async function runOrchestration(
     }
     usedFallback.push(stage);
     const mocked = mockFn();
-    onEvent({ stage, status: "fallback", label: STAGE_LABELS[stage], error: provider.isReal ? "Odpowiedź AI nie przeszła walidacji — użyto lokalnego fallbacku." : "Brak skonfigurowanego klucza AI — użyto lokalnego fallbacku." });
+    onEvent({ stage, status: "fallback", label: STAGE_LABELS[stage], error: provider.isReal ? "Odpowiedź AI nie przeszła walidacji (prawdopodobnie ucięty JSON) — użyto lokalnego fallbacku." : "Brak skonfigurowanego klucza AI — użyto lokalnego fallbacku." });
     return mocked;
   }
 
+  // Limity tokenów dobrane do liczby pozycji w oczekiwanym JSON-ie —
+  // media i segments proszą o 8-14 pozycji naraz, domyślne 2000 tokenów
+  // Gemini Flash bywa za mało i odpowiedź ucina się w połowie JSON-a
+  // (stąd błąd walidacji i fallback). Kontekstowe/opponents/rewrite mają
+  // mniej pozycji (5-7), domyślny limit wystarcza.
   const [contextual, segments, opponents, media, rewrite] = await Promise.all([
-    runStage("contextual", buildContextualPrompt(input, localScan), validateContextual, () => mockContextual(input, localScan)),
-    runStage("segments", buildSegmentsPrompt(input, localScan), validateSegments, () => mockSegments(localScan)),
-    runStage("opponents", buildOpponentsPrompt(input, localScan), validateOpponents, () => mockOpponents(localScan)),
-    runStage("media", buildMediaPrompt(input, localScan), validateMedia, () => mockMedia(localScan)),
-    runStage("rewrite", buildRewritePrompt(input, localScan), validateRewrite, () => mockRewrite(input)),
+    runStage("contextual", buildContextualPrompt(input, localScan), validateContextual, () => mockContextual(input, localScan), 2200),
+    runStage("segments", buildSegmentsPrompt(input, localScan), validateSegments, () => mockSegments(localScan), 3200),
+    runStage("opponents", buildOpponentsPrompt(input, localScan), validateOpponents, () => mockOpponents(localScan), 1800),
+    runStage("media", buildMediaPrompt(input, localScan), validateMedia, () => mockMedia(localScan), 3800),
+    runStage("rewrite", buildRewritePrompt(input, localScan), validateRewrite, () => mockRewrite(input), 2800),
   ]);
 
   // ── Krok 7: Final Recommendation — sekwencyjnie, po digest'cie ────
