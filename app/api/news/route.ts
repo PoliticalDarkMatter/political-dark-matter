@@ -424,7 +424,7 @@ function parseCompactNumber(raw: string): number {
 }
 
 function parseTelegramSubscriberCount(html: string): number | null {
-  const counters = html.matchAll(/<div class="tgme_channel_info_counter">\s*<span class="counter_value">([^<]+)<\/span>\s*<span class="counter_type">([^<]+)<\/span>/g);
+  const counters = Array.from(html.matchAll(/<div class="tgme_channel_info_counter">\s*<span class="counter_value">([^<]+)<\/span>\s*<span class="counter_type">([^<]+)<\/span>/g));
   for (const m of counters) {
     if (/subscriber/i.test(m[2])) return parseCompactNumber(m[1]);
   }
