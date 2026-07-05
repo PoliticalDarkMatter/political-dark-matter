@@ -24,7 +24,7 @@ export const maxDuration = 30;
 
 const BATCH_LIMIT = 20; // ostrożnie wobec darmowego limitu SharedCount (10k/mies.)
 
-export interface ReachResult {
+interface ReachResult {
   facebookTotal: number;
   pinterestCount: number;
 }
@@ -51,7 +51,7 @@ async function fetchSharedCount(url: string, apiKey: string): Promise<ReachResul
 // odzewu z tego samego portalu. Udokumentowany, własny dobór (nie tajemnica
 // handlowa): +1 do wagi bazowej za każdy rząd wielkości udostępnień,
 // z sufitem +4, żeby waga nadal mieściła się w porównywalnej skali.
-export function engagementBoost(facebookTotal: number, pinterestCount: number): number {
+function engagementBoost(facebookTotal: number, pinterestCount: number): number {
   const total = Math.max(0, facebookTotal) + Math.max(0, pinterestCount);
   if (total <= 0) return 0;
   return Math.min(4, Math.log10(1 + total));
