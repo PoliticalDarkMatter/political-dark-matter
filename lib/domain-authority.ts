@@ -136,9 +136,69 @@ function findKnownDomain(host: string): string | null {
   return null;
 }
 
-export function authorityScoreForUrl(url: string): AuthorityResult {
+// ── Ważny szczegół techniczny: Google News (i czasem Bing News) w polu <link>
+// zwraca WŁASNY adres przekierowujący (news.google.com/rss/articles/...), nie
+// bezpośredni URL wydawcy. Odczytanie prawdziwego adresu wymagałoby dodatkowego
+// zapytania sieciowego na każdy artykuł (zbyt kosztowne przy dziesiątkach
+// artykułów na żądanie). Zamiast tego korzystamy z nazwy źródła, którą Google
+// News i tak podaje w tagu <source> (i którą silnik już wyciąga do pola
+// "source" artykułu) — i mapujemy ją na domenę. To jest jawnie opisany,
+// drugi tor rozpoznawania domeny, używany tylko gdy sam URL nie wystarcza.
+const SOURCE_NAME_TO_DOMAIN: Record<string, string> = {
+  "gazeta": "gazeta.pl", "gazeta.pl": "gazeta.pl", "gazeta wyborcza": "wyborcza.pl", "wyborcza": "wyborcza.pl", "wyborcza.pl": "wyborcza.pl",
+  "onet": "onet.pl", "onet wiadomosci": "onet.pl", "onet.pl": "onet.pl",
+  "wp": "wp.pl", "wirtualna polska": "wp.pl", "wp wiadomosci": "wp.pl", "wp.pl": "wp.pl",
+  "interia": "interia.pl", "interia fakty": "interia.pl", "interia.pl": "interia.pl",
+  "tvn24": "tvn24.pl", "tvn24.pl": "tvn24.pl",
+  "rmf24": "rmf24.pl", "rmf24.pl": "rmf24.pl", "rmf fm": "rmf24.pl",
+  "polsat news": "polsatnews.pl", "polsatnews.pl": "polsatnews.pl",
+  "tvp info": "tvp.info", "tvp.info": "tvp.info", "tvp world": "tvp.pl", "tvp": "tvp.pl",
+  "rzeczpospolita": "rp.pl", "rp.pl": "rp.pl",
+  "polityka": "polityka.pl", "polityka.pl": "polityka.pl",
+  "newsweek polska": "newsweek.pl", "newsweek": "newsweek.pl", "newsweek.pl": "newsweek.pl",
+  "do rzeczy": "dorzeczy.pl", "dorzeczy.pl": "dorzeczy.pl",
+  "bankier.pl": "bankier.pl", "bankier": "bankier.pl",
+  "fakt": "fakt.pl", "fakt.pl": "fakt.pl", "super express": "se.pl", "se.pl": "se.pl",
+  "wprost": "wprost.pl", "wprost.pl": "wprost.pl",
+  "money.pl": "money.pl", "money": "money.pl",
+  "dziennik.pl": "dziennik.pl", "dziennik": "dziennik.pl",
+  "wpolityce.pl": "wpolityce.pl", "wpolityce": "wpolityce.pl",
+  "niezalezna.pl": "niezalezna.pl", "niezalezna": "niezalezna.pl",
+  "natemat.pl": "natemat.pl", "natemat": "natemat.pl",
+  "oko.press": "oko.press", "oko press": "oko.press",
+  "wirtualnemedia.pl": "wirtualnemedia.pl", "wirtualne media": "wirtualnemedia.pl",
+  "radio zet": "radiozet.pl", "radiozet.pl": "radiozet.pl",
+  "business insider polska": "businessinsider.com.pl", "businessinsider.com.pl": "businessinsider.com.pl",
+  "puls biznesu": "pb.pl", "pb.pl": "pb.pl",
+  "forbes.pl": "forbes.pl", "forbes polska": "forbes.pl",
+  "defence24.pl": "defence24.pl", "defence24": "defence24.pl",
+  "salon24.pl": "salon24.pl", "salon24": "salon24.pl",
+  "krytyka polityczna": "krytykapolityczna.pl", "krytykapolityczna.pl": "krytykapolityczna.pl",
+  "gosc.pl": "gosc.pl", "gość.pl": "gosc.pl",
+  "pap": "pap.pl", "pap.pl": "pap.pl",
+  "spidersweb.pl": "spidersweb.pl", "spider's web": "spidersweb.pl",
+  "antyweb.pl": "antyweb.pl", "antyweb": "antyweb.pl",
+  "the guardian": "theguardian.com", "guardian": "theguardian.com",
+};
+
+function normalizeSourceName(name: string): string {
+  return name.toLowerCase().trim().normalize("NFKD").replace(/[̀-ͯ]/g, "");
+}
+
+function findDomainByName(sourceName: string): string | null {
+  const domain = SOURCE_NAME_TO_DOMAIN[normalizeSourceName(sourceName)];
+  return domain && DOMAIN_RANKS[domain] ? domain : null;
+}
+
+export function authorityScoreForUrl(url: string, sourceName?: string): AuthorityResult {
   const host = normalizeDomain(url);
-  const known = findKnownDomain(host);
+  let known = findKnownDomain(host);
+  let viaName = false;
+
+  if (!known && sourceName) {
+    known = findDomainByName(sourceName);
+    viaName = known != null;
+  }
 
   if (known && EDITORIAL_OVERRIDES[known]) {
     const ov = EDITORIAL_OVERRIDES[known];
@@ -146,7 +206,8 @@ export function authorityScoreForUrl(url: string): AuthorityResult {
   }
   if (known) {
     const entry = DOMAIN_RANKS[known];
-    return { score: rankToAuthorityScore(entry.rank), basis: "tranco", rank: entry.rank, asOf: entry.asOf };
+    const note = viaName ? ` (rozpoznano po nazwie źródła, nie po URL — link prowadzi przez przekierowanie agregatora)` : "";
+    return { score: rankToAuthorityScore(entry.rank), basis: "tranco", rank: entry.rank, asOf: entry.asOf, reason: note || undefined };
   }
   return { score: FALLBACK_SCORE, basis: "unknown" };
 }

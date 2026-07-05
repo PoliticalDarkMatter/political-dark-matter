@@ -58,13 +58,13 @@ function sentiment(text: string): Article["sentiment"] {
 // a nie z tego, jak dany portal "wygląda na oko". Dla mediów społecznościowych
 // (Reddit/Mastodon/Telegram) waga liczy się osobno, z realnych sygnałów
 // zaangażowania danego posta — patrz funkcje niżej.
-function weightForArticleUrl(url: string): { weight: number; basis: WeightBasis; explain: string } {
-  const res = authorityScoreForUrl(url);
+function weightForArticleUrl(url: string, sourceName?: string): { weight: number; basis: WeightBasis; explain: string } {
+  const res = authorityScoreForUrl(url, sourceName);
   let explain: string;
   if (res.basis === "editorial_override") {
     explain = `Wyjątek redakcyjny: ${res.reason}`;
   } else if (res.basis === "tranco") {
-    explain = `Ranga domeny (Tranco): ${res.rank} z dnia ${res.asOf}`;
+    explain = `Ranga domeny (Tranco): ${res.rank} z dnia ${res.asOf}${res.reason ?? ""}`;
   } else {
     explain = "Domena spoza tabeli rankingowej — wartość neutralna";
   }
@@ -99,7 +99,7 @@ function parseRSS(xml: string, defaultSource: string, limit = 15): Article[] {
     }
 
     if (!title || !url) return null;
-    const w = weightForArticleUrl(url);
+    const w = weightForArticleUrl(url, source);
     return {
       id: `${defaultSource}-${i}`,
       title,
