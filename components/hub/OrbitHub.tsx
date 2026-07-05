@@ -204,7 +204,7 @@ function ModuleOrb({ module: m }: { module: ModuleDef }) {
       <div className="group flex flex-col items-center">
         <div
           className={[
-            "relative flex h-14 w-14 sm:h-20 sm:w-20 md:h-24 md:w-24 lg:h-28 lg:w-28 items-center justify-center rounded-full",
+            "relative flex h-20 w-20 sm:h-24 sm:w-24 lg:h-28 lg:w-28 items-center justify-center rounded-full",
             "bg-[radial-gradient(circle_at_35%_25%,#ffffff,#dbeafe_55%,#b8c7e8)]",
             m.active ? "ring-2 ring-sky-300/80" : "ring-1 ring-sky-300/35",
           ].join(" ")}
@@ -214,34 +214,34 @@ function ModuleOrb({ module: m }: { module: ModuleDef }) {
               : "0 0 34px rgba(96,165,250,0.45)",
           }}
         >
-          <div className="absolute -inset-1.5 sm:-inset-2 lg:-inset-3 rounded-full border border-sky-400/25" />
-          <div className="absolute -inset-2 sm:-inset-3 lg:-inset-5 rounded-full border border-violet-500/15 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+          <div className="absolute -inset-2 lg:-inset-3 rounded-full border border-sky-400/25" />
+          <div className="absolute -inset-3 lg:-inset-5 rounded-full border border-violet-500/15 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
           <Image
             src={m.logo}
             alt={m.name}
             width={92}
             height={92}
-            className="h-[36px] w-[36px] sm:h-[52px] sm:w-[52px] md:h-[62px] md:w-[62px] lg:h-[74px] lg:w-[74px] object-contain"
+            className="h-[52px] w-[52px] sm:h-[62px] sm:w-[62px] lg:h-[74px] lg:w-[74px] object-contain"
           />
         </div>
         <div
           className={[
-            "mt-1.5 sm:mt-2.5 lg:mt-3 min-w-[58px] sm:min-w-[90px] lg:min-w-[120px] rounded-md sm:rounded-lg border px-1.5 py-1 sm:px-3 sm:py-1.5 lg:px-4 lg:py-2 text-center backdrop-blur-md",
+            "mt-2 sm:mt-2.5 lg:mt-3 min-w-[80px] sm:min-w-[96px] lg:min-w-[120px] rounded-md sm:rounded-lg border px-2.5 py-1 sm:px-3 sm:py-1.5 lg:px-4 lg:py-2 text-center backdrop-blur-md",
             "bg-slate-950/70 shadow-[0_0_28px_rgba(15,23,42,0.9)]",
             m.active ? "border-sky-300/40" : "border-sky-300/20",
           ].join(" ")}
         >
-          <div className="text-[9px] sm:text-xs lg:text-sm font-semibold text-white whitespace-nowrap">{m.role}</div>
+          <div className="text-[11px] sm:text-xs lg:text-sm font-semibold text-white whitespace-nowrap">{m.role}</div>
           <div
             className={[
-              "mt-0.5 text-[6px] sm:text-[9px] lg:text-[11px] font-bold tracking-wide whitespace-nowrap",
+              "mt-0.5 text-[8px] sm:text-[9px] lg:text-[11px] font-bold tracking-wide whitespace-nowrap",
               m.active ? "text-emerald-400" : "text-blue-400",
             ].join(" ")}
           >
             {m.status}
             <span
               className={[
-                "ml-1 sm:ml-2 inline-block h-1 w-1 sm:h-1.5 sm:w-1.5 lg:h-2 lg:w-2 rounded-full",
+                "ml-1.5 sm:ml-2 inline-block h-1.5 w-1.5 lg:h-2 lg:w-2 rounded-full",
                 m.active ? "bg-emerald-400 animate-pulse" : "bg-blue-500",
               ].join(" ")}
             />
@@ -276,7 +276,7 @@ export default function OrbitHub() {
         <HudPanel title="ZASIĘG I DYSTRYBUCJA" type="radar" className="right-[14%] top-[68%]" />
       </div>
 
-      <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 pb-8 pt-8">
+      <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-3 pb-8 pt-8 sm:px-6">
         <header className="mx-auto max-w-4xl text-center">
           <div
             className="mb-3 font-bold uppercase text-blue-300/80"
@@ -331,6 +331,7 @@ export default function OrbitHub() {
         >
           <svg
             viewBox={`0 0 ${VB_W} ${VB_H}`}
+            preserveAspectRatio="none"
             className="absolute inset-0 h-full w-full"
             style={{ overflow: "visible" }}
           >
@@ -390,15 +391,15 @@ export default function OrbitHub() {
 
           {/* Centrum — Profil projektu, tętniące */}
           <div
-            className="absolute left-1/2 top-1/2 z-10 flex h-14 w-14 sm:h-24 sm:w-24 lg:h-32 lg:w-32 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-violet-300/70 bg-slate-950/80 text-center"
+            className="absolute left-1/2 top-1/2 z-10 flex h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-violet-300/70 bg-slate-950/80 text-center"
             style={{ boxShadow: "0 0 70px rgba(124,58,237,.8), 0 0 120px rgba(37,99,235,.35)" }}
           >
             <div className="pdm-core-breathe absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(124,58,237,0.55)_0%,transparent_70%)]" />
-            <div className="pdm-ping absolute -inset-2 sm:-inset-4 lg:-inset-5 rounded-full border border-violet-400/40" />
-            <div className="pdm-ping absolute -inset-2 sm:-inset-4 lg:-inset-5 rounded-full border border-sky-400/30" style={{ animationDelay: "1.5s" }} />
+            <div className="pdm-ping absolute -inset-3 sm:-inset-4 lg:-inset-5 rounded-full border border-violet-400/40" />
+            <div className="pdm-ping absolute -inset-3 sm:-inset-4 lg:-inset-5 rounded-full border border-sky-400/30" style={{ animationDelay: "1.5s" }} />
             <div className="relative">
-              <div className="text-[9px] sm:text-sm lg:text-lg font-bold text-white whitespace-nowrap">Profil</div>
-              <div className="text-[7px] sm:text-xs lg:text-sm text-slate-300/70 whitespace-nowrap">projektu</div>
+              <div className="text-sm sm:text-base lg:text-lg font-bold text-white whitespace-nowrap">Profil</div>
+              <div className="text-[11px] sm:text-xs lg:text-sm text-slate-300/70 whitespace-nowrap">projektu</div>
             </div>
           </div>
 
