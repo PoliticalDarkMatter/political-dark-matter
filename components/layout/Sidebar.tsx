@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import {
-  LayoutDashboard, Radio, TrendingUp, Network, FileText, Settings, X,
+  LayoutDashboard, Radio, TrendingUp, Network, FileText, Settings, X, ArrowLeft,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -53,18 +53,24 @@ export default function Sidebar({ onClose }: SidebarProps) {
         )}
       </div>
 
-      {/* Label + powrót do ekosystemu */}
-      <div className="px-5 pt-3 pb-1 flex items-center justify-between">
+      {/* Powrót do głównego panelu Political Dark Matter — zawsze widoczny, na górze */}
+      <div className="px-3 pt-3">
+        <Link
+          href="/"
+          onClick={onClose}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-sky-400/15 bg-slate-900/40 hover:bg-slate-900/80 hover:border-sky-400/30 transition-colors text-xs font-medium text-slate-300 hover:text-white group"
+          title="Wróć do Political Dark Matter"
+        >
+          <ArrowLeft size={13} className="text-sky-400 group-hover:-translate-x-0.5 transition-transform" />
+          Panel główny Political Dark Matter
+        </Link>
+      </div>
+
+      {/* Label sekcji */}
+      <div className="px-5 pt-3 pb-1">
         <span className="text-[10px] font-semibold text-blue-200/40 tracking-widest uppercase">
           Narrative Intelligence
         </span>
-        <Link
-          href="/"
-          className="text-[10px] font-medium text-sky-400 hover:text-sky-300 transition-colors"
-          title="Wróć do Political Dark Matter"
-        >
-          Ekosystem
-        </Link>
       </div>
 
       {/* Navigation */}
