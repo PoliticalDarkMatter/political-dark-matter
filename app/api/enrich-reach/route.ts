@@ -31,7 +31,7 @@ interface ReachResult {
 
 async function fetchSharedCount(url: string, apiKey: string): Promise<ReachResult | null> {
   try {
-    const endpoint = `https://api.sharedcount.com/v1.0/counts?url=${encodeURIComponent(url)}&apikey=${apiKey}`;
+    const endpoint = `https://api.sharedcount.com/v1.1/counts?url=${encodeURIComponent(url)}&apikey=${apiKey}`;
     const res = await fetch(endpoint, { cache: "no-store", signal: AbortSignal.timeout(6000) });
     if (!res.ok) return null;
     const data = await res.json() as {
@@ -43,18 +43,6 @@ async function fetchSharedCount(url: string, apiKey: string): Promise<ReachResul
     return { facebookTotal: facebookTotal || 0, pinterestCount: data?.Pinterest ?? 0 };
   } catch {
     return null;
-  }
-}
-
-// TYMCZASOWA DIAGNOSTYKA — do usunięcia po ustaleniu przyczyny pustych wyników.
-async function debugSharedCount(url: string, apiKey: string): Promise<Record<string, unknown>> {
-  try {
-    const endpoint = `https://api.sharedcount.com/v1.0/counts?url=${encodeURIComponent(url)}&apikey=${apiKey}`;
-    const res = await fetch(endpoint, { cache: "no-store", signal: AbortSignal.timeout(8000) });
-    const text = await res.text();
-    return { url, status: res.status, ok: res.ok, body: text.slice(0, 500) };
-  } catch (e) {
-    return { url, error: String(e) };
   }
 }
 
@@ -80,11 +68,6 @@ export async function POST(req: NextRequest) {
   const apiKey = process.env.SHAREDCOUNT_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ results: {}, skipped: urls, note: "SHAREDCOUNT_API_KEY nieustawiony — pomijam wzbogacenie zasięgu" });
-  }
-
-  if (req.nextUrl.searchParams.get("debug") === "1") {
-    const debugInfo = await debugSharedCount(urls[0], apiKey);
-    return NextResponse.json({ debug: debugInfo });
   }
 
   const toProcess = urls.slice(0, BATCH_LIMIT);
