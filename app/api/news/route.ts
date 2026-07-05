@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { DEFAULT_RSS_FEEDS } from "@/lib/sources";
+import { authorityScoreForUrl } from "@/lib/domain-authority";
 
 export const maxDuration = 30;
+
+export type WeightBasis = "tranco" | "editorial_override" | "unknown" | "social_estimate" | "social_real";
 
 export interface Article {
   id: string;
@@ -10,7 +13,9 @@ export interface Article {
   source: string;
   publishedAt: string;
   sentiment: "positive" | "negative" | "neutral";
-  weight: number; // przybliżona waga realnego zasięgu źródła (patrz weightForSource)
+  weight: number; // waga per-artykuł: patrz weightBasis/weightExplain dla metody
+  weightBasis?: WeightBasis;
+  weightExplain?: string;
 }
 
 export interface EntityInfo {
@@ -46,27 +51,24 @@ function sentiment(text: string): Article["sentiment"] {
   return "neutral";
 }
 
-// ── Waga źródeł ──────────────────────────────────────────────────
-// Skala 1–10, przybliżony rząd wielkości realnego zasięgu. To NIE są dokładne
-// dane z pomiarów (Gemius/PBI/Wirtualne Media) — to robocza hierarchia ważności,
-// żeby duży portal ogólnopolski nie liczył się tak samo jak niszowy blog czy
-// pojedynczy post. Do precyzyjnych liczb zasięgu trzeba sięgnąć po ranking PBI/Gemius.
-const MEDIA_WEIGHT: Record<string, number> = {
-  "PAP": 9, "PAP — Biznes": 8,
-  "TVN24": 10, "TVP Info": 9, "Polsat News": 8,
-  "RMF24": 9, "Onet": 10, "WP": 10, "Interia": 9, "Gazeta.pl": 9,
-  "Rzeczpospolita": 7, "Polityka": 6, "Newsweek Polska": 6, "Do Rzeczy": 5,
-  "Bankier": 6,
-  "Guardian": 7, "GDELT": 4, "Mastodon": 3,
-  "Google News": 7,
-};
-
-function weightForSource(source: string): number {
-  if (MEDIA_WEIGHT[source] != null) return MEDIA_WEIGHT[source];
-  if (source.startsWith("Reddit")) return 3;
-  if (source.startsWith("Telegram")) return 5;
-  if (source.startsWith("Mastodon")) return 3;
-  return 4; // nieznany portal z Google News — przybliżenie: średnia prasa krajowa
+// ── Waga per artykuł ─────────────────────────────────────────────
+// Poprzednia wersja miała tu płaski słownik "portal -> 1 do 10" wpisany ręcznie.
+// Od teraz każdy artykuł z realnym URL-em dostaje wagę liczoną z autorytetu
+// JEGO domeny (patrz lib/domain-authority.ts, oparte o realną rangę Tranco),
+// a nie z tego, jak dany portal "wygląda na oko". Dla mediów społecznościowych
+// (Reddit/Mastodon/Telegram) waga liczy się osobno, z realnych sygnałów
+// zaangażowania danego posta — patrz funkcje niżej.
+function weightForArticleUrl(url: string): { weight: number; basis: WeightBasis; explain: string } {
+  const res = authorityScoreForUrl(url);
+  let explain: string;
+  if (res.basis === "editorial_override") {
+    explain = `Wyjątek redakcyjny: ${res.reason}`;
+  } else if (res.basis === "tranco") {
+    explain = `Ranga domeny (Tranco): ${res.rank} z dnia ${res.asOf}`;
+  } else {
+    explain = "Domena spoza tabeli rankingowej — wartość neutralna";
+  }
+  return { weight: res.score, basis: res.basis, explain };
 }
 
 // ── RSS parser (ogólny) ──────────────────────────────────────────
@@ -97,6 +99,7 @@ function parseRSS(xml: string, defaultSource: string, limit = 15): Article[] {
     }
 
     if (!title || !url) return null;
+    const w = weightForArticleUrl(url);
     return {
       id: `${defaultSource}-${i}`,
       title,
@@ -104,7 +107,9 @@ function parseRSS(xml: string, defaultSource: string, limit = 15): Article[] {
       source,
       publishedAt: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
       sentiment: sentiment(title),
-      weight: weightForSource(source),
+      weight: w.weight,
+      weightBasis: w.basis,
+      weightExplain: w.explain,
     } as Article;
   }).filter(Boolean) as Article[];
 }
@@ -179,8 +184,26 @@ async function searchGoogleNews(query: string): Promise<Article[]> {
 // ── Reddit JSON API (darmowe, bez klucza) ────────────────────────
 const REDDIT_SUBS_MONITOR = ["poland", "europe"];
 
-interface RedditPost { title: string; url: string; permalink: string; created_utc: number; subreddit: string }
+interface RedditPost {
+  title: string; url: string; permalink: string; created_utc: number; subreddit: string;
+  score?: number; num_comments?: number; subreddit_subscribers?: number;
+}
 interface RedditResp { data: { children: Array<{ data: RedditPost }> } }
+
+// ── Waga dla posta z Reddita: realne dane z samego obiektu posta ─────────
+// Reddit zwraca w każdym poście "score" (realne saldo głosów, czyli realne
+// zaangażowanie) i "subreddit_subscribers" (realna wielkość społeczności).
+// Zasięg na Reddicie nie zależy liniowo od subskrybentów (o tym decyduje
+// algorytm strony głównej), więc bazą jest realny score, a wielkość
+// subreddita tylko skaluje, ile znaczy jeden punkt score w danej społeczności.
+function weightForRedditPost(score: number, subscribers: number): { weight: number; explain: string } {
+  const s = Math.max(0, score || 0);
+  const subs = Math.max(10, subscribers || 10);
+  const communityFactor = 1 + Math.log10(subs) / 10; // większy subreddit = każdy głos "waży" trochę więcej
+  const raw = 1 + Math.log10(1 + s) * 2 * communityFactor;
+  const weight = Math.round(Math.min(10, Math.max(1, raw)) * 10) / 10;
+  return { weight, explain: `Reddit: realny wynik ${s} głosów w społeczności ${subs.toLocaleString("pl-PL")} subskrybentów` };
+}
 
 async function fetchRedditJSON(url: string): Promise<Article[]> {
   try {
@@ -201,6 +224,7 @@ async function fetchRedditJSON(url: string): Promise<Article[]> {
         ? "https://www.reddit.com" + p.url
         : p.url;
       const source = "Reddit r/" + p.subreddit;
+      const w = weightForRedditPost(p.score ?? 0, p.subreddit_subscribers ?? 0);
       return {
         id: "reddit-" + p.subreddit + "-" + i,
         title: p.title,
@@ -208,7 +232,9 @@ async function fetchRedditJSON(url: string): Promise<Article[]> {
         source,
         publishedAt: new Date(p.created_utc * 1000).toISOString(),
         sentiment: sentiment(p.title),
-        weight: weightForSource(source),
+        weight: w.weight,
+        weightBasis: "social_real" as WeightBasis,
+        weightExplain: w.explain,
       } as Article;
     }).filter(Boolean) as Article[];
   } catch {
@@ -234,10 +260,37 @@ async function fetchRedditMonitor(): Promise<Article[]> {
 }
 
 // ── Mastodon (pol.social) — publiczne posty, bez klucza ──────────
-interface MastodonStatus { id: string; content: string; url: string; created_at: string }
+interface MastodonAccount { followers_count?: number }
+interface MastodonStatus {
+  id: string; content: string; url: string; created_at: string;
+  account?: MastodonAccount; favourites_count?: number; reblogs_count?: number;
+}
 
 function stripHtml(html: string): string {
   return html.replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\s+/g, " ").trim();
+}
+
+// ── Waga dla posta z Mastodona ─────────────────────────────────────────
+// Realne dane wejściowe: followers_count konta (z API, nie zgadywane) i
+// realne zaangażowanie (favourites + reblogi) pod danym postem.
+// VISIBILITY_RATE to jawnie oznaczone ZAŁOŻENIE: dla Mastodona nie ma
+// opublikowanych, autorytatywnych badań branżowych analogicznych do tych
+// dla Facebooka czy Twittera, więc przyjmuję ostrożną wartość 8% i mnożę
+// przez mnożnik zaangażowania, żeby post, który realnie "poszedł" wśród
+// obserwujących, dostał wyższą wagę niż post tego samego konta bez odzewu.
+const MASTODON_VISIBILITY_RATE = 0.08; // założenie własne — brak publikowanego benchmarku dla Mastodona
+function weightForMastodonPost(followers: number, engagement: number): { weight: number; explain: string } {
+  const f = Math.max(0, followers || 0);
+  const reach = f * MASTODON_VISIBILITY_RATE;
+  const engagementRate = f > 0 ? engagement / f : 0;
+  const kicker = 1 + Math.min(2, engagementRate * 20);
+  const estimatedReach = Math.round(reach * kicker);
+  const raw = 1 + Math.log10(1 + estimatedReach) * 1.6;
+  const weight = Math.round(Math.min(10, Math.max(1, raw)) * 10) / 10;
+  return {
+    weight,
+    explain: `Mastodon: ${f.toLocaleString("pl-PL")} obserwujących, założenie widoczności ${Math.round(MASTODON_VISIBILITY_RATE * 100)}% (brak publikowanego benchmarku), szacowany zasięg ~${estimatedReach.toLocaleString("pl-PL")}`,
+  };
 }
 
 async function fetchMastodon(query?: string): Promise<Article[]> {
@@ -256,6 +309,9 @@ async function fetchMastodon(query?: string): Promise<Article[]> {
     return statuses.map(function (s, i) {
       const text = stripHtml(s.content || "");
       if (!text) return null;
+      const followers = s.account?.followers_count ?? 0;
+      const engagement = (s.favourites_count ?? 0) + (s.reblogs_count ?? 0);
+      const w = weightForMastodonPost(followers, engagement);
       return {
         id: "mastodon-" + i,
         title: text.slice(0, 240),
@@ -263,7 +319,9 @@ async function fetchMastodon(query?: string): Promise<Article[]> {
         source: "Mastodon",
         publishedAt: s.created_at || new Date().toISOString(),
         sentiment: sentiment(text),
-        weight: weightForSource("Mastodon"),
+        weight: w.weight,
+        weightBasis: "social_estimate" as WeightBasis,
+        weightExplain: w.explain,
       } as Article;
     }).filter(Boolean) as Article[];
   } catch {
@@ -292,6 +350,7 @@ async function fetchGDELT(query: string): Promise<Article[]> {
       const iso = a.seendate
         ? `${a.seendate.slice(0,4)}-${a.seendate.slice(4,6)}-${a.seendate.slice(6,8)}T${a.seendate.slice(9,11)}:${a.seendate.slice(11,13)}:${a.seendate.slice(13,15)}Z`
         : new Date().toISOString();
+      const w = weightForArticleUrl(a.url);
       return {
         id: "gdelt-" + i,
         title: a.title,
@@ -299,7 +358,9 @@ async function fetchGDELT(query: string): Promise<Article[]> {
         source: "GDELT",
         publishedAt: iso,
         sentiment: sentiment(a.title),
-        weight: weightForSource("GDELT"),
+        weight: w.weight,
+        weightBasis: w.basis,
+        weightExplain: w.explain,
       } as Article;
     }).filter(Boolean) as Article[];
   } catch {
@@ -323,6 +384,7 @@ async function fetchGuardian(query: string): Promise<Article[]> {
     const data = await res.json() as { response?: { results?: GuardianResult[] } };
     const results = data?.response?.results ?? [];
     return results.map(function (r, i) {
+      const w = weightForArticleUrl(r.webUrl);
       return {
         id: "guardian-" + i,
         title: r.webTitle,
@@ -330,7 +392,9 @@ async function fetchGuardian(query: string): Promise<Article[]> {
         source: "Guardian",
         publishedAt: r.webPublicationDate || new Date().toISOString(),
         sentiment: sentiment(r.webTitle),
-        weight: weightForSource("Guardian"),
+        weight: w.weight,
+        weightBasis: w.basis,
+        weightExplain: w.explain,
       } as Article;
     }).filter((a) => a.title && a.url);
   } catch {
@@ -344,6 +408,49 @@ async function fetchGuardian(query: string): Promise<Article[]> {
 // (@nazwa_kanalu), potem od razu zaczyna działać bez zmian w kodzie.
 const TELEGRAM_CHANNELS: string[] = [];
 
+// Telegram pokazuje na publicznej stronie kanału (t.me/s/) dwie realne liczby,
+// nie estymacje: liczbę subskrybentów kanału (nagłówek strony) i liczbę
+// wyświetleń KAŻDEGO pojedynczego posta (przy każdej wiadomości). To jedyne
+// źródło w całym silniku, gdzie zasięg pojedynczego materiału jest realnym,
+// publicznie pokazywanym pomiarem, nie szacunkiem.
+function parseCompactNumber(raw: string): number {
+  const s = raw.trim().toUpperCase().replace(/,/g, ".");
+  const m = s.match(/^([\d.]+)\s*([KM]?)$/);
+  if (!m) return 0;
+  const n = parseFloat(m[1]);
+  if (m[2] === "K") return Math.round(n * 1000);
+  if (m[2] === "M") return Math.round(n * 1000000);
+  return Math.round(n);
+}
+
+function parseTelegramSubscriberCount(html: string): number | null {
+  const counters = html.matchAll(/<div class="tgme_channel_info_counter">\s*<span class="counter_value">([^<]+)<\/span>\s*<span class="counter_type">([^<]+)<\/span>/g);
+  for (const m of counters) {
+    if (/subscriber/i.test(m[2])) return parseCompactNumber(m[1]);
+  }
+  return null;
+}
+
+function weightForTelegramPost(views: number | null, subscribers: number | null): { weight: number; basis: WeightBasis; explain: string } {
+  if (views != null && views > 0) {
+    const raw = 1 + Math.log10(1 + views) * 1.8;
+    const weight = Math.round(Math.min(10, Math.max(1, raw)) * 10) / 10;
+    return { weight, basis: "social_real", explain: `Telegram: realna liczba wyświetleń posta — ${views.toLocaleString("pl-PL")}` };
+  }
+  const subs = subscribers ?? 0;
+  const TELEGRAM_VIEW_RATE = 0.25; // założenie własne, gdy realnej liczby wyświetleń nie udało się odczytać
+  const estimated = Math.round(subs * TELEGRAM_VIEW_RATE);
+  const raw = 1 + Math.log10(1 + estimated) * 1.8;
+  const weight = Math.round(Math.min(10, Math.max(1, raw)) * 10) / 10;
+  return {
+    weight,
+    basis: "social_estimate",
+    explain: subs > 0
+      ? `Telegram: brak realnej liczby wyświetleń dla tego posta, szacunek z ${subs.toLocaleString("pl-PL")} subskrybentów kanału przy założeniu ${Math.round(TELEGRAM_VIEW_RATE * 100)}% widoczności`
+      : "Telegram: brak danych o wyświetleniach i subskrybentach — wartość neutralna",
+  };
+}
+
 async function fetchTelegramChannel(handle: string): Promise<Article[]> {
   try {
     const res = await fetch(`https://t.me/s/${handle}`, {
@@ -353,13 +460,17 @@ async function fetchTelegramChannel(handle: string): Promise<Article[]> {
     });
     if (!res.ok) return [];
     const html = await res.text();
+    const subscribers = parseTelegramSubscriberCount(html);
     const blocks = html.match(/<div class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/g) ?? [];
     const dateMatches = Array.from(html.matchAll(/<time[^>]*datetime="([^"]+)"/g));
+    const viewMatches = Array.from(html.matchAll(/<span class="tgme_widget_message_views">([^<]+)<\/span>/g));
     const source = `Telegram @${handle}`;
     return blocks.slice(0, 20).map(function (block, i) {
       const text = stripHtml(block);
       if (!text) return null;
       const iso = dateMatches[i]?.[1] || new Date().toISOString();
+      const views = viewMatches[i] ? parseCompactNumber(viewMatches[i][1]) : null;
+      const w = weightForTelegramPost(views, subscribers);
       return {
         id: `tg-${handle}-${i}`,
         title: text.slice(0, 240),
@@ -367,7 +478,9 @@ async function fetchTelegramChannel(handle: string): Promise<Article[]> {
         source,
         publishedAt: new Date(iso).toISOString(),
         sentiment: sentiment(text),
-        weight: weightForSource(source),
+        weight: w.weight,
+        weightBasis: w.basis,
+        weightExplain: w.explain,
       } as Article;
     }).filter(Boolean) as Article[];
   } catch {

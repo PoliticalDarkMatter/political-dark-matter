@@ -6,9 +6,11 @@ import { useState, useEffect, useCallback } from "react";
 type Sent = "positive" | "negative" | "neutral";
 type QueryMode = string;
 
+type WeightBasis = "tranco" | "editorial_override" | "unknown" | "social_estimate" | "social_real";
 interface Article {
   id: string; title: string; url: string;
   source: string; publishedAt: string; sentiment: Sent; weight?: number;
+  weightBasis?: WeightBasis; weightExplain?: string;
   enriched?: boolean;
 }
 interface EntityInfo {
@@ -251,6 +253,35 @@ function EntityRow(p: { entity: EntityInfo; maxCount: number; selected: boolean;
   );
 }
 
+// ── Etykieta wagi artykułu ─────────────────────────────────────────
+// Rozróżnia w interfejsie realny pomiar od szacunku — zgodnie z zasadą
+// "fakt oddzielony od hipotezy". Patrz lib/domain-authority.ts (serwer)
+// dla pełnej metodologii.
+const WEIGHT_BASIS_META: Record<WeightBasis, { label: string; color: string; bg: string }> = {
+  tranco:             { label: "ranga domeny (Tranco)",       color: "#7dd3fc", bg: "rgba(56,189,248,0.1)" },
+  editorial_override: { label: "wyjątek redakcyjny",           color: "#c4b5fd", bg: "rgba(167,139,250,0.1)" },
+  social_real:        { label: "realny pomiar",                color: "#4ade80", bg: "rgba(74,222,128,0.1)" },
+  social_estimate:    { label: "szacunek",                     color: "#fbbf24", bg: "rgba(251,191,36,0.1)" },
+  unknown:            { label: "brak danych",                  color: "#94a3b8", bg: "rgba(148,163,184,0.1)" },
+};
+
+function WeightBadge(p: { weight?: number; basis?: WeightBasis; explain?: string }) {
+  if (p.weight == null) return null;
+  const meta = WEIGHT_BASIS_META[p.basis ?? "unknown"];
+  return (
+    <span
+      title={p.explain || "Waga zasięgu — brak szczegółów metody"}
+      style={{
+        fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 4,
+        background: meta.bg, color: meta.color, marginLeft: 2,
+        display: "inline-flex", alignItems: "center", gap: 3, cursor: "help",
+      }}
+    >
+      waga {p.weight.toFixed(1)} · {meta.label}
+    </span>
+  );
+}
+
 // ── ArticleCard ───────────────────────────────────────────────────
 function ArticleCard(p: { article: Article }) {
   const color = SENT_COLOR[p.article.sentiment];
@@ -279,7 +310,7 @@ function ArticleCard(p: { article: Article }) {
       <p style={{ margin: 0, fontSize: 13, color: "#cbd5e1", lineHeight: 1.45 }}>
         {p.article.title}
       </p>
-      <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 4 }}>
+      <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
         <div style={{ width: 6, height: 6, borderRadius: "50%", background: color }} />
         <span style={{ fontSize: 9, color: color, fontWeight: 600 }}>{SENT_LABEL[p.article.sentiment]}</span>
         {p.article.enriched && (
@@ -287,6 +318,7 @@ function ArticleCard(p: { article: Article }) {
             📄 pełna treść
           </span>
         )}
+        <WeightBadge weight={p.article.weight} basis={p.article.weightBasis} explain={p.article.weightExplain} />
       </div>
     </a>
   );
@@ -432,6 +464,44 @@ export default function DashboardPage() {
       .catch(function () { /* najlepszy wysiłek — cichy fallback na sentyment z tytułu */ });
   }
 
+  // Wzbogacanie wagi o realne zaangażowanie (SharedCount) — w TLE, dla góry
+  // listy. Podnosi wagę artykułu ponad bazowy autorytet domeny, jeśli dany
+  // tekst realnie "poszedł" w mediach społecznościowych (patrz /api/enrich-reach).
+  // Cichy fallback: jeśli klucz SharedCount nie jest ustawiony albo coś
+  // zawiedzie, artykuły zostają z wagą liczoną z samego autorytetu domeny.
+  function enrichReach(articles: Article[]) {
+    const urls = articles.slice(0, 20).map(function (a) { return a.url; }).filter(Boolean);
+    if (urls.length === 0) return;
+    fetch("/api/enrich-reach", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ urls }),
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (j) {
+        const results = (j.results || {}) as Record<string, { weightBoost: number; facebookTotal: number; pinterestCount: number }>;
+        if (Object.keys(results).length === 0) return;
+        setData(function (prev) {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            articles: prev.articles.map(function (a) {
+              const r = results[a.url];
+              if (!r || r.weightBoost <= 0) return a;
+              const newWeight = Math.round(((a.weight ?? 1) + r.weightBoost) * 10) / 10;
+              const engagementNote = `Realne zaangażowanie: ${r.facebookTotal} (Facebook)${r.pinterestCount ? ` + ${r.pinterestCount} (Pinterest)` : ""} → +${r.weightBoost.toFixed(1)} do wagi`;
+              return {
+                ...a,
+                weight: newWeight,
+                weightExplain: a.weightExplain ? `${a.weightExplain}. ${engagementNote}` : engagementNote,
+              };
+            }),
+          };
+        });
+      })
+      .catch(function () { /* najlepszy wysiłek — bez tego artykuł zostaje z wagą domeny */ });
+  }
+
   const fetchNews = useCallback(function (q: string, p: string, f?: string, t?: string, autoMode?: string) {
     setLoading(true);
     setHasError(false);
@@ -451,6 +521,7 @@ export default function DashboardPage() {
           } else { setSelNarr(""); setSelEntity(""); }
         }
         enrichSentiment(fd.articles);
+        enrichReach(fd.articles);
       })
       .catch(function () { setHasError(true); })
       .finally(function () { setLoading(false); });
@@ -506,6 +577,7 @@ export default function DashboardPage() {
         setSelNarr(""); setSelEntity("");
         setChips(r.j.extractedPhrases || []);
         enrichSentiment((r.j.feed as FeedData).articles);
+        enrichReach((r.j.feed as FeedData).articles);
       })
       .catch(function () { setPasteError("Błąd sieci — spróbuj ponownie."); })
       .finally(function () { setPasteLoading(false); });
