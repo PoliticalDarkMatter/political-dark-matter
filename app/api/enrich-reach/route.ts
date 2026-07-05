@@ -70,6 +70,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ results: {}, skipped: urls, note: "SHAREDCOUNT_API_KEY nieustawiony — pomijam wzbogacenie zasięgu" });
   }
 
+  if (req.nextUrl.searchParams.get("debug") === "1") {
+    try {
+      const endpoint = `https://api.sharedcount.com/v1.1/counts?url=${encodeURIComponent(urls[0])}&apikey=${apiKey}`;
+      const res = await fetch(endpoint, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+      const text = await res.text();
+      return NextResponse.json({ debugStatus: res.status, debugOk: res.ok, debugBody: text.slice(0, 800), keyLen: apiKey.length });
+    } catch (e) {
+      return NextResponse.json({ debugError: String(e) });
+    }
+  }
+
   const toProcess = urls.slice(0, BATCH_LIMIT);
   const skipped = urls.slice(BATCH_LIMIT);
   const results: Record<string, { weightBoost: number; facebookTotal: number; pinterestCount: number }> = {};
