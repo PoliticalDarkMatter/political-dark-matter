@@ -204,7 +204,7 @@ function ModuleOrb({ module: m }: { module: ModuleDef }) {
       <div className="group flex flex-col items-center">
         <div
           className={[
-            "relative flex h-28 w-28 items-center justify-center rounded-full",
+            "relative flex h-14 w-14 sm:h-20 sm:w-20 md:h-24 md:w-24 lg:h-28 lg:w-28 items-center justify-center rounded-full",
             "bg-[radial-gradient(circle_at_35%_25%,#ffffff,#dbeafe_55%,#b8c7e8)]",
             m.active ? "ring-2 ring-sky-300/80" : "ring-1 ring-sky-300/35",
           ].join(" ")}
@@ -214,34 +214,34 @@ function ModuleOrb({ module: m }: { module: ModuleDef }) {
               : "0 0 34px rgba(96,165,250,0.45)",
           }}
         >
-          <div className="absolute -inset-3 rounded-full border border-sky-400/25" />
-          <div className="absolute -inset-5 rounded-full border border-violet-500/15 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+          <div className="absolute -inset-1.5 sm:-inset-2 lg:-inset-3 rounded-full border border-sky-400/25" />
+          <div className="absolute -inset-2 sm:-inset-3 lg:-inset-5 rounded-full border border-violet-500/15 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
           <Image
             src={m.logo}
             alt={m.name}
             width={92}
             height={92}
-            className="h-[74px] w-[74px] object-contain"
+            className="h-[36px] w-[36px] sm:h-[52px] sm:w-[52px] md:h-[62px] md:w-[62px] lg:h-[74px] lg:w-[74px] object-contain"
           />
         </div>
         <div
           className={[
-            "mt-3 min-w-[120px] rounded-lg border px-4 py-2 text-center backdrop-blur-md",
+            "mt-1.5 sm:mt-2.5 lg:mt-3 min-w-[58px] sm:min-w-[90px] lg:min-w-[120px] rounded-md sm:rounded-lg border px-1.5 py-1 sm:px-3 sm:py-1.5 lg:px-4 lg:py-2 text-center backdrop-blur-md",
             "bg-slate-950/70 shadow-[0_0_28px_rgba(15,23,42,0.9)]",
             m.active ? "border-sky-300/40" : "border-sky-300/20",
           ].join(" ")}
         >
-          <div className="text-sm font-semibold text-white">{m.role}</div>
+          <div className="text-[9px] sm:text-xs lg:text-sm font-semibold text-white whitespace-nowrap">{m.role}</div>
           <div
             className={[
-              "mt-0.5 text-[11px] font-bold tracking-wide",
+              "mt-0.5 text-[6px] sm:text-[9px] lg:text-[11px] font-bold tracking-wide whitespace-nowrap",
               m.active ? "text-emerald-400" : "text-blue-400",
             ].join(" ")}
           >
             {m.status}
             <span
               className={[
-                "ml-2 inline-block h-2 w-2 rounded-full",
+                "ml-1 sm:ml-2 inline-block h-1 w-1 sm:h-1.5 sm:w-1.5 lg:h-2 lg:w-2 rounded-full",
                 m.active ? "bg-emerald-400 animate-pulse" : "bg-blue-500",
               ].join(" ")}
             />
@@ -327,8 +327,7 @@ export default function OrbitHub() {
             przepływami między modułami i pulsującym centrum */}
         <div
           id="modules"
-          className="relative mx-auto mt-10 w-full max-w-[980px] scroll-mt-10"
-          style={{ aspectRatio: `${VB_W} / ${VB_H}` }}
+          className="relative mx-auto mt-8 sm:mt-10 w-full max-w-[980px] scroll-mt-10 aspect-[3/4] sm:aspect-[940/620]"
         >
           <svg
             viewBox={`0 0 ${VB_W} ${VB_H}`}
@@ -391,15 +390,15 @@ export default function OrbitHub() {
 
           {/* Centrum — Profil projektu, tętniące */}
           <div
-            className="absolute left-1/2 top-1/2 z-10 flex h-32 w-32 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-violet-300/70 bg-slate-950/80 text-center"
+            className="absolute left-1/2 top-1/2 z-10 flex h-14 w-14 sm:h-24 sm:w-24 lg:h-32 lg:w-32 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-violet-300/70 bg-slate-950/80 text-center"
             style={{ boxShadow: "0 0 70px rgba(124,58,237,.8), 0 0 120px rgba(37,99,235,.35)" }}
           >
             <div className="pdm-core-breathe absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(124,58,237,0.55)_0%,transparent_70%)]" />
-            <div className="pdm-ping absolute -inset-5 rounded-full border border-violet-400/40" />
-            <div className="pdm-ping absolute -inset-5 rounded-full border border-sky-400/30" style={{ animationDelay: "1.5s" }} />
+            <div className="pdm-ping absolute -inset-2 sm:-inset-4 lg:-inset-5 rounded-full border border-violet-400/40" />
+            <div className="pdm-ping absolute -inset-2 sm:-inset-4 lg:-inset-5 rounded-full border border-sky-400/30" style={{ animationDelay: "1.5s" }} />
             <div className="relative">
-              <div className="text-lg font-bold text-white">Profil</div>
-              <div className="text-sm text-slate-300/70">projektu</div>
+              <div className="text-[9px] sm:text-sm lg:text-lg font-bold text-white whitespace-nowrap">Profil</div>
+              <div className="text-[7px] sm:text-xs lg:text-sm text-slate-300/70 whitespace-nowrap">projektu</div>
             </div>
           </div>
 
