@@ -31,7 +31,7 @@ interface ReachResult {
 
 async function fetchSharedCount(url: string, apiKey: string): Promise<ReachResult | null> {
   try {
-    const endpoint = `https://api.sharedcount.com/v1.1/counts?url=${encodeURIComponent(url)}&apikey=${apiKey}`;
+    const endpoint = `https://api.sharedcount.com/v1.1/?url=${encodeURIComponent(url)}&apikey=${apiKey}`;
     const res = await fetch(endpoint, { cache: "no-store", signal: AbortSignal.timeout(6000) });
     if (!res.ok) return null;
     const data = await res.json() as {
@@ -68,27 +68,6 @@ export async function POST(req: NextRequest) {
   const apiKey = process.env.SHAREDCOUNT_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ results: {}, skipped: urls, note: "SHAREDCOUNT_API_KEY nieustawiony — pomijam wzbogacenie zasięgu" });
-  }
-
-  if (req.nextUrl.searchParams.get("debug") === "1") {
-    const u = encodeURIComponent(urls[0]);
-    const variants = [
-      `https://api.sharedcount.com/v1.1/?url=${u}&apikey=${apiKey}`,
-      `https://api.sharedcount.com/v1.1/counts?url=${u}&apikey=${apiKey}`,
-      `https://api.sharedcount.com/v1.1/counts/?url=${u}&apikey=${apiKey}`,
-      `https://api.sharedcount.com/v1.0/?url=${u}&apikey=${apiKey}`,
-    ];
-    const out: Record<string, unknown>[] = [];
-    for (const endpoint of variants) {
-      try {
-        const res = await fetch(endpoint, { cache: "no-store", signal: AbortSignal.timeout(8000) });
-        const text = await res.text();
-        out.push({ endpoint: endpoint.replace(apiKey, "***"), status: res.status, body: text.slice(0, 300) });
-      } catch (e) {
-        out.push({ endpoint: endpoint.replace(apiKey, "***"), error: String(e) });
-      }
-    }
-    return NextResponse.json({ variants: out, keyLen: apiKey.length });
   }
 
   const toProcess = urls.slice(0, BATCH_LIMIT);
