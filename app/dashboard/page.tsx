@@ -1,41 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import type { Article, EntityInfo, FeedData, NarrativeCluster, Sent, TimelineItem, WeightBasis } from "@/lib/dashboard-types";
+import { BriefingHero } from "@/components/dashboard/BriefingHero";
+import { computeSentimentTimeline, narrativesForEntity } from "@/lib/dashboard-briefing";
 
-// ── Typy ────────────────────────────────────────────────────────
-type Sent = "positive" | "negative" | "neutral";
+// ── Typy specyficzne dla tej strony (stan UI, nie dane domenowe) ───
 type QueryMode = string;
-
-type WeightBasis = "tranco" | "editorial_override" | "unknown" | "social_estimate" | "social_real";
-interface Article {
-  id: string; title: string; url: string;
-  source: string; publishedAt: string; sentiment: Sent; weight?: number;
-  weightBasis?: WeightBasis; weightExplain?: string;
-  enriched?: boolean;
-}
-interface EntityInfo {
-  name: string; count: number; weightedCount?: number; velocity?: number | null;
-  sentimentBreakdown: { positive: number; negative: number; neutral: number };
-  dominantSentiment: Sent;
-}
-interface NarrativeCluster {
-  label: string; icon: string; count: number; weightedCount?: number; velocity?: number | null; percentage: number;
-  dominantSentiment: Sent;
-  topArticles: Array<{ title: string; url: string; source: string }>;
-}
-interface TimelineItem { hour: string; count: number }
-interface FeedData {
-  articles: Article[]; total: number; totalAvailable: number;
-  bySource: Record<string, number>;
-  bySourceWeighted?: Record<string, number>;
-  totalWeightedReach?: number;
-  sentimentCounts: { positive: number; negative: number; neutral: number };
-  entities: EntityInfo[]; narratives: NarrativeCluster[];
-  timeline: TimelineItem[];
-  query: string; period: string; searchMode: string;
-  searchInfo: string | null; rssNote: string | null;
-  fetchedAt: string;
-}
 interface SavedSearch { label: string; chips: string[]; period: string }
 
 interface SimulationResult {
@@ -129,17 +100,23 @@ function DonutChart(p: { pos: number; neg: number; neu: number }) {
 }
 
 // ── TimelineBar ──────────────────────────────────────────────────
-function TimelineBar(p: { data: TimelineItem[] }) {
+// Opcjonalny sentimentByHour dokłada cienki pasek składu sentymentu pod
+// słupkiem wolumenu — ta sama oś X (klucz "HH:00"), liczona client-side
+// w lib/dashboard-briefing.ts z tego samego zbioru artykułów, więc jest
+// spójna 1:1 z liczbami w panelu "Sentyment".
+function TimelineBar(p: { data: TimelineItem[]; sentimentByHour?: Map<string, { positive: number; negative: number; neutral: number }> }) {
   if (!p.data || p.data.length === 0) {
     return <div style={{ height: 80, display: "flex", alignItems: "center", color: "#94a3b8", fontSize: 12 }}>Brak danych osi czasu</div>;
   }
   const maxVal = Math.max(...p.data.map(function (d) { return d.count; }), 1);
   const showEvery = Math.max(1, Math.ceil(p.data.length / 10));
   return (
-    <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 88, width: "100%" }}>
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 96, width: "100%" }}>
       {p.data.map(function (item, idx) {
         const h = Math.max(4, Math.round((item.count / maxVal) * 60));
         const showLabel = (idx % showEvery === 0) || idx === p.data.length - 1;
+        const sb = p.sentimentByHour?.get(item.hour);
+        const sbTotal = sb ? sb.positive + sb.negative + sb.neutral : 0;
         return (
           <div key={item.hour} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
             <span style={{ fontSize: 8, color: "#94a3b8", marginBottom: 1 }}>{item.count > 0 ? item.count : ""}</span>
@@ -152,6 +129,13 @@ function TimelineBar(p: { data: TimelineItem[] }) {
                 boxShadow: item.count > 0 ? "0 0 10px rgba(56,189,248,0.35)" : "none",
               }}
             />
+            {sb && sbTotal > 0 && (
+              <div title={`sentyment o ${item.hour}: ${sb.positive} poz / ${sb.negative} neg / ${sb.neutral} neu`} style={{ display: "flex", width: "100%", height: 3, borderRadius: 1, overflow: "hidden" }}>
+                <div style={{ flex: sb.positive / sbTotal, background: "#4ade80", minWidth: sb.positive > 0 ? 1 : 0 }} />
+                <div style={{ flex: sb.negative / sbTotal, background: "#f87171", minWidth: sb.negative > 0 ? 1 : 0 }} />
+                <div style={{ flex: sb.neutral / sbTotal, background: "#475569", minWidth: sb.neutral > 0 ? 1 : 0 }} />
+              </div>
+            )}
             <span style={{ fontSize: 8, color: showLabel ? "#94a3b8" : "transparent", whiteSpace: "nowrap", marginTop: 2 }}>
               {item.hour}
             </span>
@@ -164,13 +148,15 @@ function TimelineBar(p: { data: TimelineItem[] }) {
 
 // ── ColumnChart ──────────────────────────────────────────────────
 function ColumnChart(p: { data: Record<string, number> }) {
-  const entries = Object.entries(p.data);
+  const entries = Object.entries(p.data).sort(function (a, b) { return b[1] - a[1]; });
   if (!entries.length) return <div style={{ color: "#94a3b8", fontSize: 12 }}>Brak danych</div>;
   const maxVal = Math.max(...entries.map(function (e) { return e[1]; }), 1);
+  const total = entries.reduce(function (s, e) { return s + e[1]; }, 0) || 1;
   return (
-    <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 72 }}>
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 78 }}>
       {entries.map(function (entry) {
-        const h = Math.max(4, Math.round((entry[1] / maxVal) * 60));
+        const h = Math.max(4, Math.round((entry[1] / maxVal) * 56));
+        const share = Math.round((entry[1] / total) * 100);
         return (
           <div key={entry[0]} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
             <span style={{ fontSize: 9, color: "#94a3b8" }}>{entry[1]}</span>
@@ -178,6 +164,7 @@ function ColumnChart(p: { data: Record<string, number> }) {
             <span style={{ fontSize: 8, color: "#64748b", whiteSpace: "nowrap", overflow: "hidden", maxWidth: 38, textOverflow: "ellipsis" }}>
               {entry[0]}
             </span>
+            <span style={{ fontSize: 8, color: "#a78bfa", fontWeight: 700 }}>{share}%</span>
           </div>
         );
       })}
@@ -215,12 +202,16 @@ function NarrativeBar(p: { cluster: NarrativeCluster; selected: boolean; onClick
 }
 
 // ── EntityRow ─────────────────────────────────────────────────────
-function EntityRow(p: { entity: EntityInfo; maxCount: number; selected: boolean; onClick: () => void }) {
+// narrativeTags: wynik narrativesForEntity() z lib/dashboard-briefing.ts —
+// sygnał częściowy (dopasowanie po topArticles danej narracji), nie pełna
+// klasyfikacja, stąd opisane w UI jako "m.in." (patrz komentarz w funkcji).
+function EntityRow(p: { entity: EntityInfo; maxCount: number; selected: boolean; onClick: () => void; narrativeTags?: string[] }) {
   const color = SENT_COLOR[p.entity.dominantSentiment];
   const bg    = SENT_BG[p.entity.dominantSentiment];
   const pct   = Math.round((p.entity.count / p.maxCount) * 100);
   const sb    = p.entity.sentimentBreakdown;
   const sbTotal = (sb.positive + sb.negative + sb.neutral) || 1;
+  const tags  = p.narrativeTags ?? [];
   return (
     <div
       onClick={p.onClick}
@@ -249,6 +240,19 @@ function EntityRow(p: { entity: EntityInfo; maxCount: number; selected: boolean;
       <div style={{ height: 3, background: "rgba(255,255,255,0.07)", borderRadius: 2, marginTop: 3, overflow: "hidden" }}>
         <div style={{ height: "100%", width: pct + "%", background: color }} />
       </div>
+      {tags.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 5 }}>
+          <span style={{ fontSize: 9, color: "#64748b" }}>w narracjach m.in.:</span>
+          {tags.slice(0, 3).map(function (t) {
+            return (
+              <span key={t} style={{ fontSize: 9.5, fontWeight: 600, color: "#7dd3fc", background: "rgba(56,189,248,0.1)", border: "1px solid rgba(56,189,248,0.25)", borderRadius: 8, padding: "1px 7px" }}>
+                {t}
+              </span>
+            );
+          })}
+          {tags.length > 3 && <span style={{ fontSize: 9, color: "#64748b" }}>+{tags.length - 3}</span>}
+        </div>
+      )}
     </div>
   );
 }
@@ -626,13 +630,21 @@ export default function DashboardPage() {
       <Panel title="Sentyment" subtitle={data.total + " wyników"}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
           <DonutChart pos={data.sentimentCounts.positive} neg={data.sentimentCounts.negative} neu={data.sentimentCounts.neutral} />
-          <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 4 }}>
+          <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 5 }}>
             {(["positive", "negative", "neutral"] as const).map(function (s) {
+              const tot = data.sentimentCounts.positive + data.sentimentCounts.negative + data.sentimentCounts.neutral || 1;
+              const pctS = Math.round((data.sentimentCounts[s] / tot) * 100);
               return (
-                <div key={s} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <div style={{ width: 7, height: 7, borderRadius: "50%", background: SENT_COLOR[s], flexShrink: 0 }} />
-                  <span style={{ fontSize: 11, color: "#94a3b8", flex: 1 }}>{SENT_LABEL[s]}</span>
-                  <span style={{ fontSize: 12, color: SENT_COLOR[s], fontWeight: 700 }}>{data.sentimentCounts[s]}</span>
+                <div key={s} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: SENT_COLOR[s], flexShrink: 0 }} />
+                    <span style={{ fontSize: 11, color: "#94a3b8", flex: 1 }}>{SENT_LABEL[s]}</span>
+                    <span style={{ fontSize: 10.5, color: "#64748b" }}>{pctS}%</span>
+                    <span style={{ fontSize: 12, color: SENT_COLOR[s], fontWeight: 700, minWidth: 22, textAlign: "right" }}>{data.sentimentCounts[s]}</span>
+                  </div>
+                  <div style={{ height: 3, borderRadius: 2, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: pctS + "%", background: SENT_COLOR[s] }} />
+                  </div>
                 </div>
               );
             })}
@@ -644,9 +656,12 @@ export default function DashboardPage() {
 
   function renderTimeline(highlight?: boolean) {
     if (!data) return null;
+    const sentByHour = new Map(computeSentimentTimeline(data.articles).map(function (pt) {
+      return [pt.hour, { positive: pt.positive, negative: pt.negative, neutral: pt.neutral }] as const;
+    }));
     return (
-      <Panel title="Oś czasu" subtitle="Artykuły wg godziny publikacji" highlight={highlight}>
-        <TimelineBar data={data.timeline} />
+      <Panel title="Oś czasu" subtitle="Wolumen i skład sentymentu wg godziny publikacji" highlight={highlight}>
+        <TimelineBar data={data.timeline} sentimentByHour={sentByHour} />
       </Panel>
     );
   }
@@ -711,6 +726,7 @@ export default function DashboardPage() {
                     maxCount={maxEntityCount}
                     selected={selEntity === entity.name}
                     onClick={function () { handleEntityClick(entity.name); }}
+                    narrativeTags={narrativesForEntity(entity.name, data.narratives)}
                   />
                 );
               })}
@@ -840,6 +856,10 @@ export default function DashboardPage() {
           <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.08em", color: "#86efac" }}>NA ŻYWO</span>
         </div>
       </div>
+
+      {/* Bryfing sytuacyjny — deterministyczna synteza tego, co silnik już
+          policzył (sentyment, narracje, momentum); patrz lib/dashboard-briefing.ts */}
+      {data && <BriefingHero data={data} />}
 
       {/* Status bar */}
       {data && (
