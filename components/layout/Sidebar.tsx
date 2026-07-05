@@ -4,16 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import {
-  LayoutDashboard, Radio, TrendingUp, Network, FileText, Settings, X, ArrowLeft,
+  LayoutDashboard, Radio, TrendingUp, Network, FileText, Settings, X, ArrowLeft, Radar,
 } from "lucide-react";
 import { clsx } from "clsx";
 
 const NAV_ITEMS = [
-  { href: "/dashboard",  icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/monitoring", icon: Radio,            label: "Projekty" },
-  { href: "/trends",     icon: TrendingUp,       label: "Trendy" },
-  { href: "/network",    icon: Network,          label: "Źródła" },
-  { href: "/reports",    icon: FileText,         label: "Raporty" },
+  { href: "/dashboard",     icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/reaction-lab",  icon: Radar,            label: "Symulator Reakcji" },
+  { href: "/monitoring",    icon: Radio,            label: "Projekty" },
+  { href: "/trends",        icon: TrendingUp,       label: "Trendy" },
+  { href: "/network",       icon: Network,          label: "Źródła" },
+  { href: "/reports",       icon: FileText,         label: "Raporty" },
 ];
 
 interface SidebarProps {

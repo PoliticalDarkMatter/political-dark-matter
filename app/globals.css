@@ -18,3 +18,226 @@
     @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium;
   }
 }
+
+/* ── Design system Political Dark Matter — ciemne, szklane, z głębią ────
+   Współdzielone przez dashboard Narrative Scope i Political Reaction
+   Simulator. Global (nie per-page <style>), żeby każdy nowy widok w
+   tej aplikacji mógł od razu użyć tych samych klas bez duplikacji. ── */
+
+.pdm-panel {
+  position: relative;
+  background: linear-gradient(165deg, rgba(30,41,59,0.55), rgba(8,11,20,0.7));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(56,189,248,0.14);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.06) inset,
+    0 14px 32px -12px rgba(0,0,0,0.6);
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.pdm-panel::before {
+  content: "";
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(56,189,248,0.65), rgba(167,139,250,0.65), transparent);
+  opacity: .75;
+}
+.pdm-panel::after {
+  content: "";
+  position: absolute; top: -30%; left: -10%; width: 55%; height: 70%;
+  background: radial-gradient(circle, rgba(56,189,248,0.08), transparent 70%);
+  pointer-events: none;
+}
+.pdm-panel:hover {
+  border-color: rgba(56,189,248,0.28);
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.08) inset,
+    0 18px 40px -12px rgba(0,0,0,0.65),
+    0 0 26px rgba(56,189,248,0.10);
+}
+.pdm-panel-highlight {
+  border-color: rgba(56,189,248,0.5) !important;
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.1) inset,
+    0 0 0 3px rgba(56,189,248,0.12),
+    0 0 44px rgba(56,189,248,0.16),
+    0 16px 34px -12px rgba(0,0,0,0.65) !important;
+}
+/* Warianty akcentu ryzyka dla kart werdyktu / destroy mode */
+.pdm-panel-danger { border-color: rgba(248,113,113,0.4) !important; }
+.pdm-panel-danger::before { background: linear-gradient(90deg, transparent, rgba(248,113,113,0.7), rgba(251,191,36,0.5), transparent) !important; }
+.pdm-panel-safe { border-color: rgba(74,222,128,0.4) !important; }
+.pdm-panel-safe::before { background: linear-gradient(90deg, transparent, rgba(74,222,128,0.7), rgba(56,189,248,0.5), transparent) !important; }
+
+.pdm-pill {
+  border-radius: 20px;
+  cursor: pointer;
+  transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 3px 8px rgba(0,0,0,0.35);
+}
+.pdm-pill:hover { transform: translateY(-1px); filter: brightness(1.12); }
+.pdm-pill:active { transform: translateY(1px); filter: brightness(0.95); }
+.pdm-pill-active {
+  box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 4px 16px rgba(56,189,248,0.32), 0 0 0 1px rgba(56,189,248,0.2);
+}
+
+.pdm-btn-primary {
+  position: relative;
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  border: 1px solid rgba(255,255,255,0.2);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.4) inset,
+    0 -3px 8px rgba(0,0,0,0.25) inset,
+    0 8px 20px rgba(37,99,235,0.35),
+    0 2px 5px rgba(0,0,0,0.3);
+  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+}
+.pdm-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.45) inset,
+    0 -3px 8px rgba(0,0,0,0.25) inset,
+    0 12px 28px rgba(124,58,237,0.45),
+    0 2px 6px rgba(0,0,0,0.3);
+}
+.pdm-btn-primary:active:not(:disabled) { transform: translateY(1px); filter: brightness(0.97); }
+.pdm-btn-primary:disabled { opacity: .5; cursor: default; }
+
+.pdm-btn-amber {
+  position: relative;
+  background: linear-gradient(135deg, rgba(251,191,36,0.9), rgba(217,119,6,0.85));
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.35) inset,
+    0 -3px 8px rgba(0,0,0,0.2) inset,
+    0 8px 18px rgba(217,119,6,0.3);
+  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+}
+.pdm-btn-amber:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.08); }
+.pdm-btn-amber:active:not(:disabled) { transform: translateY(1px); filter: brightness(0.97); }
+
+.pdm-btn-danger {
+  position: relative;
+  background: linear-gradient(135deg, #dc2626 0%, #7c2d12 100%);
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.3) inset,
+    0 -3px 8px rgba(0,0,0,0.25) inset,
+    0 8px 20px rgba(220,38,38,0.35);
+  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+}
+.pdm-btn-danger:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.1); }
+.pdm-btn-danger:active:not(:disabled) { transform: translateY(1px); }
+
+.pdm-btn-square {
+  transition: transform .12s ease, filter .12s ease;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset, 0 4px 14px rgba(0,0,0,0.35);
+}
+.pdm-btn-square:hover { transform: translateY(-1px); filter: brightness(1.18); }
+.pdm-btn-square:active { transform: translateY(1px); }
+
+.pdm-searchbar {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  transition: box-shadow .2s ease, border-color .2s ease;
+}
+.pdm-searchbar:focus-within {
+  border-color: rgba(56,189,248,0.5) !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.35), 0 0 0 3px rgba(56,189,248,0.12), 0 0 30px rgba(56,189,248,0.12);
+}
+
+.pdm-article-card {
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+}
+.pdm-article-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56,189,248,0.4) !important;
+  background: linear-gradient(135deg, rgba(56,189,248,0.07), rgba(255,255,255,0.02)) !important;
+  box-shadow: 0 12px 26px -10px rgba(0,0,0,0.55);
+}
+
+.pdm-strip {
+  position: relative;
+  background: linear-gradient(165deg, rgba(30,41,59,0.5), rgba(8,11,20,0.6));
+  box-shadow: 0 10px 24px -12px rgba(0,0,0,0.55);
+  transition: border-color .18s ease;
+}
+
+.pdm-live-pill {
+  background: linear-gradient(135deg, rgba(74,222,128,0.14), rgba(15,23,42,0.4));
+  border: 1px solid rgba(74,222,128,0.3);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset, 0 4px 14px rgba(0,0,0,0.3);
+}
+.pdm-live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 8px rgba(74,222,128,0.9);
+  animation: pdm-live-pulse 1.8s ease-in-out infinite;
+}
+@keyframes pdm-live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+
+/* ── Political Reaction Simulator — dodatkowe klasy war roomu ────── */
+.pdm-hero-title {
+  margin: 0; font-weight: 900; letter-spacing: -0.02em;
+  background-image: linear-gradient(90deg, #60a5fa, #93c5fd, #c4b5fd);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.pdm-kicker {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.32em; text-transform: uppercase;
+  color: rgba(94,184,240,0.67); margin-bottom: 3px;
+}
+
+.pdm-scan-sweep {
+  position: relative; overflow: hidden;
+}
+.pdm-scan-sweep::after {
+  content: ""; position: absolute; top: 0; left: -60%; width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(56,189,248,0.16), transparent);
+  animation: pdm-scan-move 1.8s ease-in-out infinite;
+}
+@keyframes pdm-scan-move {
+  0% { left: -60%; }
+  100% { left: 100%; }
+}
+
+.pdm-stage-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.pdm-stage-dot-wait { background: rgba(148,163,184,0.35); }
+.pdm-stage-dot-run { background: #38bdf8; box-shadow: 0 0 8px rgba(56,189,248,0.9); animation: pdm-live-pulse 1.2s ease-in-out infinite; }
+.pdm-stage-dot-done { background: #4ade80; box-shadow: 0 0 6px rgba(74,222,128,0.7); }
+.pdm-stage-dot-fallback { background: #fbbf24; box-shadow: 0 0 6px rgba(251,191,36,0.7); }
+.pdm-stage-dot-error { background: #f87171; box-shadow: 0 0 6px rgba(248,113,113,0.7); }
+
+.pdm-risk-track { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.06); overflow: hidden; position: relative; }
+.pdm-risk-fill { height: 100%; border-radius: 4px; transition: width .5s ease; }
+
+.pdm-heat-cell {
+  border-radius: 10px; padding: 10px 12px; position: relative;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(148,163,184,0.12);
+  transition: transform .15s ease, border-color .15s ease;
+}
+.pdm-heat-cell:hover { transform: translateY(-2px); border-color: rgba(56,189,248,0.35); }
+
+.pdm-mode-tab {
+  border-radius: 10px; cursor: pointer; text-align: left;
+  transition: transform .12s ease, filter .12s ease, background .15s ease, border-color .15s ease;
+}
+.pdm-mode-tab:hover { transform: translateX(2px); }
+
+.pdm-variant-card {
+  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.pdm-variant-card:hover { transform: translateY(-3px); }
+.pdm-variant-recommended {
+  border-color: rgba(74,222,128,0.5) !important;
+  box-shadow: 0 0 0 2px rgba(74,222,128,0.12), 0 14px 30px -10px rgba(0,0,0,0.6) !important;
+}
+
+.pdm-timeline-node {
+  width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid rgba(56,189,248,0.5); background: rgba(15,23,42,0.9);
+}
+.pdm-timeline-line { width: 2px; flex: 1; background: linear-gradient(180deg, rgba(56,189,248,0.4), rgba(167,139,250,0.15)); }
