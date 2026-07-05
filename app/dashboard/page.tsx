@@ -293,13 +293,13 @@ function ArticleCard(p: { article: Article }) {
       href={p.article.url}
       target="_blank"
       rel="noopener noreferrer"
+      className="pdm-article-card"
       style={{
-        display: "block", padding: "10px 12px", borderRadius: 8,
-        background: "rgba(255,255,255,0.03)", border: "1px solid rgba(148,163,184,0.1)",
-        textDecoration: "none", transition: "border-color 0.12s", marginBottom: 6,
+        display: "block", padding: "11px 13px 11px 15px", borderRadius: 10,
+        background: "linear-gradient(135deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015))",
+        border: "1px solid rgba(148,163,184,0.12)", borderLeft: "3px solid " + color + "80",
+        textDecoration: "none", marginBottom: 7,
       }}
-      onMouseEnter={function (e) { (e.currentTarget as HTMLElement).style.borderColor = "rgba(56,189,248,0.4)"; }}
-      onMouseLeave={function (e) { (e.currentTarget as HTMLElement).style.borderColor = "rgba(148,163,184,0.1)"; }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
         <span style={{ fontSize: 10, padding: "1px 7px", borderRadius: 7, background: "rgba(56,189,248,0.12)", color: "#7dd3fc", fontWeight: 600 }}>
@@ -327,25 +327,22 @@ function ArticleCard(p: { article: Article }) {
 // ── Panel ─────────────────────────────────────────────────────────
 function Panel(p: { title: string; subtitle?: string; highlight?: boolean; children: React.ReactNode; style?: React.CSSProperties }) {
   return (
-    <div style={{
-      background: "rgba(15,23,42,0.55)",
-      backdropFilter: "blur(10px)",
-      border: p.highlight ? "1px solid rgba(56,189,248,0.4)" : "1px solid rgba(56,189,248,0.12)",
-      borderRadius: 12, padding: "15px 15px 13px",
-      boxShadow: p.highlight ? "0 0 0 3px rgba(56,189,248,0.1), 0 0 30px rgba(56,189,248,0.08)" : "0 4px 20px rgba(0,0,0,0.35)",
-      ...(p.style || {}),
-    }}>
-      <div style={{ marginBottom: 10 }}>
+    <div
+      className={"pdm-panel" + (p.highlight ? " pdm-panel-highlight" : "")}
+      style={{ padding: "16px 16px 14px", ...(p.style || {}) }}
+    >
+      <div style={{ marginBottom: 11, position: "relative", zIndex: 1 }}>
         <h3 style={{
-          margin: 0, fontSize: 10, fontWeight: 700, letterSpacing: "0.07em",
+          margin: 0, fontSize: 10, fontWeight: 800, letterSpacing: "0.08em",
           textTransform: "uppercase",
           color: p.highlight ? "#7dd3fc" : "#94a3b8",
+          display: "flex", alignItems: "center", gap: 5,
         }}>
-          {p.highlight && "★ "}{p.title}
+          {p.highlight && <span style={{ color: "#facc15" }}>★</span>}{p.title}
         </h3>
-        {p.subtitle && <p style={{ margin: "2px 0 0", fontSize: 11, color: "#64748b" }}>{p.subtitle}</p>}
+        {p.subtitle && <p style={{ margin: "3px 0 0", fontSize: 11, color: "#64748b" }}>{p.subtitle}</p>}
       </div>
-      {p.children}
+      <div style={{ position: "relative", zIndex: 1 }}>{p.children}</div>
     </div>
   );
 }
@@ -821,6 +818,29 @@ export default function DashboardPage() {
   return (
     <div style={{ padding: isMobile ? "12px 12px" : "18px 24px", minHeight: "100%", fontFamily: "'Inter', system-ui, sans-serif", color: "#e2e8f0" }}>
 
+      {/* Nagłówek modułu — spójny z gradientem huba PDM */}
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.32em", textTransform: "uppercase", color: "#5eb8f0aa", marginBottom: 3 }}>
+            Political Dark Matter · Moduł 1
+          </div>
+          <h1
+            style={{
+              margin: 0, fontWeight: 900, letterSpacing: "-0.02em",
+              fontSize: isMobile ? 22 : 28, lineHeight: 1.1,
+              backgroundImage: "linear-gradient(90deg, #60a5fa, #93c5fd, #c4b5fd)",
+              WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent",
+            }}
+          >
+            Narrative Scope
+          </h1>
+        </div>
+        <div className="pdm-live-pill" style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 20 }}>
+          <span className="pdm-live-dot" />
+          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.08em", color: "#86efac" }}>NA ŻYWO</span>
+        </div>
+      </div>
+
       {/* Status bar */}
       {data && (
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -829,12 +849,13 @@ export default function DashboardPage() {
               const active = mode === m2.value;
               return (
                 <button key={m2.value} onClick={function () { setMode(m2.value); }} title={m2.desc}
+                  className={"pdm-pill" + (active ? " pdm-pill-active" : "")}
                   style={{
-                    padding: "4px 13px", borderRadius: 20,
-                    border: active ? "1px solid rgba(56,189,248,0.5)" : "1px solid rgba(148,163,184,0.2)",
-                    background: active ? "rgba(56,189,248,0.12)" : "rgba(15,23,42,0.5)",
-                    color: active ? "#7dd3fc" : "#94a3b8",
-                    fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.15s",
+                    padding: "5px 14px",
+                    border: active ? "1px solid rgba(56,189,248,0.55)" : "1px solid rgba(148,163,184,0.18)",
+                    background: active ? "linear-gradient(135deg, rgba(56,189,248,0.24), rgba(124,58,237,0.20))" : "rgba(15,23,42,0.5)",
+                    color: active ? "#bae6fd" : "#94a3b8",
+                    fontSize: 12, fontWeight: 700,
                   }}>
                   {m2.label}
                 </button>
@@ -853,11 +874,13 @@ export default function DashboardPage() {
         <div style={{ display: "flex", gap: 7, alignItems: "flex-start" }}>
           <div style={{ flex: 1, minWidth: 0, position: "relative" }}>
             <div
+              className="pdm-searchbar"
               style={{
-                background: "rgba(15,23,42,0.55)", border: "1px solid rgba(56,189,248,0.15)",
+                background: "linear-gradient(180deg, rgba(30,41,59,0.6), rgba(10,14,26,0.6))",
+                border: "1px solid rgba(56,189,248,0.18)",
                 borderRadius: 10, padding: "7px 10px",
                 display: "flex", flexWrap: "wrap", gap: 5, alignItems: "center",
-                minHeight: 44, cursor: "text", boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+                minHeight: 44, cursor: "text",
               }}
               onClick={function () { const el = document.getElementById("chip-input"); if (el) el.focus(); }}
             >
@@ -972,35 +995,34 @@ export default function DashboardPage() {
           {/* Zapisz */}
           {chips.length > 0 && (
             <button type="button" onClick={saveCurrentSearch} title="Zapisz wyszukiwanie"
+              className="pdm-btn-square"
               style={{
                 width: 44, height: 44, flexShrink: 0,
-                background: starAnim ? "rgba(234,179,8,0.12)" : "rgba(15,23,42,0.5)",
+                background: starAnim ? "linear-gradient(135deg, rgba(234,179,8,0.25), rgba(217,119,6,0.18))" : "rgba(15,23,42,0.5)",
                 border: starAnim ? "1px solid #f59e0b" : "1px solid rgba(148,163,184,0.2)",
                 borderRadius: 10, color: starAnim ? "#fbbf24" : "#94a3b8",
-                fontSize: 16, cursor: "pointer", transition: "all 0.2s",
+                fontSize: 16, cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 4px 14px rgba(0,0,0,0.3)",
               }}>⭐</button>
           )}
           {/* Wyczyść */}
           {chips.length > 0 && (
             <button type="button" onClick={clearQuery} title="Wyczyść"
+              className="pdm-btn-square"
               style={{
                 width: 44, height: 44, flexShrink: 0,
                 background: "rgba(15,23,42,0.5)", border: "1px solid rgba(148,163,184,0.2)",
                 borderRadius: 10, color: "#94a3b8", fontSize: 13, cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 4px 14px rgba(0,0,0,0.3)",
               }}>✕</button>
           )}
           {/* Analizuj */}
           <button type="submit"
+            className="pdm-btn-primary"
             style={{
-              height: 44, padding: "0 20px", flexShrink: 0,
-              background: "linear-gradient(135deg, #2563eb, #7c3aed)",
-              border: "none", borderRadius: 10,
-              color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
-              boxShadow: "0 2px 16px rgba(56,189,248,0.3)",
+              height: 44, padding: "0 22px", flexShrink: 0,
+              borderRadius: 10,
+              color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer",
               whiteSpace: "nowrap",
             }}>
             Analizuj
@@ -1024,12 +1046,13 @@ export default function DashboardPage() {
           const active = period === f.value;
           return (
             <button key={f.value} onClick={function () { handlePeriod(f.value); }}
+              className={"pdm-pill" + (active ? " pdm-pill-active" : "")}
               style={{
-                padding: "4px 11px", borderRadius: 20,
-                border: active ? "1px solid rgba(56,189,248,0.5)" : "1px solid rgba(148,163,184,0.2)",
-                background: active ? "rgba(56,189,248,0.12)" : "rgba(15,23,42,0.5)",
-                color: active ? "#7dd3fc" : "#94a3b8",
-                fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.15s",
+                padding: "5px 12px",
+                border: active ? "1px solid rgba(56,189,248,0.55)" : "1px solid rgba(148,163,184,0.18)",
+                background: active ? "linear-gradient(135deg, rgba(56,189,248,0.24), rgba(124,58,237,0.20))" : "rgba(15,23,42,0.5)",
+                color: active ? "#bae6fd" : "#94a3b8",
+                fontSize: 12, fontWeight: 700,
               }}>
               {f.label}
             </button>
@@ -1043,7 +1066,8 @@ export default function DashboardPage() {
             <input type="datetime-local" value={toTs} onChange={function (e) { setToTs(e.target.value); }}
               style={{ background: "rgba(15,23,42,0.6)", border: "1px solid rgba(148,163,184,0.25)", borderRadius: 7, padding: "4px 9px", color: "#f1f5f9", fontSize: 11, outline: "none", colorScheme: "dark" }} />
             <button onClick={function () { fetchNews(buildQuery(), "custom", fromTs, toTs, mode); }}
-              style={{ padding: "4px 11px", background: "rgba(56,189,248,0.12)", border: "1px solid rgba(56,189,248,0.5)", borderRadius: 7, color: "#7dd3fc", fontSize: 11, cursor: "pointer" }}>
+              className="pdm-pill pdm-pill-active"
+              style={{ padding: "5px 12px", background: "linear-gradient(135deg, rgba(56,189,248,0.24), rgba(124,58,237,0.20))", border: "1px solid rgba(56,189,248,0.55)", color: "#bae6fd", fontSize: 11, fontWeight: 700 }}>
               Szukaj
             </button>
           </div>
@@ -1051,7 +1075,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Analiza wypowiedzi / afery — szuka realnych artykułów po wklejonym tekście */}
-      <div style={{ marginBottom: 10, borderRadius: 12, border: "1px solid rgba(56,189,248,0.15)", background: "rgba(15,23,42,0.5)", overflow: "hidden" }}>
+      <div className="pdm-strip" style={{ marginBottom: 10, borderRadius: 12, border: "1px solid rgba(56,189,248,0.15)" }}>
         <button
           onClick={function () { setPasteOpen(function (v) { return !v; }); }}
           style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "none", border: "none", cursor: "pointer" }}
@@ -1087,10 +1111,10 @@ export default function DashboardPage() {
               <button
                 onClick={runPasteAnalysis}
                 disabled={pasteLoading || !pasteText.trim()}
+                className="pdm-btn-primary"
                 style={{
-                  padding: "7px 16px", borderRadius: 8, border: "none",
-                  background: "linear-gradient(135deg, #2563eb, #7c3aed)",
-                  color: "#fff", fontSize: 12, fontWeight: 600,
+                  padding: "8px 18px", borderRadius: 8,
+                  color: "#fff", fontSize: 12, fontWeight: 700,
                   cursor: pasteLoading ? "default" : "pointer",
                   opacity: (pasteLoading || !pasteText.trim()) ? 0.5 : 1,
                 }}
@@ -1103,7 +1127,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Symulator reakcji AI — HIPOTEZA, wyraźnie oddzielona od prawdziwych danych */}
-      <div style={{ marginBottom: 12, borderRadius: 12, border: "1px dashed rgba(251,191,36,0.35)", background: "rgba(120,53,15,0.08)", overflow: "hidden" }}>
+      <div className="pdm-strip" style={{ marginBottom: 12, borderRadius: 12, border: "1px dashed rgba(251,191,36,0.35)", background: "rgba(120,53,15,0.08)" }}>
         <button
           onClick={function () { setSimOpen(function (v) { return !v; }); }}
           style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "none", border: "none", cursor: "pointer" }}
@@ -1130,10 +1154,10 @@ export default function DashboardPage() {
               <button
                 onClick={runSimulation}
                 disabled={simLoading || !simText.trim()}
+                className="pdm-btn-amber"
                 style={{
-                  padding: "7px 16px", borderRadius: 8, border: "1px solid rgba(251,191,36,0.4)",
-                  background: "rgba(251,191,36,0.15)",
-                  color: "#fbbf24", fontSize: 12, fontWeight: 700,
+                  padding: "8px 18px", borderRadius: 8, border: "1px solid rgba(251,191,36,0.45)",
+                  color: "#fef3c7", fontSize: 12, fontWeight: 700,
                   cursor: simLoading ? "default" : "pointer",
                   opacity: (simLoading || !simText.trim()) ? 0.5 : 1,
                 }}
@@ -1230,6 +1254,152 @@ export default function DashboardPage() {
 
       {/* Panele */}
       {!loading && !hasError && renderPanels()}
+
+      <style>{`
+        /* ── Premium panel — szkło z głębią, spójne z hubem PDM ─────── */
+        .pdm-panel {
+          position: relative;
+          background: linear-gradient(165deg, rgba(30,41,59,0.55), rgba(8,11,20,0.7));
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          border: 1px solid rgba(56,189,248,0.14);
+          border-radius: 14px;
+          overflow: hidden;
+          box-shadow:
+            0 1px 0 0 rgba(255,255,255,0.06) inset,
+            0 14px 32px -12px rgba(0,0,0,0.6);
+          transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+        }
+        .pdm-panel::before {
+          content: "";
+          position: absolute; top: 0; left: 0; right: 0; height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(56,189,248,0.65), rgba(167,139,250,0.65), transparent);
+          opacity: .75;
+        }
+        .pdm-panel::after {
+          content: "";
+          position: absolute; top: -30%; left: -10%; width: 55%; height: 70%;
+          background: radial-gradient(circle, rgba(56,189,248,0.08), transparent 70%);
+          pointer-events: none;
+        }
+        .pdm-panel:hover {
+          border-color: rgba(56,189,248,0.28);
+          transform: translateY(-2px);
+          box-shadow:
+            0 1px 0 0 rgba(255,255,255,0.08) inset,
+            0 18px 40px -12px rgba(0,0,0,0.65),
+            0 0 26px rgba(56,189,248,0.10);
+        }
+        .pdm-panel-highlight {
+          border-color: rgba(56,189,248,0.5) !important;
+          box-shadow:
+            0 1px 0 0 rgba(255,255,255,0.1) inset,
+            0 0 0 3px rgba(56,189,248,0.12),
+            0 0 44px rgba(56,189,248,0.16),
+            0 16px 34px -12px rgba(0,0,0,0.65) !important;
+        }
+
+        /* ── Pigułki filtrów — z lekkim liftem 3D ───────────────────── */
+        .pdm-pill {
+          border-radius: 20px;
+          cursor: pointer;
+          transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+          box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 3px 8px rgba(0,0,0,0.35);
+        }
+        .pdm-pill:hover { transform: translateY(-1px); filter: brightness(1.12); }
+        .pdm-pill:active { transform: translateY(1px); filter: brightness(0.95); }
+        .pdm-pill-active {
+          box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 4px 16px rgba(56,189,248,0.32), 0 0 0 1px rgba(56,189,248,0.2);
+        }
+
+        /* ── Główny przycisk akcji — gradient + połysk 3D ───────────── */
+        .pdm-btn-primary {
+          position: relative;
+          background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+          border: 1px solid rgba(255,255,255,0.2);
+          box-shadow:
+            0 1px 0 rgba(255,255,255,0.4) inset,
+            0 -3px 8px rgba(0,0,0,0.25) inset,
+            0 8px 20px rgba(37,99,235,0.35),
+            0 2px 5px rgba(0,0,0,0.3);
+          transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+        }
+        .pdm-btn-primary:hover:not(:disabled) {
+          transform: translateY(-1px);
+          filter: brightness(1.08);
+          box-shadow:
+            0 1px 0 rgba(255,255,255,0.45) inset,
+            0 -3px 8px rgba(0,0,0,0.25) inset,
+            0 12px 28px rgba(124,58,237,0.45),
+            0 2px 6px rgba(0,0,0,0.3);
+        }
+        .pdm-btn-primary:active:not(:disabled) { transform: translateY(1px); filter: brightness(0.97); }
+
+        .pdm-btn-amber {
+          position: relative;
+          background: linear-gradient(135deg, rgba(251,191,36,0.9), rgba(217,119,6,0.85));
+          box-shadow:
+            0 1px 0 rgba(255,255,255,0.35) inset,
+            0 -3px 8px rgba(0,0,0,0.2) inset,
+            0 8px 18px rgba(217,119,6,0.3);
+          transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+        }
+        .pdm-btn-amber:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.08); }
+        .pdm-btn-amber:active:not(:disabled) { transform: translateY(1px); filter: brightness(0.97); }
+
+        .pdm-btn-square {
+          transition: transform .12s ease, filter .12s ease;
+          box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset, 0 4px 14px rgba(0,0,0,0.35);
+        }
+        .pdm-btn-square:hover { transform: translateY(-1px); filter: brightness(1.18); }
+        .pdm-btn-square:active { transform: translateY(1px); }
+
+        /* ── Pasek wyszukiwania — poświata przy fokusie ─────────────── */
+        .pdm-searchbar {
+          box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+          transition: box-shadow .2s ease, border-color .2s ease;
+        }
+        .pdm-searchbar:focus-within {
+          border-color: rgba(56,189,248,0.5) !important;
+          box-shadow: 0 4px 24px rgba(0,0,0,0.35), 0 0 0 3px rgba(56,189,248,0.12), 0 0 30px rgba(56,189,248,0.12);
+        }
+
+        /* ── Karta artykułu — lift przy hover, akcent po lewej ──────── */
+        .pdm-article-card {
+          transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+        }
+        .pdm-article-card:hover {
+          transform: translateY(-2px);
+          border-color: rgba(56,189,248,0.4) !important;
+          background: linear-gradient(135deg, rgba(56,189,248,0.07), rgba(255,255,255,0.02)) !important;
+          box-shadow: 0 12px 26px -10px rgba(0,0,0,0.55);
+        }
+
+        /* ── Paski rozwijane (analiza wypowiedzi / symulator) ───────── */
+        .pdm-strip {
+          position: relative;
+          background: linear-gradient(165deg, rgba(30,41,59,0.5), rgba(8,11,20,0.6));
+          box-shadow: 0 10px 24px -12px rgba(0,0,0,0.55);
+          transition: border-color .18s ease;
+        }
+
+        /* ── Wskaźnik „na żywo" w nagłówku modułu ───────────────────── */
+        .pdm-live-pill {
+          background: linear-gradient(135deg, rgba(74,222,128,0.14), rgba(15,23,42,0.4));
+          border: 1px solid rgba(74,222,128,0.3);
+          box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset, 0 4px 14px rgba(0,0,0,0.3);
+        }
+        .pdm-live-dot {
+          width: 7px; height: 7px; border-radius: 50%;
+          background: #4ade80;
+          box-shadow: 0 0 8px rgba(74,222,128,0.9);
+          animation: pdm-live-pulse 1.8s ease-in-out infinite;
+        }
+        @keyframes pdm-live-pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.3); }
+        }
+      `}</style>
     </div>
   );
 }
