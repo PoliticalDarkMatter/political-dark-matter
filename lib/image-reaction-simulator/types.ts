@@ -233,6 +233,21 @@ export interface ImageStrategicRecommendation {
   firstCounterAttack: string;
 }
 
+// ── Precedensy wizualne — "reakcje historyczne na podobne zdjęcia" ────
+// Patrz lib/image-reaction-simulator/visual-precedents.ts: to WZORCE
+// ogólne (jak CRISIS_ARCHETYPES w module tekstowym), nie zweryfikowana
+// baza konkretnych zdarzeń — whySimilar i historicalNote mają to jawnie
+// odzwierciedlać, nigdy nie podszywać się pod udokumentowany przypadek.
+export interface VisualPrecedentMatch {
+  archetypeId: string;
+  label: string;
+  matchStrength: number; // 0-100, finalne dopasowanie (LLM, do TEGO zdjęcia)
+  whySimilar: string; // konkretnie, dlaczego TO zdjęcie pasuje do wzorca
+  typicalPattern: string;
+  typicalOutcome: string;
+  historicalNote: string; // jawne zastrzeżenie: wzorzec ogólny vs znany publiczny przykład
+}
+
 export interface ImageOverallScores {
   authenticity: number;
   empathy: number;
@@ -252,7 +267,7 @@ export interface ImageOverallScores {
 // ── Statusy etapów pipeline'u AI (10 kroków, sekcja 7.2 specyfikacji) ─
 export type ImageStageId =
   | "local_scan" | "vision_observation" | "visual_risk" | "meme_potential"
-  | "segments" | "opponents" | "media" | "caption" | "evolution" | "final";
+  | "historical_precedent" | "segments" | "opponents" | "media" | "caption" | "evolution" | "final";
 
 export type ImageStageStatus = "oczekuje" | "analizuje" | "gotowe" | "blad" | "fallback";
 
@@ -276,6 +291,7 @@ export interface ImageReactionSimulationResult {
   riskHotspots: RiskHotspot[];
   memePotential: MemePotential;
   memeScenarios: MemeScenario[];
+  visualPrecedents: VisualPrecedentMatch[];
   segmentReactions: SegmentImageReaction[];
   mediaFrames: MediaImageFrame[];
   opponentAttacks: OpponentImageAttack[];

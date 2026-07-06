@@ -25,16 +25,17 @@
 
 import { getVisionAIProvider, type VisionAIProvider } from "./ai-provider";
 import { runImageLocalScan } from "./local-scan";
+import { matchVisualPrecedents } from "./visual-precedents";
 import {
-  buildCaptionPrompt, buildEvolutionPrompt, buildFinalPrompt, buildMediaPrompt,
+  buildCaptionPrompt, buildEvolutionPrompt, buildFinalPrompt, buildHistoricalPrecedentPrompt, buildMediaPrompt,
   buildMemePrompt, buildObservationPrompt, buildOpponentsPrompt, buildRiskPrompt, buildSegmentsPrompt,
 } from "./prompts";
 import {
-  extractJson, validateCaption, validateEvolution, validateFinal, validateMedia,
+  extractJson, validateCaption, validateEvolution, validateFinal, validateHistoricalPrecedent, validateMedia,
   validateMeme, validateObservation, validateOpponents, validateRisk, validateSegments,
 } from "./validate";
 import {
-  mockCaption, mockEvolution, mockFinal, mockMedia, mockMeme, mockObservation, mockOpponents, mockRisk, mockSegments,
+  mockCaption, mockEvolution, mockFinal, mockHistoricalPrecedent, mockMedia, mockMeme, mockObservation, mockOpponents, mockRisk, mockSegments,
 } from "./mock-generators";
 import type {
   ImageReactionSimulationResult, ImageSimulationInput, ImageStageEvent, ImageStageId,
@@ -45,6 +46,7 @@ const STAGE_LABELS: Record<ImageStageId, string> = {
   vision_observation: "Vision Observation",
   visual_risk: "Visual Risk Engine",
   meme_potential: "Meme Potential Engine",
+  historical_precedent: "Visual Precedent Engine",
   segments: "Segment Simulation",
   opponents: "Opponent Room",
   media: "Media Room",
@@ -71,6 +73,7 @@ function hashKey(input: ImageSimulationInput): string {
 function digestForFinal(parts: {
   risk: ReturnType<typeof mockRisk>;
   meme: ReturnType<typeof mockMeme>;
+  precedents: ReturnType<typeof mockHistoricalPrecedent>;
   segments: ReturnType<typeof mockSegments>;
   opponents: ReturnType<typeof mockOpponents>;
   media: ReturnType<typeof mockMedia>;
@@ -83,9 +86,11 @@ function digestForFinal(parts: {
   const worstMedia = parts.media.filter((m) => m.negativeUseRisk === "wysokie");
   const bestCaption = parts.caption.captionRecommendations.find((c) => c.disarmsRisk) ?? parts.caption.captionRecommendations[0];
   const peakEvolution = [...parts.evolution].sort((a, b) => b.intensity - a.intensity)[0];
+  const topPrecedent = [...parts.precedents].sort((a, b) => b.matchStrength - a.matchStrength)[0];
   return [
     `Najsilniejsze ryzyka wizualne: ${worstRisks.map((r) => `${r.label} (${r.score}/100): ${r.reason}`).join("; ") || "brak danych"}.`,
     `Potencjał memiczny: ${parts.meme.memePotential.isMemeable ? `TAK (${parts.meme.memePotential.score}/100) — ${parts.meme.memePotential.mostMemeableElement}` : "niski"}.`,
+    `Najbliższy wzorzec wizualny (precedens): ${topPrecedent ? `${topPrecedent.label} (dopasowanie ${topPrecedent.matchStrength}/100) — zwykle: ${topPrecedent.typicalOutcome}` : "brak wyraźnego dopasowania do znanych wzorców"}.`,
     `Najbardziej narażone segmenty: ${worstSegments.map((s) => `${s.segment} (ryzyko ${s.risk}/100, ${s.strengthensOrWeakens})`).join("; ") || "brak danych"}.`,
     `Najsilniejsze ataki przeciwników: ${worstAttacks.map((a) => `${a.vector}: ${a.attack}`).join(" | ") || "brak danych"}.`,
     `Media wysokiego ryzyka negatywnego wykorzystania: ${worstMedia.map((m) => m.category).join(", ") || "brak"}.`,
@@ -129,10 +134,6 @@ export async function runImageOrchestration(
     onEvent({ stage: "vision_observation", status: "gotowe", label: STAGE_LABELS.vision_observation });
   }
 
-  // ── Kroki 3-9: siedem wywołań LLM równolegle, na tekście ──────────
-  const parallelStages: ImageStageId[] = ["visual_risk", "meme_potential", "segments", "opponents", "media", "caption", "evolution"];
-  for (const s of parallelStages) onEvent({ stage: s, status: "analizuje", label: STAGE_LABELS[s] });
-
   async function runStage<T>(
     stage: ImageStageId,
     prompt: string,
@@ -153,9 +154,20 @@ export async function runImageOrchestration(
     return mocked;
   }
 
-  const [risk, meme, segments, opponents, media, caption, evolution] = await Promise.all([
-    runStage("visual_risk", buildRiskPrompt(input, localScan, observation), validateRisk, mockRisk, 2600),
+  // ── Krok 3: Visual Risk — osobno na starcie, bo historical_precedent
+  // (poniżej) potrzebuje jego wyniku (visualRiskFactors) do dopasowania
+  // lokalnego, zanim w ogóle zapyta LLM.
+  onEvent({ stage: "visual_risk", status: "analizuje", label: STAGE_LABELS.visual_risk });
+  const risk = await runStage("visual_risk", buildRiskPrompt(input, localScan, observation), validateRisk, mockRisk, 2600);
+
+  // ── Kroki 4-9: sześć wywołań LLM równolegle, na tekście ───────────
+  const candidates = matchVisualPrecedents(observation, risk.visualRiskFactors);
+  const parallelStages: ImageStageId[] = ["meme_potential", "historical_precedent", "segments", "opponents", "media", "caption", "evolution"];
+  for (const s of parallelStages) onEvent({ stage: s, status: "analizuje", label: STAGE_LABELS[s] });
+
+  const [meme, historicalPrecedent, segments, opponents, media, caption, evolution] = await Promise.all([
     runStage("meme_potential", buildMemePrompt(input, localScan, observation), validateMeme, mockMeme, 2200),
+    runStage("historical_precedent", buildHistoricalPrecedentPrompt(input, localScan, observation, candidates), validateHistoricalPrecedent, () => mockHistoricalPrecedent(candidates), 1800),
     runStage("segments", buildSegmentsPrompt(input, localScan, observation), validateSegments, mockSegments, 3400),
     runStage("opponents", buildOpponentsPrompt(input, localScan, observation), validateOpponents, mockOpponents, 2200),
     runStage("media", buildMediaPrompt(input, localScan, observation), validateMedia, mockMedia, 2600),
@@ -165,7 +177,7 @@ export async function runImageOrchestration(
 
   // ── Krok 10: Final Recommendation — sekwencyjnie, po digest'cie ───
   onEvent({ stage: "final", status: "analizuje", label: STAGE_LABELS.final });
-  const digest = digestForFinal({ risk, meme, segments, opponents, media, caption, evolution });
+  const digest = digestForFinal({ risk, meme, precedents: historicalPrecedent, segments, opponents, media, caption, evolution });
   const finalRaw = provider.isReal
     ? await provider.generateText(buildFinalPrompt(input, localScan, observation, digest), { maxTokens: 1800 })
     : null;
@@ -193,6 +205,7 @@ export async function runImageOrchestration(
     riskHotspots: risk.riskHotspots,
     memePotential: meme.memePotential,
     memeScenarios: meme.memeScenarios,
+    visualPrecedents: historicalPrecedent,
     segmentReactions: segments,
     mediaFrames: media,
     opponentAttacks: opponents,

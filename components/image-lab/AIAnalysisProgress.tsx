@@ -7,6 +7,7 @@ const STAGE_ORDER: Array<{ id: ImageStageId; label: string }> = [
   { id: "vision_observation", label: "Vision Observation" },
   { id: "visual_risk", label: "Visual Risk Engine" },
   { id: "meme_potential", label: "Meme Potential Engine" },
+  { id: "historical_precedent", label: "Visual Precedent Engine" },
   { id: "segments", label: "Segment Simulation" },
   { id: "opponents", label: "Opponent Room" },
   { id: "media", label: "Media Room" },

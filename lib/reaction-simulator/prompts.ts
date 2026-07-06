@@ -1,4 +1,5 @@
 import { AUDIENCE_SEGMENTS, CRISIS_ARCHETYPES } from "./mock-data";
+import { effectiveText } from "./local-scan";
 import type { LocalScanResult, SimulationInput } from "./types";
 
 // ── Biblioteka promptów — Political Reaction Simulator ────────────────
@@ -18,9 +19,38 @@ const SHARED_RULES = `Zasady, których musisz przestrzegać zawsze:
 - Bądź konkretny i bezlitosny. To ma pomóc przed publikacją, nie pocieszyć po fakcie.
 - Zwracaj WYŁĄCZNIE czysty JSON, bez markdown, bez bloków kodu, bez komentarzy przed lub po.`;
 
+// ── Framing zależny od trybu wprowadzania ─────────────────────────────
+// To jedyne miejsce, gdzie tryb realnie wpływa na to, co model dostaje —
+// reszta pipeline'u (7 promptów, walidacja, typy wyniku) jest identyczna
+// dla wszystkich czterech trybów. "wydarzenie_zaistniale" ma inny cel
+// analizy (co robić DALEJ, nie czy publikować), więc werdykt i
+// rekomendacja mają być interpretowane w tym duchu — bez zmiany schematu
+// JSON, tylko przez instrukcję w prompt-cie.
+function modeIntro(input: SimulationInput): string {
+  switch (input.inputMode) {
+    case "wydarzenie_planowane":
+      return "Testowany materiał to PLANOWANE DZIAŁANIE LUB DECYZJA, jeszcze nieogłoszone i niewykonane. Oceniasz konsekwencje, zanim cokolwiek się stanie.";
+    case "watek":
+      return "Testowany materiał to SERIA/WĄTEK powiązanych wypowiedzi, jeszcze nieopublikowanych — oceniasz je jako całość, nie osobno.";
+    case "wydarzenie_zaistniale":
+      return "Testowany materiał to WYDARZENIE LUB WYPOWIEDŹ, KTÓRE JUŻ ZAISTNIAŁY. Pytanie nie brzmi \"czy publikować\", tylko \"jak reagować dalej\" — werdykt i rekomendacja mają być przeformułowane w tym duchu (np. zamiast \"publikować\" — \"utrzymać kurs / nie komentować dalej\", zamiast \"nie publikować\" — \"pilnie zareagować / sprostować\").";
+    case "wypowiedz":
+    default:
+      return "Testowany materiał to pojedyncza wypowiedź/cytat, jeszcze nieopublikowany.";
+  }
+}
+
 function contextBlock(input: SimulationInput, localScan: LocalScanResult): string {
+  const combined = effectiveText(input);
   const lines = [
-    `Treść (draft): """${input.text.slice(0, 3000)}"""`,
+    modeIntro(input),
+    `Treść (draft): """${combined.slice(0, 3000)}"""`,
+    input.inputMode === "wydarzenie_planowane" && input.eventTiming && `Kiedy ma się to stać: ${input.eventTiming}`,
+    input.inputMode === "wydarzenie_planowane" && input.eventStakeholders && `Kogo dotyczy: ${input.eventStakeholders}`,
+    input.inputMode === "wydarzenie_zaistniale" && input.eventTiming && `Kiedy się to stało: ${input.eventTiming}`,
+    input.inputMode === "wydarzenie_zaistniale" && input.eventStakeholders && `Kogo dotyczy: ${input.eventStakeholders}`,
+    input.inputMode === "wydarzenie_zaistniale" && input.priorReaction && `Dotychczasowa reakcja (jeśli już coś wiadomo): ${input.priorReaction}`,
+    input.inputMode === "wydarzenie_zaistniale" && input.analysisGoal && `Co nadawca chce ustalić: ${input.analysisGoal}`,
     input.topic && `Temat: ${input.topic}`,
     input.format && `Format: ${input.format}`,
     input.situation && `Sytuacja: ${input.situation}`,

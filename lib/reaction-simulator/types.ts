@@ -32,8 +32,25 @@ export type Topic =
   | "gospodarka" | "migracja" | "zdrowie" | "edukacja" | "bezpieczenstwo"
   | "klimat" | "kosciol" | "obyczaje" | "wojna" | "podatki" | "samorzad" | "kryzys";
 
+// ── Tryby wprowadzania (sekcja "różne opcje wpisywania w zależności od
+// charakteru", zgłoszenie Jana 2026-07-06) ────────────────────────────
+// Cztery różne "kształty" tego, co można testować — nie każdy przekaz
+// to pojedynczy cytat. Każdy tryb ma swoje dodatkowe pola (patrz niżej),
+// ale wszystkie płyną przez ten sam pipeline: local-scan liczy po
+// tekście efektywnym (patrz effectiveText w local-scan.ts), prompty
+// dostosowują framing zadania (patrz modeIntro w prompts.ts), a kształt
+// wyniku (ReactionSimulationResult) zostaje identyczny we wszystkich
+// trybach — to reprezentacja WEJŚCIA się różni, nie architektura AI.
+export type InputMode = "wypowiedz" | "wydarzenie_planowane" | "watek" | "wydarzenie_zaistniale";
+
 export interface SimulationInput {
-  text: string;
+  inputMode: InputMode;
+  text: string; // znaczenie zależne od trybu: cytat / opis planowanego działania / pierwszy element wątku / opis zaistniałego zdarzenia
+  threadItems: string[]; // tryb "watek": kolejne elementy serii poza `text`; puste w innych trybach
+  eventTiming: string; // tryb "wydarzenie_planowane"/"wydarzenie_zaistniale": kiedy się stanie/stało
+  eventStakeholders: string; // tryb "wydarzenie_planowane"/"wydarzenie_zaistniale": kogo dotyczy / kto jest zaangażowany
+  priorReaction: string; // tryb "wydarzenie_zaistniale": co się już wydarzyło w reakcji, jeśli wiadomo (opcjonalnie)
+  analysisGoal: string; // tryb "wydarzenie_zaistniale": co chcemy ustalić (np. "czy reagować", "jak zamknąć temat")
   topic: Topic | "";
   format: CommFormat | "";
   situation: CommSituation | "";

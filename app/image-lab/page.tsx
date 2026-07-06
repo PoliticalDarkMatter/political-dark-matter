@@ -10,6 +10,7 @@ import { VerdictCard } from "@/components/image-lab/VerdictCard";
 import { ImagePreviewHotspots } from "@/components/image-lab/ImagePreviewHotspots";
 import { VisualRiskScores } from "@/components/image-lab/VisualRiskScores";
 import { MemePotentialPanel } from "@/components/image-lab/MemePotentialPanel";
+import { VisualPrecedentPanel } from "@/components/image-lab/VisualPrecedentPanel";
 import { SegmentImageHeatmap } from "@/components/image-lab/SegmentImageHeatmap";
 import { OpponentImageRoom } from "@/components/image-lab/OpponentImageRoom";
 import { MediaImageRoom } from "@/components/image-lab/MediaImageRoom";
@@ -168,6 +169,10 @@ export default function ImageLabPage() {
 
             {(showAll || mode === "meme") && (
               <MemePotentialPanel potential={result.memePotential} scenarios={result.memeScenarios} />
+            )}
+
+            {(showAll || mode === "meme") && (
+              <VisualPrecedentPanel precedents={result.visualPrecedents} />
             )}
 
             {(showAll || mode === "segments") && (

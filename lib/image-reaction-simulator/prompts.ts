@@ -1,4 +1,5 @@
 import { ALL_ATTACK_VECTORS, ALL_CAPTION_TYPES, ALL_VISUAL_RISK_FACTORS, EVOLUTION_WINDOWS, IMAGE_AUDIENCE_SEGMENTS, OPPONENT_VECTOR_LABELS, VISUAL_RISK_FACTOR_LABELS } from "./mock-data";
+import type { PrecedentCandidate } from "./visual-precedents";
 import type { ImageLocalScanResult, ImageObservation, ImageSimulationInput } from "./types";
 
 // ── Biblioteka promptów — Political Image Reaction Simulator ─────────
@@ -120,6 +121,38 @@ Zwróć JSON:
   ]
 }
 Podaj 4-6 pozycji w memeScenarios, różnorodnych formatowo.`;
+}
+
+// ── Krok: Historical Precedent — "reakcje historyczne na podobne zdjęcia" ─
+// KRYTYCZNE dla zasady "zero halucynacji" tego projektu: kandydaci
+// (candidates) to WZORCE OGÓLNE z lib/image-reaction-simulator/visual-precedents.ts,
+// dopasowane lokalnie i deterministycznie — nie zmyślone przez model.
+// Zadanie modelu to WYBRAĆ i UZASADNIĆ dopasowanie do TEGO zdjęcia, nie
+// wymyślać nowe, niepotwierdzone "historyczne przypadki".
+export function buildHistoricalPrecedentPrompt(
+  input: ImageSimulationInput, localScan: ImageLocalScanResult, observation: ImageObservation, candidates: PrecedentCandidate[]
+): string {
+  const candidateList = candidates.map((c) => `- "${c.archetypeId}" (${c.label}): ${c.typicalPattern} Zwykły przebieg: ${c.typicalOutcome}`).join("\n");
+  return `${SHARED_RULES}
+
+${contextBlock(input, localScan)}
+
+${observationBlock(observation)}
+
+Poniżej lista OGÓLNYCH wzorców wizualnych dopasowanych lokalnie (deterministycznie, po słowach kluczowych) do tego zdjęcia — to nie są konkretne, zweryfikowane zdarzenia historyczne, tylko nazwane, powtarzalne wzorce z polityki wizualnej:
+${candidateList || "(brak silnych dopasowań lokalnych — oceń samodzielnie na podstawie obserwacji, czy któryś ogólny wzorzec pasuje)"}
+
+Zadanie: dla każdego wzorca, który TWOIM ZDANIEM realnie pasuje do TEGO zdjęcia, wyjaśnij dlaczego — konkretnie, odwołując się do elementów z obserwacji wizualnej (nie ogólnikowo). Odrzuć wzorce, które nie pasują.
+
+ZASADA KRYTYCZNA: NIE WYMYŚLAJ konkretnych, nazwanych zdarzeń historycznych, dat, nazwisk polityków ani źródeł. Opisuj WZORZEC (typ sytuacji, który wielokrotnie się powtarzał w polityce), a nie rzekomy konkretny przypadek. Jeśli chcesz odwołać się do bardzo znanego, powszechnie rozpoznawalnego przykładu (bez wymyślania szczegółów) — zaznacz to wprost jako "ogólnie znany przykład", nigdy jako zweryfikowane źródło.
+
+Zwróć JSON:
+{
+  "visualPrecedents": [
+    {"archetypeId": "dokładnie taki sam identyfikator jak w liście kandydatów powyżej", "matchStrength": 0-100, "whySimilar": "konkretnie, dlaczego TO zdjęcie pasuje do tego wzorca", "typicalPattern": "przepisz albo doprecyzuj opis wzorca", "typicalOutcome": "przepisz albo doprecyzuj typowy przebieg", "historicalNote": "jawne zastrzeżenie, np. 'wzorzec ogólny, nie konkretny udokumentowany przypadek' albo, jeśli faktycznie nawiązujesz do bardzo znanego przykładu, 'nawiązanie do ogólnie znanego, publicznego przykładu, bez weryfikacji źródłowej'"}
+  ]
+}
+Podaj od 0 do 5 pozycji (tylko te, które faktycznie pasują — pusta tablica jest poprawną odpowiedzią, jeśli żaden wzorzec nie pasuje).`;
 }
 
 // ── Krok 5: Segment Simulation ────────────────────────────────────────

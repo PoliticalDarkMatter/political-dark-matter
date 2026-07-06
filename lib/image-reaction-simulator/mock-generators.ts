@@ -6,12 +6,13 @@
 // w UI jako "użyto fallbacku", nigdy cichy.
 
 import { ALL_ATTACK_VECTORS, ALL_CAPTION_TYPES, ALL_VISUAL_RISK_FACTORS, EVOLUTION_WINDOWS, IMAGE_AUDIENCE_SEGMENTS, VISUAL_RISK_FACTOR_LABELS } from "./mock-data";
+import type { PrecedentCandidate } from "./visual-precedents";
 import type {
   CaptionStageData, FinalStageData, MemeStageData, RiskStageData,
 } from "./validate";
 import type {
   ImageEvolutionStage, ImageLocalScanResult, ImageObservation, MediaImageFrame,
-  OpponentImageAttack, SegmentImageReaction,
+  OpponentImageAttack, SegmentImageReaction, VisualPrecedentMatch,
 } from "./types";
 
 export function mockObservation(scan: ImageLocalScanResult): ImageObservation {
@@ -54,6 +55,23 @@ export function mockMeme(): MemeStageData {
     },
     memeScenarios: [],
   };
+}
+
+// Fallback dla silnika precedensów wizualnych — świadomie zwraca co
+// najwyżej jednego kandydata z lokalnego dopasowania (bez LLM), jasno
+// oznaczonego jako fallback, zamiast fabrykować dopasowanie. Pusta
+// tablica jest tu równie poprawnym wynikiem co w ścieżce normalnej.
+export function mockHistoricalPrecedent(candidates: PrecedentCandidate[]): VisualPrecedentMatch[] {
+  const best = candidates.filter((c) => c.localMatchStrength > 0).slice(0, 1);
+  return best.map((c) => ({
+    archetypeId: c.archetypeId,
+    label: c.label,
+    matchStrength: c.localMatchStrength,
+    whySimilar: "Fallback: brak połączenia z modelem AI — to wyłącznie lokalne dopasowanie słów kluczowych, nie ocena LLM konkretnego zdjęcia.",
+    typicalPattern: c.typicalPattern,
+    typicalOutcome: c.typicalOutcome,
+    historicalNote: "Wzorzec ogólny, niepotwierdzony przez pełną analizę AI w tym uruchomieniu.",
+  }));
 }
 
 export function mockSegments(): SegmentImageReaction[] {

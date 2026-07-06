@@ -1,4 +1,4 @@
-import type { CommFormat, CommSituation, CommunicationGoal, PoliticianRole, Topic } from "./types";
+import type { CommFormat, CommSituation, CommunicationGoal, InputMode, PoliticianRole, Topic } from "./types";
 
 // ── Political Reaction Simulator — słowniki i dane referencyjne ──────
 // To jest warstwa, którą docelowo zasili prawdziwy social listening,
@@ -181,3 +181,31 @@ export const DEMO_EXAMPLES: DemoExample[] = [
 export const RISK_TOLERANCE_LABELS: Record<string, string> = {
   niskie: "Niski", srednie: "Średni", wysokie: "Wysoki", zwarcie: "Idziemy na zwarcie",
 };
+
+// ── Tryby wprowadzania — etykiety i podpowiedzi dla zakładek InputPanel ─
+export const INPUT_MODES: Array<{ value: InputMode; label: string; hint: string; placeholder: string }> = [
+  {
+    value: "wypowiedz",
+    label: "Wypowiedź / cytat",
+    hint: "Pojedynczy tekst do przetestowania przed publikacją",
+    placeholder: "Wklej planowany tweet, wypowiedź, fragment wywiadu, komunikat, reakcję kryzysową…",
+  },
+  {
+    value: "wydarzenie_planowane",
+    label: "Wydarzenie / decyzja (planowane)",
+    hint: "Działanie, które jeszcze nie zostało ogłoszone ani wykonane",
+    placeholder: "Opisz, co planujecie zrobić albo ogłosić — np. decyzję, wizytę, ruch personalny, zmianę stanowiska…",
+  },
+  {
+    value: "watek",
+    label: "Seria wypowiedzi / wątek",
+    hint: "Kilka powiązanych wypowiedzi testowanych razem, jako całość",
+    placeholder: "Pierwsza wypowiedź w wątku — kolejne dodasz poniżej…",
+  },
+  {
+    value: "wydarzenie_zaistniale",
+    label: "Wydarzenie, które już zaistniało",
+    hint: "Coś już się wydarzyło albo zostało powiedziane — pytanie brzmi, jak reagować dalej",
+    placeholder: "Opisz, co się już wydarzyło albo co zostało powiedziane…",
+  },
+];

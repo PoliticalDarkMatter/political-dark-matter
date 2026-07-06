@@ -26,15 +26,27 @@ export async function POST(req: NextRequest) {
       headers: { "Content-Type": "application/json" },
     });
   }
-  if (text.length > 6000) {
-    return new Response(JSON.stringify({ error: "Tekst zbyt długi (limit 6000 znaków)." }), {
+
+  const threadItems = Array.isArray(raw?.threadItems)
+    ? raw.threadItems.filter((x): x is string => typeof x === "string" && x.trim().length > 0).map((x) => x.slice(0, 2000)).slice(0, 20)
+    : [];
+
+  const combinedLength = text.length + threadItems.reduce((s, t) => s + t.length, 0);
+  if (combinedLength > 6000) {
+    return new Response(JSON.stringify({ error: "Treść zbyt długa (limit 6000 znaków łącznie, wliczając wątek)." }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
   }
 
   const input: SimulationInput = {
+    inputMode: raw?.inputMode ?? "wypowiedz",
     text,
+    threadItems,
+    eventTiming: (raw?.eventTiming ?? "").slice(0, 300),
+    eventStakeholders: (raw?.eventStakeholders ?? "").slice(0, 300),
+    priorReaction: (raw?.priorReaction ?? "").slice(0, 500),
+    analysisGoal: (raw?.analysisGoal ?? "").slice(0, 300),
     topic: raw?.topic ?? "",
     format: raw?.format ?? "",
     situation: raw?.situation ?? "",

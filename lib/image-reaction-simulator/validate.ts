@@ -14,7 +14,7 @@ import type {
   CaptionRecommendation, CaptionRisk, ImageAttackVector, ImageEvolutionStage, ImageObservation,
   ImageOverallScores, ImageStrategicRecommendation, ImageVerdict, MediaImageFrame, MemePotential,
   MemeScenario, OpponentImageAttack, RiskHotspot, SegmentImageReaction, VisualRiskFactor,
-  CropRecommendation, AlternativeUseRecommendation,
+  CropRecommendation, AlternativeUseRecommendation, VisualPrecedentMatch,
 } from "./types";
 
 // ── Krok 2: Vision Observation ────────────────────────────────────────
@@ -99,6 +99,25 @@ export function validateMeme(data: unknown): MemeStageData | null {
       riskLevel: (["niskie", "srednie", "wysokie"].includes(String(s.riskLevel)) ? s.riskLevel : "srednie") as MemeScenario["riskLevel"],
     })),
   };
+}
+
+// ── Krok: Historical Precedent ─────────────────────────────────────────
+// Pusta tablica jest poprawnym wynikiem (model mógł uznać, że żaden
+// wzorzec nie pasuje) — walidacja zwraca [] zamiast null w tym wypadku,
+// żeby orchestrator NIE traktował tego jako fallback.
+export function validateHistoricalPrecedent(data: unknown): VisualPrecedentMatch[] | null {
+  if (!isRecord(data)) return null;
+  if (!("visualPrecedents" in data)) return null;
+  const list = arr<Record<string, unknown>>(data.visualPrecedents).filter(isRecord);
+  return list.map((v) => ({
+    archetypeId: str(v.archetypeId, "wzorzec"),
+    label: str(v.label, str(v.archetypeId, "Wzorzec wizualny")),
+    matchStrength: clampNum(v.matchStrength),
+    whySimilar: str(v.whySimilar),
+    typicalPattern: str(v.typicalPattern),
+    typicalOutcome: str(v.typicalOutcome),
+    historicalNote: str(v.historicalNote, "Wzorzec ogólny, nie konkretny udokumentowany przypadek."),
+  }));
 }
 
 // ── Krok 5: Segment Simulation ─────────────────────────────────────────

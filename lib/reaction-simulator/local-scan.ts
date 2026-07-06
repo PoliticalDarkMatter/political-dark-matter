@@ -60,12 +60,21 @@ function contextualModifier(input: SimulationInput): number {
   return mod;
 }
 
+// Tekst, po którym faktycznie liczymy skan — dla trybu "watek" to cała
+// seria łącznie (patrz SimulationInput.threadItems w types.ts), nie
+// tylko pierwszy element. Inne tryby mają threadItems puste, więc join
+// nie zmienia dla nich niczego.
+export function effectiveText(input: SimulationInput): string {
+  return [input.text, ...(input.threadItems || [])].filter(Boolean).join("\n");
+}
+
 export function runLocalScan(input: SimulationInput): LocalScanResult {
-  const triggerMatches = detectTriggerPhrases(input.text);
+  const combined = effectiveText(input);
+  const triggerMatches = detectTriggerPhrases(combined);
   const triggerScore = triggerMatches.reduce((sum, m) => sum + m.weight, 0);
   const baseRiskScore = Math.max(0, Math.min(100, triggerScore + contextualModifier(input)));
   const riskBand = riskBandOf(baseRiskScore);
-  const toneLabel = detectToneLabel(input.text);
+  const toneLabel = detectToneLabel(combined);
 
   // Zgrubne dopasowanie archetypu kryzysu do najcięższej trafionej frazy —
   // ostateczne dopasowanie i uzasadnienie i tak robi warstwa "contextual" LLM.

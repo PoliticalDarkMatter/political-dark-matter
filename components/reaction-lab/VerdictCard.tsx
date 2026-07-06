@@ -52,6 +52,12 @@ export function VerdictCard(p: { result: ReactionSimulationResult }) {
           „{result.summary}"
         </p>
 
+        {result.input.inputMode === "wydarzenie_zaistniale" && (
+          <div style={{ fontSize: 11, color: "#94a3b8", marginTop: -10, marginBottom: 14 }}>
+            To już zaistniało — etykieta werdyktu odnosi się do dalszego reagowania, nie do pierwszej publikacji.
+          </div>
+        )}
+
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px 22px", marginBottom: 16 }}>
           {SCORE_ROWS.map((row) => (
             <ScoreBadge key={row.key} label={row.label} value={result.overallScores[row.key]} invert={row.invert} />
