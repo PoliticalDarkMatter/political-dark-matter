@@ -160,7 +160,7 @@ export async function runImageOrchestration(
     runStage("opponents", buildOpponentsPrompt(input, localScan, observation), validateOpponents, mockOpponents, 2200),
     runStage("media", buildMediaPrompt(input, localScan, observation), validateMedia, mockMedia, 2600),
     runStage("caption", buildCaptionPrompt(input, localScan, observation), validateCaption, mockCaption, 3000),
-    runStage("evolution", buildEvolutionPrompt(input, localScan, observation), validateEvolution, () => mockEvolution(localScan), 2200),
+    runStage("evolution", buildEvolutionPrompt(input, localScan, observation), validateEvolution, () => mockEvolution(localScan), 3400),
   ]);
 
   // ── Krok 10: Final Recommendation — sekwencyjnie, po digest'cie ───
