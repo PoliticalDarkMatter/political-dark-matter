@@ -35,6 +35,7 @@ export interface ImageSimulationInput {
   fileSizeBytes: number;
 
   who: string; // kto jest na zdjęciu
+  additionalContext: string; // wolny opis: intencja wykorzystania, sytuacja, tło zdarzenia — cokolwiek nie mieści się w polach poniżej
   topic: Topic | "";
   channel: ImageChannel | "";
   goal: ImageGoal | "";

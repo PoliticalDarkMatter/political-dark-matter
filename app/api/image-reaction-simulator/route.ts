@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
     height,
     fileSizeBytes: Math.max(0, Math.round(Number(raw?.fileSizeBytes) || 0)),
     who: (raw?.who ?? "").trim().slice(0, 300),
+    additionalContext: (raw?.additionalContext ?? "").trim().slice(0, 1500),
     topic: raw?.topic ?? "",
     channel: raw?.channel ?? "",
     goal: raw?.goal ?? "",

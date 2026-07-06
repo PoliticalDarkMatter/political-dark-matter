@@ -53,6 +53,7 @@ export default function ImageLabPage() {
       height: payload.prepared.originalHeight,
       fileSizeBytes: payload.prepared.fileSizeBytes,
       who: payload.who,
+      additionalContext: payload.additionalContext,
       topic: payload.topic,
       channel: payload.channel,
       goal: payload.goal,

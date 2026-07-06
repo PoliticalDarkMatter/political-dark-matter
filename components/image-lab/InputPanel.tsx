@@ -39,6 +39,7 @@ function Toggle(p: { label: string; checked: boolean; onChange: (v: boolean) => 
 export interface ImageInputPayload {
   prepared: PreparedImage;
   who: string;
+  additionalContext: string;
   topic: ImageSimulationInput["topic"];
   channel: ImageSimulationInput["channel"];
   goal: ImageSimulationInput["goal"];
@@ -51,6 +52,7 @@ export interface ImageInputPayload {
 export function InputPanel(p: { onSubmit: (payload: ImageInputPayload) => void; running: boolean }) {
   const [prepared, setPrepared] = useState<PreparedImage | null>(null);
   const [who, setWho] = useState("");
+  const [additionalContext, setAdditionalContext] = useState("");
   const [topic, setTopic] = useState<ImageSimulationInput["topic"]>("");
   const [channel, setChannel] = useState<ImageSimulationInput["channel"]>("");
   const [goal, setGoal] = useState<ImageSimulationInput["goal"]>("");
@@ -61,7 +63,7 @@ export function InputPanel(p: { onSubmit: (payload: ImageInputPayload) => void; 
 
   function submit() {
     if (!prepared || p.running) return;
-    p.onSubmit({ prepared, who, topic, channel, goal, eventType, isCrisisResponse, isCounterAttack, riskTolerance });
+    p.onSubmit({ prepared, who, additionalContext, topic, channel, goal, eventType, isCrisisResponse, isCounterAttack, riskTolerance });
   }
 
   return (
@@ -92,6 +94,23 @@ export function InputPanel(p: { onSubmit: (payload: ImageInputPayload) => void; 
           <Select label="Cel komunikacyjny" value={goal} onChange={(v) => setGoal(v as ImageSimulationInput["goal"])} options={GOALS} placeholder="— wybierz —" />
           <Select label="Typ wydarzenia" value={eventType} onChange={(v) => setEventType(v as ImageSimulationInput["eventType"])} options={EVENT_TYPES} placeholder="— wybierz —" />
         </div>
+
+        <label style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 14 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.04em" }}>Kontekst, intencja, opis sytuacji (opcjonalnie)</span>
+          <textarea
+            value={additionalContext}
+            onChange={(e) => setAdditionalContext(e.target.value)}
+            placeholder="Np. do jakiego materiału to zdjęcie ma trafić, co się działo w tym momencie, co ma pokazywać, jakie jest tło zdarzenia, czego się obawiamy albo co chcemy przez to zdjęcie osiągnąć…"
+            rows={3}
+            maxLength={1500}
+            className="pdm-searchbar"
+            style={{
+              width: "100%", background: "rgba(8,11,20,0.6)", border: "1px solid rgba(56,189,248,0.18)", borderRadius: 10,
+              padding: "9px 11px", color: "#f1f5f9", fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit", lineHeight: 1.5,
+            }}
+          />
+          <span style={{ fontSize: 10, color: "#475569", alignSelf: "flex-end" }}>{additionalContext.length}/1500</span>
+        </label>
 
         <div style={{ display: "flex", gap: 18, marginBottom: 14, flexWrap: "wrap" }}>
           <Toggle label="Reakcja na kryzys" checked={isCrisisResponse} onChange={setIsCrisisResponse} />

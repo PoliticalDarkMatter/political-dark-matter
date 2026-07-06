@@ -19,6 +19,7 @@ const SHARED_RULES = `Zasady, których musisz przestrzegać zawsze:
 function contextBlock(input: ImageSimulationInput, localScan: ImageLocalScanResult): string {
   const lines = [
     input.who && `Kto jest na zdjęciu: ${input.who}`,
+    input.additionalContext && `Kontekst i intencja podane przez nadawcę: ${input.additionalContext.slice(0, 1500)}`,
     input.topic && `Temat publikacji: ${input.topic}`,
     input.channel && `Kanał publikacji: ${input.channel}`,
     input.goal && `Cel komunikacyjny: ${input.goal}`,
