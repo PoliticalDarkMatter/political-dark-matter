@@ -1,5 +1,7 @@
 import { Font, StyleSheet, Text, View } from "@react-pdf/renderer";
-import { ROBOTO_BOLD_BASE64, ROBOTO_REGULAR_BASE64 } from "./fonts-data";
+import {
+  ROBOTO_BOLD_BASE64, ROBOTO_BOLD_ITALIC_BASE64, ROBOTO_ITALIC_BASE64, ROBOTO_REGULAR_BASE64,
+} from "./fonts-data";
 
 // ── Wspólny silnik raportów PDF — motyw i prymitywy ───────────────────
 // Reużywane przez lib/reports/{image-lab,reaction-lab,dashboard}-report.tsx.
@@ -20,11 +22,20 @@ export function ensureFontsRegistered() {
   if (fontsRegistered) return;
   // src jako "data:" URL (base64 w pamięci) — trafia w gałąź isDataUrl()
   // loadera fontów, więc żaden odczyt z dysku w runtime w ogóle nie zachodzi.
+  // Rejestrujemy WSZYSTKIE 4 warianty (regular/bold/italic/bold-italic):
+  // pierwsza wersja miała tylko regular+bold, a raporty gdzieniegdzie
+  // używają fontStyle: "italic" (np. cytaty) — react-pdf filtruje źródła
+  // fontu dokładnie po fontStyle, więc bez zarejestrowanej wersji italic
+  // resolver rzuca "Could not resolve font for Roboto, fontWeight 400"
+  // (brak pasujących źródeł), co ujawniło się dopiero w produkcji na
+  // sekcjach z kursywą — stąd ta czwórka, nie tylko dwa warianty.
   Font.register({
     family: "Roboto",
     fonts: [
-      { src: `data:font/ttf;base64,${ROBOTO_REGULAR_BASE64}`, fontWeight: "normal" },
-      { src: `data:font/ttf;base64,${ROBOTO_BOLD_BASE64}`, fontWeight: "bold" },
+      { src: `data:font/ttf;base64,${ROBOTO_REGULAR_BASE64}`, fontWeight: "normal", fontStyle: "normal" },
+      { src: `data:font/ttf;base64,${ROBOTO_BOLD_BASE64}`, fontWeight: "bold", fontStyle: "normal" },
+      { src: `data:font/ttf;base64,${ROBOTO_ITALIC_BASE64}`, fontWeight: "normal", fontStyle: "italic" },
+      { src: `data:font/ttf;base64,${ROBOTO_BOLD_ITALIC_BASE64}`, fontWeight: "bold", fontStyle: "italic" },
     ],
   });
   // react-pdf łamie długie słowa/frazy nieadekwatnie z domyślnym silnikiem

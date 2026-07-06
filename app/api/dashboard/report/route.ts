@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err) {
+    console.error("[dashboard/report] PDF generation failed:", err);
     return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Nie udało się wygenerować raportu PDF." }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
