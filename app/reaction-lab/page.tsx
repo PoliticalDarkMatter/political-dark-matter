@@ -27,6 +27,8 @@ export default function ReactionLabPage() {
   const [result, setResult] = useState<ReactionSimulationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<LabMode>("pelny");
+  const [reportBusy, setReportBusy] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const runSimulation = useCallback(async (input: SimulationInput) => {
@@ -86,6 +88,36 @@ export default function ReactionLabPage() {
     setRunning(false);
   }
 
+  async function generateReport() {
+    if (!result) return;
+    setReportBusy(true);
+    setReportError(null);
+    try {
+      const res = await fetch("/api/reaction-simulator/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ result }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => null);
+        throw new Error(j?.error || "Nie udało się wygenerować raportu PDF.");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "raport-symulator-reakcji.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setReportError(e instanceof Error ? e.message : "Nie udało się wygenerować raportu PDF.");
+    } finally {
+      setReportBusy(false);
+    }
+  }
+
   const question = MODE_META[mode].question;
   const showAll = mode === "pelny";
 
@@ -130,7 +162,22 @@ export default function ReactionLabPage() {
         {result && !running && (
           <>
             <AIAnalysisProgress statuses={stageStatuses} running={false} />
-            <ModeSwitcher mode={mode} onChange={setMode} />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+              <ModeSwitcher mode={mode} onChange={setMode} />
+              <button
+                onClick={generateReport}
+                disabled={reportBusy}
+                className="pdm-btn-square"
+                style={{ padding: "7px 16px", borderRadius: 8, background: "rgba(56,189,248,0.1)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", fontSize: 12, fontWeight: 700, cursor: reportBusy ? "wait" : "pointer", whiteSpace: "nowrap" }}
+              >
+                {reportBusy ? "Generuję raport…" : "📄 Generuj raport PDF"}
+              </button>
+            </div>
+            {reportError && (
+              <div style={{ padding: "8px 12px", borderRadius: 8, background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.3)", color: "#fca5a5", fontSize: 12 }}>
+                ⚠ {reportError}
+              </div>
+            )}
             {mode !== "pelny" && (
               <div style={{ fontSize: 13, fontWeight: 700, color: "#7dd3fc", marginTop: -8 }}>„{question}"</div>
             )}

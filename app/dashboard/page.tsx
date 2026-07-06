@@ -366,6 +366,8 @@ export default function DashboardPage() {
 
   // Chip-based search
   const [chips, setChips]               = useState([] as string[]);
+  const [reportBusy, setReportBusy]      = useState(false);
+  const [reportError, setReportError]   = useState(null as string | null);
   const [chipInput, setChipInput]       = useState("");
   const [chipMode, setChipMode]         = useState("AND" as "AND" | "OR");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -541,6 +543,38 @@ export default function DashboardPage() {
     }
     const q = buildQuery(); addToRecent(chips);
     fetchNews(q, period === "custom" ? "custom" : period, fromTs || undefined, toTs || undefined, mode);
+  }
+
+  async function generateReport() {
+    if (!data) return;
+    setReportBusy(true);
+    setReportError(null);
+    try {
+      const modeLabel = QUERY_MODES.find((m) => m.value === mode)?.label ?? mode;
+      const periodLabel = TIME_FILTERS.find((t) => t.value === period)?.label ?? period;
+      const res = await fetch("/api/dashboard/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data, query: chips.join(" + "), period: periodLabel, mode: modeLabel }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => null);
+        throw new Error(j?.error || "Nie udało się wygenerować raportu PDF.");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "raport-narrative-scope-dashboard.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setReportError(e instanceof Error ? e.message : "Nie udało się wygenerować raportu PDF.");
+    } finally {
+      setReportBusy(false);
+    }
   }
 
   function handlePeriod(v: string) {
@@ -898,10 +932,25 @@ export default function DashboardPage() {
               );
             })}
           </div>
-          <span style={{ fontSize: 11, color: "#64748b", flexShrink: 0 }}>
-            {data.totalAvailable} art. · {new Date(data.fetchedAt).toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" })}
-            {data.searchMode === "google_news" && <span style={{ color: "#7dd3fc", marginLeft: 6, fontWeight: 600 }}>· Google News</span>}
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 11, color: "#64748b", flexShrink: 0 }}>
+              {data.totalAvailable} art. · {new Date(data.fetchedAt).toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" })}
+              {data.searchMode === "google_news" && <span style={{ color: "#7dd3fc", marginLeft: 6, fontWeight: 600 }}>· Google News</span>}
+            </span>
+            <button
+              onClick={generateReport}
+              disabled={reportBusy}
+              className="pdm-btn-square"
+              style={{ padding: "5px 13px", borderRadius: 8, background: "rgba(56,189,248,0.1)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", fontSize: 11.5, fontWeight: 700, cursor: reportBusy ? "wait" : "pointer", whiteSpace: "nowrap" }}
+            >
+              {reportBusy ? "Generuję…" : "📄 Raport PDF"}
+            </button>
+          </div>
+        </div>
+      )}
+      {reportError && (
+        <div style={{ padding: "8px 12px", marginBottom: 10, borderRadius: 8, background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.3)", color: "#fca5a5", fontSize: 12 }}>
+          ⚠ {reportError}
         </div>
       )}
 
