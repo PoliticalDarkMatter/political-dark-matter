@@ -861,6 +861,22 @@ export default function DashboardPage() {
           policzył (sentyment, narracje, momentum); patrz lib/dashboard-briefing.ts */}
       {data && <BriefingHero data={data} />}
 
+      {/* Etykieta trybu domyślnego — dashboard ładuje ostatnie 24h bez filtra
+          zaraz po wejściu (patrz fetchNews("", "24h") w useEffect poniżej),
+          żeby ekran nie był pusty. Jan zgłosił, że to myli: wygląda jakby
+          dane pochodziły z wyszukiwania, którego nikt nie wpisał. Ten pasek
+          jest widoczny tylko wtedy, gdy nie ma aktywnych chipów wyszukiwania
+          (czyli to wciąż domyślny podgląd, nie wynik czyjegoś zapytania). */}
+      {data && chips.length === 0 && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 8, marginBottom: 10, padding: "7px 12px",
+          borderRadius: 8, background: "rgba(56,189,248,0.07)", border: "1px solid rgba(56,189,248,0.2)",
+          fontSize: 11.5, color: "#7dd3fc",
+        }}>
+          📡 Podgląd ogólny — ostatnie 24h, bez filtra. Wpisz zapytanie poniżej, żeby zawęzić wyniki do konkretnego tematu, zdarzenia albo aktora.
+        </div>
+      )}
+
       {/* Status bar */}
       {data && (
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
