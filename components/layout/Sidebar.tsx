@@ -4,13 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import {
-  LayoutDashboard, Radio, TrendingUp, Network, FileText, Settings, X, ArrowLeft, Radar,
+  LayoutDashboard, Radio, TrendingUp, Network, FileText, Settings, X, ArrowLeft, Radar, ImageIcon,
 } from "lucide-react";
 import { clsx } from "clsx";
 
 const NAV_ITEMS = [
   { href: "/dashboard",     icon: LayoutDashboard, label: "Dashboard" },
   { href: "/reaction-lab",  icon: Radar,            label: "Symulator Reakcji" },
+  { href: "/image-lab",     icon: ImageIcon,        label: "Symulator Zdjęć" },
   { href: "/monitoring",    icon: Radio,            label: "Projekty" },
   { href: "/trends",        icon: TrendingUp,       label: "Trendy" },
   { href: "/network",       icon: Network,          label: "Źródła" },
