@@ -21,7 +21,7 @@ const modules: ModuleDef[] = [
     status: "AKTYWNY",
     active: true,
     angle: -90,
-    href: "/dashboard",
+    href: "/narrative-scope",
   },
   {
     key: "apex",

@@ -29,7 +29,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
     <aside className="w-64 shrink-0 flex flex-col bg-[#080b14] border-r border-sky-400/10 h-screen">
       {/* Logo — planeta, spójna z hubem */}
       <div className="flex items-center justify-between px-5 py-5 border-b border-sky-400/10">
-        <Link href="/dashboard" className="flex items-center gap-2.5">
+        <Link href="/narrative-scope" className="flex items-center gap-2.5">
           <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_25%,#ffffff,#dbeafe_55%,#b8c7e8)] ring-1 ring-sky-300/70"
             style={{ boxShadow: "0 0 16px rgba(56,189,248,.45)" }}>
             <Image
