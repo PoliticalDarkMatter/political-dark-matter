@@ -1,5 +1,5 @@
-import path from "path";
 import { Font, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { ROBOTO_BOLD_BASE64, ROBOTO_REGULAR_BASE64 } from "./fonts-data";
 
 // ── Wspólny silnik raportów PDF — motyw i prymitywy ───────────────────
 // Reużywane przez lib/reports/{image-lab,reaction-lab,dashboard}-report.tsx.
@@ -8,22 +8,23 @@ import { Font, StyleSheet, Text, View } from "@react-pdf/renderer";
 // zarejestrowania prawdziwego fontu Unicode: standardowe 14 fontów PDF
 // (Helvetica itp.) NIE mają polskich znaków diakrytycznych (ą, ć, ę, ł,
 // ń, ó, ś, ź, ż), więc bez tego rejestru całe PL UI raportu byłoby
-// nieczytelne. Font trzymany lokalnie w repo (assets/fonts/) i czytany
-// z dysku w runtime — patrz next.config.mjs (outputFileTracingIncludes)
-// dla wyjaśnienia, czemu to jest potrzebne na Vercelu.
+// nieczytelne. Font osadzony jako base64 w lib/reports/fonts-data.ts
+// (import ES, zawsze trafia do bundla) — próba czytania pliku z dysku
+// w runtime (assets/fonts/*.ttf + outputFileTracingIncludes) zawiodła
+// na Vercelu: "Could not resolve font for Roboto" w produkcji, mimo że
+// lokalnie działało — file tracing nie zawsze łapie dynamiczny fs.readFileSync.
 
-const FONTS_DIR = path.join(process.cwd(), "assets", "fonts");
 let fontsRegistered = false;
 
 export function ensureFontsRegistered() {
   if (fontsRegistered) return;
-  // src jako ścieżka na dysku (string) — fontkit.open() czyta plik sam,
-  // nie trzeba (i nie da się bez rzutowania typu) przekazywać Buffera.
+  // src jako "data:" URL (base64 w pamięci) — trafia w gałąź isDataUrl()
+  // loadera fontów, więc żaden odczyt z dysku w runtime w ogóle nie zachodzi.
   Font.register({
     family: "Roboto",
     fonts: [
-      { src: path.join(FONTS_DIR, "Roboto-Regular.ttf"), fontWeight: "normal" },
-      { src: path.join(FONTS_DIR, "Roboto-Bold.ttf"), fontWeight: "bold" },
+      { src: `data:font/ttf;base64,${ROBOTO_REGULAR_BASE64}`, fontWeight: "normal" },
+      { src: `data:font/ttf;base64,${ROBOTO_BOLD_BASE64}`, fontWeight: "bold" },
     ],
   });
   // react-pdf łamie długie słowa/frazy nieadekwatnie z domyślnym silnikiem
