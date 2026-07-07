@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getGroupProfile } from "@/lib/insight";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(req: NextRequest) {
   try {
     const value = req.nextUrl.searchParams.get("group");
