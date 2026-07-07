@@ -141,6 +141,31 @@ export async function queryInsight(
   return (data as InsightQueryResult) ?? EMPTY_RESULT;
 }
 
+// Grupa profilowa miesza dziś w jednej tabeli dwa bardzo różne rodzaje wiedzy
+// o grupie: (1) zaufanie/poparcie polityczne oraz (2) wartości, priorytety
+// życiowe, postawy wobec pracy/rodziny/religii itd. Dla użytkownika to nie jest
+// to samo pytanie - "za kim grupa głosuje" i "jak grupa patrzy na życie" trzeba
+// pokazywać osobno, żeby profil grupy nie sprowadzał się do listy sondaży
+// politycznych. To rozróżnienie jest heurystyką po prefiksie/słowach kluczowych
+// w `topic`, nie osobną kolumną w bazie - jeśli topic nie pasuje do żadnego
+// wzorca politycznego, trafia domyślnie do "wartości i stylu życia".
+const POLITICAL_TOPIC_PATTERNS = [
+  /^zaufanie_do_/,
+  /^poparcie_/,
+  /_do_rzadu$/,
+  /_do_prezydenta$/,
+  /polityk/,
+  /partii/,
+  /wybor/,
+];
+
+export type FindingCategory = "polityka" | "wartosci_i_styl_zycia";
+
+export function categorizeTopic(topic: string): FindingCategory {
+  const t = topic.toLowerCase();
+  return POLITICAL_TOPIC_PATTERNS.some((re) => re.test(t)) ? "polityka" : "wartosci_i_styl_zycia";
+}
+
 export interface GroupProfileFinding {
   topic: string;
   value: number | null;
@@ -148,6 +173,7 @@ export interface GroupProfileFinding {
   verbatim_quote: string | null;
   confidence: string;
   created_at: string;
+  category: FindingCategory;
   insight_studies: {
     title: string;
     source_url: string;
@@ -200,9 +226,9 @@ export async function getGroupProfile(groupValue: string): Promise<GroupProfile 
       syntheses: ((syntheses ?? []) as (GroupProfileSynthesis & { group_tags: string[] | null })[]).filter(
         (s) => !s.group_tags || s.group_tags.length === 0
       ),
-      findings: ((findings ?? []) as unknown as (GroupProfileFinding & { group_tags: string[] | null })[]).filter(
-        (f) => !f.group_tags || f.group_tags.length === 0
-      ),
+      findings: ((findings ?? []) as unknown as (GroupProfileFinding & { group_tags: string[] | null })[])
+        .filter((f) => !f.group_tags || f.group_tags.length === 0)
+        .map((f) => ({ ...f, category: categorizeTopic(f.topic) })),
     };
   }
 
@@ -229,6 +255,9 @@ export async function getGroupProfile(groupValue: string): Promise<GroupProfile 
   return {
     group,
     syntheses: (syntheses ?? []) as GroupProfileSynthesis[],
-    findings: (findings ?? []) as unknown as GroupProfileFinding[],
+    findings: ((findings ?? []) as unknown as GroupProfileFinding[]).map((f) => ({
+      ...f,
+      category: categorizeTopic(f.topic),
+    })),
   };
 }

@@ -11,6 +11,7 @@ import {
   type GroupWithCount,
   type InsightQueryResult,
   type GroupProfile,
+  type GroupProfileFinding,
   type OverallStats,
 } from "@/lib/insight";
 
@@ -483,44 +484,61 @@ function GroupProfileTab() {
             </div>
           )}
 
-          {profile.findings.length > 0 && (
-            <div className="flex flex-col gap-3">
-              <div className="text-[11px] font-bold uppercase tracking-wide text-sky-300/70">
-                Pojedyncze wyniki badań
-              </div>
-              {profile.findings.map((f, i) => (
-                <div key={i} className="pdm-panel p-4">
-                  <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wide text-sky-300/80">{f.topic}</span>
-                    <ConfidenceBadge confidence={f.confidence} />
-                  </div>
-                  {(f.value !== null || f.value_text) && (
-                    <div className="text-lg font-black text-white">{f.value !== null ? f.value : f.value_text}</div>
-                  )}
-                  {f.verbatim_quote && (
-                    <p className="mt-1 text-[13px] italic leading-relaxed text-slate-300">„{f.verbatim_quote}”</p>
-                  )}
-                  {f.insight_studies && (
-                    <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-slate-500">
-                      <a
-                        href={f.insight_studies.source_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="truncate text-sky-400/80 hover:text-sky-300"
-                      >
-                        {f.insight_studies.title}
-                      </a>
-                      {f.insight_studies.published_date && (
-                        <span className="shrink-0">
-                          {new Date(f.insight_studies.published_date).toLocaleDateString("pl-PL")}
-                        </span>
-                      )}
-                    </div>
-                  )}
+          {(() => {
+            const values = profile.findings.filter((f) => f.category === "wartosci_i_styl_zycia");
+            const political = profile.findings.filter((f) => f.category === "polityka");
+            const renderFinding = (f: GroupProfileFinding, i: number) => (
+              <div key={i} className="pdm-panel p-4">
+                <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-sky-300/80">{f.topic}</span>
+                  <ConfidenceBadge confidence={f.confidence} />
                 </div>
-              ))}
-            </div>
-          )}
+                {(f.value !== null || f.value_text) && (
+                  <div className="text-lg font-black text-white">{f.value !== null ? f.value : f.value_text}</div>
+                )}
+                {f.verbatim_quote && (
+                  <p className="mt-1 text-[13px] italic leading-relaxed text-slate-300">„{f.verbatim_quote}”</p>
+                )}
+                {f.insight_studies && (
+                  <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-slate-500">
+                    <a
+                      href={f.insight_studies.source_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="truncate text-sky-400/80 hover:text-sky-300"
+                    >
+                      {f.insight_studies.title}
+                    </a>
+                    {f.insight_studies.published_date && (
+                      <span className="shrink-0">
+                        {new Date(f.insight_studies.published_date).toLocaleDateString("pl-PL")}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+            return (
+              <>
+                {values.length > 0 && (
+                  <div className="flex flex-col gap-3">
+                    <div className="text-[11px] font-bold uppercase tracking-wide text-emerald-300/70">
+                      Wartości, postawy i styl życia
+                    </div>
+                    {values.map(renderFinding)}
+                  </div>
+                )}
+                {political.length > 0 && (
+                  <div className="flex flex-col gap-3">
+                    <div className="text-[11px] font-bold uppercase tracking-wide text-sky-300/70">
+                      Zaufanie i poglądy polityczne
+                    </div>
+                    {political.map(renderFinding)}
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
     </div>
