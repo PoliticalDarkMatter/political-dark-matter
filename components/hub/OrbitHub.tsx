@@ -55,26 +55,33 @@ const modules: ModuleDef[] = [
   },
 ];
 
+// Każda karta to odzwierciedlenie jednej z czterech planet (ten sam href
+// co w modules powyżej) — kliknięcie w kartę na dole ma prowadzić do tego
+// samego modułu co kliknięcie w odpowiadającą jej planetę na orbicie.
 const bottomCards = [
   {
     title: "SŁUCHANIE",
     text: ["monitoring narracji", "w czasie rzeczywistym"],
     icon: "wave",
+    href: "/narrative-scope",
   },
   {
     title: "ANALIZA",
     text: ["scenariusze i rekomendacje", "strategiczne"],
     icon: "chart",
+    href: "/apex-grid",
   },
   {
     title: "PRZEKAZ",
     text: ["komunikacja skrojona", "pod projekt"],
     icon: "message",
+    href: "/volt-stream",
   },
   {
     title: "EMISJA",
     text: ["własne medium i", "dystrybucja"],
     icon: "broadcast",
+    href: "/pulse-field",
   },
 ];
 
@@ -510,8 +517,9 @@ export default function OrbitHub() {
 
         <div className="mx-auto mt-16 grid w-full max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {bottomCards.map((card) => (
-            <div
+            <Link
               key={card.title}
+              href={card.href}
               className="group rounded-2xl border border-sky-300/20 bg-slate-950/50 p-5 shadow-[0_0_32px_rgba(59,130,246,0.12)] backdrop-blur-xl transition hover:-translate-y-1 hover:border-violet-300/45 hover:shadow-[0_0_50px_rgba(124,58,237,0.22)]"
             >
               <div className="flex items-center gap-4">
@@ -529,7 +537,7 @@ export default function OrbitHub() {
                   </p>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
