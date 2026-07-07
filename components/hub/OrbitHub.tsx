@@ -296,6 +296,57 @@ function InsightBaseComet() {
   );
 }
 
+// Konsylium, tak jak Insight Base, nie jest piątym modułem operacyjnym z
+// czwórki planet — to osobna, pomocnicza warstwa (narada ekspercka, nie
+// monitoring/analiza/przekaz/emisja), więc dostaje ten sam wzorzec komety:
+// nieruchomy punkt z boku, bez orbitowania i bez pulsującej animacji
+// "aktywności". Symetryczne miejsce po przeciwnej stronie sceny względem
+// Insight Base (ten po lewej u dołu, Konsylium po prawej u dołu), inny
+// kolor (bursztyn zamiast indygo), żeby dało się je rozróżnić na pierwszy rzut oka.
+function KonsyliumIcon() {
+  return (
+    <svg viewBox="0 0 64 40" className="h-7 w-11 text-amber-700">
+      <circle cx="32" cy="20" r="6" stroke="currentColor" strokeWidth="3" fill="none" />
+      <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="3" fill="none" opacity=".85" />
+      <circle cx="52" cy="12" r="4" stroke="currentColor" strokeWidth="3" fill="none" opacity=".85" />
+      <circle cx="12" cy="30" r="4" stroke="currentColor" strokeWidth="3" fill="none" opacity=".85" />
+      <circle cx="52" cy="30" r="4" stroke="currentColor" strokeWidth="3" fill="none" opacity=".85" />
+      <path d="M17 14L27 18M47 14L37 18M17 28L27 22M47 28L37 22" stroke="currentColor" strokeWidth="2" opacity=".55" />
+      <path d="M46 8l3 6 6 1.5-6 1.5-3 6-3-6-6-1.5 6-1.5z" fill="currentColor" opacity=".85" />
+    </svg>
+  );
+}
+
+function KonsyliumComet() {
+  return (
+    <Link
+      href="/konsylium"
+      className="absolute z-20 hidden -translate-x-1/2 flex-col items-center sm:flex"
+      style={{ left: "94%", top: "94%" }}
+    >
+      <div className="group flex flex-col items-center">
+        {/* ogon komety skierowany w drugą stronę niż Insight Base — leci z przeciwnego kierunku */}
+        <div className="pointer-events-none absolute left-full top-1/2 h-[2px] w-16 -translate-y-1/2 bg-gradient-to-l from-transparent to-amber-200/70 opacity-70 sm:w-20" />
+        <div
+          className="relative flex h-12 w-20 items-center justify-center rounded-full ring-1 ring-amber-200/50 sm:h-14 sm:w-24"
+          style={{
+            background: "radial-gradient(circle at 35% 30%, #ffffff, #fef3c7 55%, #fde68a)",
+            boxShadow: "0 0 26px rgba(251,191,36,0.4)",
+          }}
+        >
+          <KonsyliumIcon />
+        </div>
+        <div className="mt-2 min-w-[92px] rounded-md border border-amber-300/25 bg-slate-950/70 px-2.5 py-1 text-center backdrop-blur-md shadow-[0_0_20px_rgba(15,23,42,0.9)] sm:min-w-[104px]">
+          <div className="text-[10px] font-semibold text-white whitespace-nowrap sm:text-[11px]">Konsylium</div>
+          <div className="mt-0.5 text-[7px] font-bold tracking-wide text-amber-300 whitespace-nowrap sm:text-[8px]">
+            10 EKSPERTÓW AI
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export default function OrbitHub() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#05070d] text-white">
@@ -452,6 +503,7 @@ export default function OrbitHub() {
           ))}
 
           <InsightBaseComet />
+          <KonsyliumComet />
         </div>
 
         <div className="mx-auto mt-16 grid w-full max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
