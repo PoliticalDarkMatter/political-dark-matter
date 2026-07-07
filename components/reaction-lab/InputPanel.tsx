@@ -41,7 +41,19 @@ function TextField(p: { label: string; value: string; onChange: (v: string) => v
   );
 }
 
-export function InputPanel(p: { onSubmit: (input: SimulationInput) => void; running: boolean }) {
+// excludeModes/submitLabel/runningLabel — nieinwazyjne rozszerzenie, żeby ten
+// sam komponent (te same pola, te same opcje) dało się reużyć w
+// app/reaction-check ("Reakcja na przekaz/fakt", sprawdzanie realnej reakcji
+// zamiast symulacji AI). Domyślne wartości zachowują dokładnie stare
+// zachowanie w app/reaction-lab — zero zmian dla istniejącego symulatora.
+export function InputPanel(p: {
+  onSubmit: (input: SimulationInput) => void;
+  running: boolean;
+  excludeModes?: InputMode[];
+  submitLabel?: string;
+  runningLabel?: string;
+}) {
+  const MODES = INPUT_MODES.filter((m) => !p.excludeModes?.includes(m.value));
   const [inputMode, setInputMode] = useState<InputMode>("wypowiedz");
   const [text, setText] = useState("");
   const [threadItems, setThreadItems] = useState<string[]>([]);
@@ -57,7 +69,7 @@ export function InputPanel(p: { onSubmit: (input: SimulationInput) => void; runn
   const [goal, setGoal] = useState<SimulationInput["goal"]>("");
   const [riskTolerance, setRiskTolerance] = useState<SimulationInput["riskTolerance"]>("srednie");
 
-  const modeMeta = INPUT_MODES.find((m) => m.value === inputMode) ?? INPUT_MODES[0];
+  const modeMeta = MODES.find((m) => m.value === inputMode) ?? MODES[0];
   const combinedLength = text.length + threadItems.reduce((s, t) => s + t.length, 0);
 
   function pickDemo(ex: DemoExample) {
@@ -82,7 +94,7 @@ export function InputPanel(p: { onSubmit: (input: SimulationInput) => void; runn
       <div style={{ position: "relative", zIndex: 1 }}>
         {/* Zakładki trybu wprowadzania — różny "kształt" tego, co się testuje */}
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
-          {INPUT_MODES.map((m) => {
+          {MODES.map((m) => {
             const active = inputMode === m.value;
             return (
               <button
@@ -219,7 +231,7 @@ export function InputPanel(p: { onSubmit: (input: SimulationInput) => void; runn
             className="pdm-btn-primary"
             style={{ height: 46, padding: "0 26px", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 800, cursor: p.running ? "default" : "pointer" }}
           >
-            {p.running ? "Symuluję…" : "Uruchom symulację reakcji"}
+            {p.running ? (p.runningLabel ?? "Symuluję…") : (p.submitLabel ?? "Uruchom symulację reakcji")}
           </button>
         </div>
       </div>

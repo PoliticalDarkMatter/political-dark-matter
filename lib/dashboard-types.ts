@@ -3,6 +3,8 @@
 // modułach (np. lib/dashboard-briefing.ts, components/dashboard/*) bez
 // duplikowania definicji. Kształt 1:1 z tym, co zwraca /api/news.
 
+import type { CrossPlatformSignal } from "@/lib/cross-platform";
+
 export type Sent = "positive" | "negative" | "neutral";
 
 export type WeightBasis = "tranco" | "editorial_override" | "unknown" | "social_estimate" | "social_real";
@@ -36,6 +38,7 @@ export interface FeedData {
   sentimentCounts: { positive: number; negative: number; neutral: number };
   entities: EntityInfo[]; narratives: NarrativeCluster[];
   timeline: TimelineItem[];
+  crossPlatformSignals?: CrossPlatformSignal[];
   query: string; period: string; searchMode: string;
   searchInfo: string | null; rssNote: string | null;
   fetchedAt: string;

@@ -4,18 +4,24 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import {
-  LayoutDashboard, Radio, TrendingUp, Network, FileText, Settings, X, ArrowLeft, Radar, ImageIcon,
+  Radio, TrendingUp, Network, FileText, Settings, X, ArrowLeft, Radar, ImageIcon, FileSearch, ScanSearch,
 } from "lucide-react";
 import { clsx } from "clsx";
 
+// ── Nawigacja — cztery główne moduły na górze (ten sam porządek co hub
+// wewnętrzny, components/hub/NarrativeScopeHub.tsx), reszta niżej. Jan,
+// 2026-07-07: bez osobnej pozycji "Dashboard" — ogólny wolny monitoring
+// (dawny app/dashboard) zostaje dostępny wyłącznie przez "Projekty"
+// (app/monitoring, otwiera zapisane wyszukiwania), nie jako główna planeta.
 const NAV_ITEMS = [
-  { href: "/dashboard",     icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/reaction-lab",  icon: Radar,            label: "Symulator Reakcji" },
-  { href: "/image-lab",     icon: ImageIcon,        label: "Symulator Zdjęć" },
-  { href: "/monitoring",    icon: Radio,            label: "Projekty" },
-  { href: "/trends",        icon: TrendingUp,       label: "Trendy" },
-  { href: "/network",       icon: Network,          label: "Źródła" },
-  { href: "/reports",       icon: FileText,         label: "Raporty" },
+  { href: "/reaction-check",       icon: FileSearch, label: "Reakcja na przekaz" },
+  { href: "/image-reaction-check", icon: ScanSearch,  label: "Reakcja na zdjęcie/mem" },
+  { href: "/reaction-lab",         icon: Radar,       label: "Symulator Reakcji" },
+  { href: "/image-lab",            icon: ImageIcon,   label: "Symulator Zdjęć" },
+  { href: "/monitoring",           icon: Radio,       label: "Projekty" },
+  { href: "/trends",               icon: TrendingUp,  label: "Trendy" },
+  { href: "/network",              icon: Network,     label: "Źródła" },
+  { href: "/reports",              icon: FileText,    label: "Raporty" },
 ];
 
 interface SidebarProps {

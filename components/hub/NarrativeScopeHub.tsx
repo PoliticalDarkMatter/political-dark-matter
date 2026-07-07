@@ -2,17 +2,23 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, FileSearch, ImageIcon, Radar } from "lucide-react";
+import { ArrowLeft, FileSearch, ImageIcon, Radar, ScanSearch } from "lucide-react";
 
 // ── Narrative Scope — hub wewnętrzny modułu ───────────────────────────
 // Ten sam język wizualny co components/hub/OrbitHub.tsx (top-level hub
 // Political Dark Matter): głęboki navy, gwiazdy, komety, poświata,
-// szklane karty. Różnica: to NIE jest orbita 4 modułów PDM, tylko
-// wejściowy ekran samego Narrative Scope z trzema konkretnymi
-// narzędziami — Jan poprosił wprost o "centralny pulpit i trzy
-// przyciski / rodzaj planet z napisami" przy wejściu w moduł.
-// Podpięty w AppShell.tsx jako trasa standalone (bez Sidebar/Header),
-// dokładnie jak "/" — to jest ekran wyboru, nie treść robocza.
+// szklane karty. To NIE jest orbita 4 modułów PDM, tylko wejściowy
+// ekran samego Narrative Scope.
+//
+// Cztery narzędzia (Jan, 2026-07-07 — zastąpienie wcześniejszego układu
+// z "Dashboardem" jako osobną kategorią): dwie pary "sprawdź naprawdę"
+// vs "przewiduj z wyprzedzeniem", jedna dla tekstu/faktu, jedna dla
+// zdjęcia/mema. "Reakcja na..." to NOWA kategoria (post factum, realne
+// dane z buildFeed) — "Symulator..." to istniejące moduły (AI, hipoteza
+// przed publikacją). Świadomie brak tu wejścia opisanego jako
+// "Dashboard" — ogólny wolny monitoring (dawny app/dashboard) zostaje
+// dostępny tylko przez "Projekty" w Sidebar, nie jako jedna z czterech
+// głównych planet.
 
 interface ToolDef {
   key: string;
@@ -26,28 +32,37 @@ interface ToolDef {
 
 const TOOLS: ToolDef[] = [
   {
-    key: "post-factum",
-    title: "Analiza post factum",
-    subtitle: "Dashboard",
-    description: "Co już się wydarzyło w sieci: narracje, sentyment, aktorzy, oś czasu.",
-    href: "/dashboard",
+    key: "reaction-check-text",
+    title: "Reakcja na przekaz/fakt",
+    subtitle: "Realne dane, nie symulacja",
+    description: "Sprawdź, co NAPRAWDĘ działo się w sieci wokół wypowiedzi albo zdarzenia, które już zaszło.",
+    href: "/reaction-check",
     icon: FileSearch,
     accent: "#38bdf8",
   },
   {
+    key: "reaction-check-image",
+    title: "Reakcja na zdjęcie/mem",
+    subtitle: "Realne dane, nie symulacja",
+    description: "Sprawdź, co NAPRAWDĘ piszą media i sieć o zdjęciu/memie, który już krąży.",
+    href: "/image-reaction-check",
+    icon: ScanSearch,
+    accent: "#34d399",
+  },
+  {
     key: "reaction-words",
-    title: "Symulator reakcji na słowa",
+    title: "Symulator reakcji na przekaz/fakt",
     subtitle: "Narrative Impact Lab",
-    description: "Testuj wypowiedź przed publikacją — ryzyko, segmenty, media, przeciwnicy.",
+    description: "Przewiduj reakcję na wypowiedź PRZED publikacją — ryzyko, segmenty, media, przeciwnicy.",
     href: "/reaction-lab",
     icon: Radar,
     accent: "#a78bfa",
   },
   {
     key: "reaction-image",
-    title: "Symulator reakcji na obraz",
+    title: "Symulator reakcji na zdjęcie/mem",
     subtitle: "Visual Narrative Lab",
-    description: "Testuj zdjęcie przed publikacją — memiczność, hotspoty ryzyka, media.",
+    description: "Przewiduj reakcję na zdjęcie PRZED publikacją — memiczność, hotspoty ryzyka, media.",
     href: "/image-lab",
     icon: ImageIcon,
     accent: "#f472b6",
@@ -120,13 +135,11 @@ export default function NarrativeScopeHub() {
             Narrative Scope
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-slate-300/80">
-            Radar narracyjny: co już się wydarzyło w sieci i co może się wydarzyć, zanim polityk cokolwiek opublikuje.
+            Radar narracyjny: co NAPRAWDĘ już się wydarzyło w sieci i co MOŻE się wydarzyć, zanim cokolwiek zostanie opublikowane.
           </p>
         </header>
 
-        <div className="relative mx-auto mt-16 flex w-full max-w-4xl flex-col items-center gap-10 sm:flex-row sm:items-start sm:justify-center sm:gap-8">
-          {/* Belka łącząca trzy narzędzia — czysto dekoracyjna, spójna z orbitą PDM */}
-          <div className="pointer-events-none absolute left-0 right-0 top-14 hidden h-px sm:block" style={{ background: "linear-gradient(90deg, transparent, rgba(56,189,248,0.4), rgba(167,139,250,0.4), rgba(244,114,182,0.4), transparent)" }} />
+        <div className="relative mx-auto mt-16 grid w-full max-w-3xl grid-cols-1 place-items-center gap-x-10 gap-y-12 sm:grid-cols-2">
           {TOOLS.map((tool) => (
             <ToolOrb key={tool.key} tool={tool} />
           ))}
