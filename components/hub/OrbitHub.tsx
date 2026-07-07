@@ -300,9 +300,11 @@ function InsightBaseComet() {
 // czwórki planet — to osobna, pomocnicza warstwa (narada ekspercka, nie
 // monitoring/analiza/przekaz/emisja), więc dostaje ten sam wzorzec komety:
 // nieruchomy punkt z boku, bez orbitowania i bez pulsującej animacji
-// "aktywności". Symetryczne miejsce po przeciwnej stronie sceny względem
-// Insight Base (ten po lewej u dołu, Konsylium po prawej u dołu), inny
-// kolor (bursztyn zamiast indygo), żeby dało się je rozróżnić na pierwszy rzut oka.
+// "aktywności". Umieszczona nad planetą Apex Grid ("Analiza", prawa strona
+// elipsy) — góra-prawo sceny, symetrycznie do Insight Base (dół-lewo).
+// Inny kolor (bursztyn zamiast indygo), żeby dało się je rozróżnić na
+// pierwszy rzut oka. Ogon komety skierowany w lewo, tak jak w Insight Base
+// — ten sam kierunek lotu dla obu komet, nie lustrzane odbicie.
 function KonsyliumIcon() {
   return (
     <svg viewBox="0 0 64 40" className="h-7 w-11 text-amber-700">
@@ -322,11 +324,11 @@ function KonsyliumComet() {
     <Link
       href="/konsylium"
       className="absolute z-20 hidden -translate-x-1/2 flex-col items-center sm:flex"
-      style={{ left: "94%", top: "94%" }}
+      style={{ left: "90%", top: "8%" }}
     >
       <div className="group flex flex-col items-center">
-        {/* ogon komety skierowany w drugą stronę niż Insight Base — leci z przeciwnego kierunku */}
-        <div className="pointer-events-none absolute left-full top-1/2 h-[2px] w-16 -translate-y-1/2 bg-gradient-to-l from-transparent to-amber-200/70 opacity-70 sm:w-20" />
+        {/* ogon komety w lewo — ten sam kierunek co Insight Base */}
+        <div className="pointer-events-none absolute right-full top-1/2 h-[2px] w-16 -translate-y-1/2 bg-gradient-to-r from-transparent to-amber-200/70 opacity-70 sm:w-20" />
         <div
           className="relative flex h-12 w-20 items-center justify-center rounded-full ring-1 ring-amber-200/50 sm:h-14 sm:w-24"
           style={{
