@@ -252,6 +252,50 @@ function ModuleOrb({ module: m }: { module: ModuleDef }) {
   );
 }
 
+// Insight Base nie jest piątym modułem operacyjnym, tylko warstwą danych pod
+// spodem, dlatego nie orbituje jak cztery planety: to nieruchomy punkt z boku,
+// osobny kształt (wydłużona kometa, nie koło) i bez pulsującej animacji "aktywności".
+function InsightBaseIcon() {
+  return (
+    <svg viewBox="0 0 64 40" className="h-7 w-11 text-indigo-700">
+      <ellipse cx="20" cy="12" rx="16" ry="5" stroke="currentColor" strokeWidth="3" fill="none" />
+      <path d="M4 12v10c0 2.8 7.2 5 16 5s16-2.2 16-5V12" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <path d="M4 17c0 2.8 7.2 5 16 5s16-2.2 16-5" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" opacity=".55" />
+      <path d="M46 8l3 6 6 1.5-6 1.5-3 6-3-6-6-1.5 6-1.5z" fill="currentColor" opacity=".85" />
+    </svg>
+  );
+}
+
+function InsightBaseComet() {
+  return (
+    <Link
+      href="/insight-base"
+      className="absolute z-20 hidden -translate-x-1/2 flex-col items-center sm:flex"
+      style={{ left: "6%", top: "94%" }}
+    >
+      <div className="group flex flex-col items-center">
+        {/* ogon komety — statyczna smuga, nie animacja przelotu jak tło komety w tle sceny */}
+        <div className="pointer-events-none absolute right-full top-1/2 h-[2px] w-16 -translate-y-1/2 bg-gradient-to-r from-transparent to-indigo-200/70 opacity-70 sm:w-20" />
+        <div
+          className="relative flex h-12 w-20 items-center justify-center rounded-full ring-1 ring-indigo-200/50 sm:h-14 sm:w-24"
+          style={{
+            background: "radial-gradient(circle at 35% 30%, #ffffff, #e0e7ff 55%, #c7d2fe)",
+            boxShadow: "0 0 26px rgba(129,140,248,0.4)",
+          }}
+        >
+          <InsightBaseIcon />
+        </div>
+        <div className="mt-2 min-w-[92px] rounded-md border border-indigo-300/25 bg-slate-950/70 px-2.5 py-1 text-center backdrop-blur-md shadow-[0_0_20px_rgba(15,23,42,0.9)] sm:min-w-[104px]">
+          <div className="text-[10px] font-semibold text-white whitespace-nowrap sm:text-[11px]">Insight Base</div>
+          <div className="mt-0.5 text-[7px] font-bold tracking-wide text-indigo-300 whitespace-nowrap sm:text-[8px]">
+            BAZA WIEDZY
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export default function OrbitHub() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#05070d] text-white">
@@ -406,6 +450,8 @@ export default function OrbitHub() {
           {modules.map((m) => (
             <ModuleOrb key={m.key} module={m} />
           ))}
+
+          <InsightBaseComet />
         </div>
 
         <div className="mx-auto mt-16 grid w-full max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
