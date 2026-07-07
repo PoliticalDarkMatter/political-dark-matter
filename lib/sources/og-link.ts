@@ -34,6 +34,10 @@ function decodeHtmlEntities(s: string): string {
   return s
     .replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'")
     .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ")
+    // Encje numeryczne (&#039; &#x1f4ab; itd.) — Facebook/Instagram często
+    // renderują emoji i apostrofy w tej formie, nie jako nazwane encje.
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
     .trim();
 }
 
