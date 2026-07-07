@@ -5,10 +5,13 @@ import Link from "next/link";
 import { ArrowLeft, Search, Users, Layers, Sparkles } from "lucide-react";
 import {
   DIMENSION_LABELS,
+  ALL_POPULATION_VALUE,
+  ALL_POPULATION_LABEL,
   type GroupDimension,
   type GroupWithCount,
   type InsightQueryResult,
   type GroupProfile,
+  type OverallStats,
 } from "@/lib/insight";
 
 type TabKey = "grupy" | "zapytaj" | "porownaj" | "charakterystyka";
@@ -63,6 +66,7 @@ function EmptyNote({ children }: { children: React.ReactNode }) {
 
 function useGroups() {
   const [groups, setGroups] = useState<GroupWithCount[] | null>(null);
+  const [stats, setStats] = useState<OverallStats | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -72,7 +76,10 @@ function useGroups() {
       .then((data) => {
         if (cancelled) return;
         if (data.error) setError(data.error);
-        else setGroups(data.groups ?? []);
+        else {
+          setGroups(data.groups ?? []);
+          setStats(data.stats ?? null);
+        }
       })
       .catch(() => {
         if (!cancelled) setError("Nie udało się połączyć z Insight Base.");
@@ -82,11 +89,11 @@ function useGroups() {
     };
   }, []);
 
-  return { groups, error };
+  return { groups, stats, error };
 }
 
 function GroupsTab() {
-  const { groups, error } = useGroups();
+  const { groups, stats, error } = useGroups();
 
   const byDimension = useMemo(() => {
     const map = new Map<GroupDimension, GroupWithCount[]>();
@@ -99,9 +106,7 @@ function GroupsTab() {
   }, [groups]);
 
   if (error) return <EmptyNote>{error}</EmptyNote>;
-  if (!groups) return <EmptyNote>Ładowanie taksonomii grup…</EmptyNote>;
-
-  const totalFindings = groups.reduce((sum, g) => sum + g.findings_count, 0);
+  if (!groups || !stats) return <EmptyNote>Ładowanie taksonomii grup…</EmptyNote>;
 
   return (
     <div className="flex flex-col gap-6">
@@ -113,11 +118,22 @@ function GroupsTab() {
             <span className="ml-2 text-sm text-slate-400">zdefiniowanych grup społecznych, w {byDimension.size} wymiarach</span>
           </div>
           <div>
-            <span className="text-3xl font-black text-white">{totalFindings}</span>
-            <span className="ml-2 text-sm text-slate-400">powiązań grupa-wynik zebranych dotąd w bazie</span>
+            <span className="text-3xl font-black text-white">{stats.totalStudies}</span>
+            <span className="ml-2 text-sm text-slate-400">badań/źródeł wgranych do bazy</span>
+          </div>
+          <div>
+            <span className="text-3xl font-black text-white">{stats.totalFindings}</span>
+            <span className="ml-2 text-sm text-slate-400">zebranych wyników łącznie</span>
           </div>
         </div>
-        {totalFindings === 0 && (
+        {stats.findingsWithoutGroup > 0 && (
+          <p className="mt-3 text-[12.5px] text-slate-500">
+            {stats.findingsWithoutGroup} z tych wyników to dane ogólnokrajowe (źródło nie podało rozbicia na grupy
+            społeczne) — dostępne pod „Cała populacja” w zakładkach pytania i charakterystyki, nie w rozbiciu
+            poniżej.
+          </p>
+        )}
+        {stats.totalFindings === 0 && (
           <p className="mt-3 text-[12.5px] text-slate-500">
             Baza wystartowała pusta. Nocne zadanie ingestii uzupełnia ją automatycznie, pierwsze dane pojawią się
             po najbliższym uruchomieniu.
@@ -243,6 +259,7 @@ function GroupPicker({
       className="pdm-searchbar w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-200"
     >
       <option value="">Wybierz grupę…</option>
+      <option value={ALL_POPULATION_VALUE}>{ALL_POPULATION_LABEL}</option>
       {Object.entries(
         (groups ?? []).reduce<Record<string, GroupWithCount[]>>((acc, g) => {
           (acc[g.dimension] ??= []).push(g);
@@ -274,10 +291,11 @@ function AskGroupTab() {
     setLoading(true);
     setError(null);
     try {
+      const groupValues = groupValue === ALL_POPULATION_VALUE ? [] : [groupValue];
       const res = await fetch("/api/insight/query", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, groupValues: [groupValue] }),
+        body: JSON.stringify({ topic, groupValues }),
       });
       const data = await res.json();
       if (data.error) setError(data.error);

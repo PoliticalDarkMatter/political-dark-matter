@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getGroupsWithCounts } from "@/lib/insight";
+import { getGroupsWithCounts, getOverallStats } from "@/lib/insight";
 
 export async function GET() {
   try {
-    const groups = await getGroupsWithCounts();
-    return NextResponse.json({ groups });
+    const [groups, stats] = await Promise.all([getGroupsWithCounts(), getOverallStats()]);
+    return NextResponse.json({ groups, stats });
   } catch (err) {
     console.error("[api/insight/groups]", err);
     return NextResponse.json(

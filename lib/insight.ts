@@ -35,6 +35,20 @@ export interface GroupWithCount extends GroupTaxonomyRow {
   findings_count: number;
 }
 
+// Wiele realnych badań (zwłaszcza streszczenia prasowe sondaży ogólnopolskich)
+// nie podaje rozbicia na grupy społeczne — to są dane ogólnokrajowe, nie błąd
+// ingestii. Taki finding ma group_tags = '{}'. Żeby te dane nie "znikały" z
+// widoku (0 w każdej grupie, mimo że baza coś zawiera), dajemy im osobny,
+// wybieralny pseudo-wpis zamiast chować je wyłącznie za pytaniem bez grupy.
+export const ALL_POPULATION_VALUE = "__all__";
+export const ALL_POPULATION_LABEL = "Cała populacja (bez podziału na grupy)";
+
+export interface OverallStats {
+  totalStudies: number;
+  totalFindings: number;
+  findingsWithoutGroup: number;
+}
+
 export interface InsightSynthesisSource {
   title: string;
   url: string;
@@ -96,6 +110,25 @@ export async function getGroupsWithCounts(): Promise<GroupWithCount[]> {
   return groups.map((g) => ({ ...g, findings_count: counts.get(g.id) ?? 0 }));
 }
 
+export async function getOverallStats(): Promise<OverallStats> {
+  const [{ count: totalStudies, error: studiesErr }, { data: findingsRows, error: findingsErr }] =
+    await Promise.all([
+      supabase.from("insight_studies").select("id", { count: "exact", head: true }),
+      supabase.from("insight_findings").select("group_tags"),
+    ]);
+  if (studiesErr) throw studiesErr;
+  if (findingsErr) throw findingsErr;
+
+  const rows = (findingsRows ?? []) as { group_tags: string[] | null }[];
+  const findingsWithoutGroup = rows.filter((r) => !r.group_tags || r.group_tags.length === 0).length;
+
+  return {
+    totalStudies: totalStudies ?? 0,
+    totalFindings: rows.length,
+    findingsWithoutGroup,
+  };
+}
+
 export async function queryInsight(
   topic: string,
   groupValues: string[]
@@ -136,6 +169,43 @@ export interface GroupProfile {
 }
 
 export async function getGroupProfile(groupValue: string): Promise<GroupProfile | null> {
+  if (groupValue === ALL_POPULATION_VALUE) {
+    // Pseudo-grupa: dane ogólnokrajowe, gdzie źródło nie podało rozbicia
+    // demograficznego (typowe dla streszczeń prasowych sondaży toplinowych).
+    const syntheticGroup: GroupTaxonomyRow = {
+      id: "",
+      dimension: "inne" as GroupDimension,
+      value: ALL_POPULATION_VALUE,
+      label_pl: ALL_POPULATION_LABEL,
+    };
+
+    const [{ data: syntheses, error: synthErr }, { data: findings, error: findErr }] = await Promise.all([
+      supabase
+        .from("insight_syntheses")
+        .select("topic, synthesis_text, divergence_note, last_updated_at, group_tags")
+        .order("last_updated_at", { ascending: false }),
+      supabase
+        .from("insight_findings")
+        .select(
+          "topic, value, value_text, verbatim_quote, confidence, created_at, group_tags, insight_studies(title, source_url, published_date)"
+        )
+        .order("created_at", { ascending: false })
+        .limit(200),
+    ]);
+    if (synthErr) throw synthErr;
+    if (findErr) throw findErr;
+
+    return {
+      group: syntheticGroup,
+      syntheses: ((syntheses ?? []) as (GroupProfileSynthesis & { group_tags: string[] | null })[]).filter(
+        (s) => !s.group_tags || s.group_tags.length === 0
+      ),
+      findings: ((findings ?? []) as unknown as (GroupProfileFinding & { group_tags: string[] | null })[]).filter(
+        (f) => !f.group_tags || f.group_tags.length === 0
+      ),
+    };
+  }
+
   const group = (await getGroupTaxonomy()).find((g) => g.value === groupValue);
   if (!group) return null;
 
