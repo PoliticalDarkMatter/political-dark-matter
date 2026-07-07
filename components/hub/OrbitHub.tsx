@@ -307,8 +307,10 @@ function InsightBaseComet() {
 // czwórki planet — to osobna, pomocnicza warstwa (narada ekspercka, nie
 // monitoring/analiza/przekaz/emisja), więc dostaje ten sam wzorzec komety:
 // nieruchomy punkt z boku, bez orbitowania i bez pulsującej animacji
-// "aktywności". Umieszczona nad planetą Apex Grid ("Analiza", prawa strona
-// elipsy) — góra-prawo sceny, symetrycznie do Insight Base (dół-lewo).
+// "aktywności". Insight Base wisi nad pierwszą kartą na dole (SŁUCHANIE,
+// left: 6%) — Konsylium ma wisieć nad DRUGĄ kartą na dole (ANALIZA, ta sama
+// logika pozycjonowania, tylko przesunięta o jedną kolumnę w prawo w tym
+// samym układzie 4-kolumnowym), NIE nad orbitującą planetą Apex Grid.
 // Inny kolor (bursztyn zamiast indygo), żeby dało się je rozróżnić na
 // pierwszy rzut oka. Ogon komety skierowany w lewo, tak jak w Insight Base
 // — ten sam kierunek lotu dla obu komet, nie lustrzane odbicie.
@@ -331,7 +333,7 @@ function KonsyliumComet() {
     <Link
       href="/konsylium"
       className="absolute z-20 hidden -translate-x-1/2 flex-col items-center sm:flex"
-      style={{ left: "90%", top: "8%" }}
+      style={{ left: "35%", top: "94%" }}
     >
       <div className="group flex flex-col items-center">
         {/* ogon komety w lewo — ten sam kierunek co Insight Base */}
