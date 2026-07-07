@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase, DEFAULT_PROJECT_SLUG } from "@/lib/supabase";
+import { classifySentiment } from "@/lib/sentiment";
 
 export const maxDuration = 30;
 
@@ -18,17 +19,8 @@ export const maxDuration = 30;
 
 const BATCH_LIMIT = 25;
 
-const POS = ["wzrost","sukces","poprawa","rekord","wygrał","dobry","pozytywny","rozwój","zysk","inwestycje","historyczny","przełom","szansa","pokój","wyróżnienie","nagroda","odbudowa","wsparcie","pomoc","porozumienie","zwycięstwo","umowa","inwestycja"];
-const NEG = ["kryzys","katastrofa","atak","śmierć","wypadek","skandal","protest","strajk","inflacja","drożyzna","problem","tragedia","konflikt","zagrożenie","agresja","korupcja","pożar","powódź","zabójstwo","aresztowanie","zarzuty","oskarżenie","wyrok","bankructwo","kolizja","ranny","zginął","zginęła","utonął","eksplozja","awaria","porażka","afera","kradzież","oszustwo","wyburzenie"];
-
-function sentimentOf(text: string): "positive" | "negative" | "neutral" {
-  const t = text.toLowerCase();
-  const p = POS.filter((w) => t.includes(w)).length;
-  const n = NEG.filter((w) => t.includes(w)).length;
-  if (p > n) return "positive";
-  if (n > p) return "negative";
-  return "neutral";
-}
+// Definicja w lib/sentiment.ts — patrz tam po uzasadnienie wydzielenia.
+const sentimentOf = classifySentiment;
 
 function extractVisibleText(html: string): string {
   return html

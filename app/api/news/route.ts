@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { DEFAULT_RSS_FEEDS } from "@/lib/sources";
-import { authorityScoreForUrl } from "@/lib/domain-authority";
+import { classifySentiment } from "@/lib/sentiment";
+import { parseRSS, weightForArticleUrl } from "@/lib/rss";
+import { fetchYouTubeSearch, fetchYouTubeMonitor } from "@/lib/sources/youtube";
+import { fetchX } from "@/lib/sources/x";
+import { dedupeArticles } from "@/lib/dedup";
+import { correlateAcrossPlatforms, type CrossPlatformSignal } from "@/lib/cross-platform";
 
 export const maxDuration = 30;
 
@@ -38,81 +43,11 @@ export interface NarrativeCluster {
   topArticles: Array<{ title: string; url: string; source: string }>;
 }
 
-// ── Sentiment ────────────────────────────────────────────────────
-const POS = ["wzrost","sukces","poprawa","rekord","wygrał","dobry","pozytywny","rozwój","zysk","inwestycje","historyczny","przełom","szansa","pokój","wyróżnienie","nagroda","odbudowa","wsparcie","pomoc","porozumienie","zwycięstwo","umowa","inwestycja"];
-const NEG = ["kryzys","katastrofa","atak","śmierć","wypadek","skandal","protest","strajk","inflacja","drożyzna","problem","tragedia","konflikt","zagrożenie","agresja","korupcja","pożar","powódź","zabójstwo","aresztowanie","zarzuty","oskarżenie","wyrok","bankructwo","kolizja","ranny","zginął","zginęła","utonął","eksplozja","awaria","porażka","afera","kradzież","oszustwo","wyburzenie"];
-
-function sentiment(text: string): Article["sentiment"] {
-  const t = text.toLowerCase();
-  const p = POS.filter(w => t.includes(w)).length;
-  const n = NEG.filter(w => t.includes(w)).length;
-  if (p > n) return "positive";
-  if (n > p) return "negative";
-  return "neutral";
-}
-
-// ── Waga per artykuł ─────────────────────────────────────────────
-// Poprzednia wersja miała tu płaski słownik "portal -> 1 do 10" wpisany ręcznie.
-// Od teraz każdy artykuł z realnym URL-em dostaje wagę liczoną z autorytetu
-// JEGO domeny (patrz lib/domain-authority.ts, oparte o realną rangę Tranco),
-// a nie z tego, jak dany portal "wygląda na oko". Dla mediów społecznościowych
-// (Reddit/Mastodon/Telegram) waga liczy się osobno, z realnych sygnałów
-// zaangażowania danego posta — patrz funkcje niżej.
-function weightForArticleUrl(url: string, sourceName?: string): { weight: number; basis: WeightBasis; explain: string } {
-  const res = authorityScoreForUrl(url, sourceName);
-  let explain: string;
-  if (res.basis === "editorial_override") {
-    explain = `Wyjątek redakcyjny: ${res.reason}`;
-  } else if (res.basis === "tranco") {
-    explain = `Ranga domeny (Tranco): ${res.rank} z dnia ${res.asOf}${res.reason ?? ""}`;
-  } else {
-    explain = "Domena spoza tabeli rankingowej — wartość neutralna";
-  }
-  return { weight: res.score, basis: res.basis, explain };
-}
-
-// ── RSS parser (ogólny) ──────────────────────────────────────────
-function tag(xml: string, name: string): string {
-  const m = xml.match(new RegExp(`<${name}[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/${name}>`, "i"));
-  return m ? m[1].replace(/<[^>]+>/g, "").trim() : "";
-}
-
-function parseRSS(xml: string, defaultSource: string, limit = 15): Article[] {
-  const items = xml.match(/<item[\s>]([\s\S]*?)<\/item>/gi) ?? [];
-  return items.slice(0, limit).map((item, i) => {
-    let title = tag(item, "title");
-    const url = tag(item, "link") || tag(item, "guid");
-    const pubDate = tag(item, "pubDate");
-
-    // Google News RSS: title zawiera "- Źródło" na końcu
-    const srcTag = item.match(/<source[^>]*>([^<]+)<\/source>/i);
-    let source = srcTag ? srcTag[1].trim() : defaultSource;
-
-    // Odetnij "- NazwaŹródła" z końca tytułu (Google News)
-    if (srcTag) {
-      const suffix = new RegExp(`\\s*-\\s*${source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`);
-      title = title.replace(suffix, "").trim();
-      if (!title) {
-        // fallback: odetnij ostatni " - X"
-        title = title.replace(/\s*-\s*[^-]+$/, "").trim();
-      }
-    }
-
-    if (!title || !url) return null;
-    const w = weightForArticleUrl(url, source);
-    return {
-      id: `${defaultSource}-${i}`,
-      title,
-      url,
-      source,
-      publishedAt: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
-      sentiment: sentiment(title),
-      weight: w.weight,
-      weightBasis: w.basis,
-      weightExplain: w.explain,
-    } as Article;
-  }).filter(Boolean) as Article[];
-}
+// ── Sentiment i waga per artykuł ──────────────────────────────────
+// Definicje w lib/sentiment.ts i lib/rss.ts (parseRSS + weightForArticleUrl
+// przeniesione tam, żeby lib/sources/x.ts mogło je reużyć bez zależności
+// cyklicznej — patrz komentarz na górze lib/rss.ts).
+const sentiment = classifySentiment;
 
 // ── Polskie RSS feeds (tryb monitorowania) ───────────────────────
 // Źródło listy: lib/sources.ts (DEFAULT_RSS_FEEDS) — katalog był już
@@ -827,6 +762,7 @@ export interface FeedResult {
   entities: EntityInfo[];
   narratives: NarrativeCluster[];
   timeline: Array<{ hour: string; count: number }>;
+  crossPlatformSignals: CrossPlatformSignal[];
   query: string;
   period: string;
   searchMode: string;
@@ -847,13 +783,15 @@ export async function buildFeed(q: string, period: string, from?: string, to?: s
   }
 
   if (isSearchMode) {
-    const [gnArticles, redditArticles, mastodonArticles, gdeltArticles, guardianArticles, telegramArticles] = await Promise.all([
+    const [gnArticles, redditArticles, mastodonArticles, gdeltArticles, guardianArticles, telegramArticles, youtubeArticles, xArticles] = await Promise.all([
       searchGoogleNews(q.trim()),
       searchReddit(q.trim()),
       fetchMastodon(q.trim()),
       fetchGDELT(q.trim()),
       fetchGuardian(q.trim()),
       fetchTelegramAll(),
+      fetchYouTubeSearch(q.trim()),
+      fetchX(q.trim()),
     ]);
 
     if (gnArticles.length > 0) {
@@ -870,27 +808,31 @@ export async function buildFeed(q: string, period: string, from?: string, to?: s
       });
     }
 
-    for (const arts of [redditArticles, mastodonArticles, gdeltArticles, guardianArticles, telegramArticles]) {
+    for (const arts of [redditArticles, mastodonArticles, gdeltArticles, guardianArticles, telegramArticles, youtubeArticles, xArticles]) {
       tally(arts);
       allArticles = [...allArticles, ...arts];
     }
   } else {
     searchMode = "rss_monitor";
-    const [feedResults, redditArticles, mastodonArticles, telegramArticles] = await Promise.all([
+    const [feedResults, redditArticles, mastodonArticles, telegramArticles, youtubeArticles] = await Promise.all([
       Promise.allSettled(POLISH_FEEDS.map(fetchFeed)),
       fetchRedditMonitor(),
       fetchMastodon(),
       fetchTelegramAll(),
+      fetchYouTubeMonitor(),
     ]);
     feedResults.forEach((r, i) => {
       const arts = r.status === "fulfilled" ? r.value : [];
       bySourceRaw[POLISH_FEEDS[i].name] = arts.length;
       allArticles.push(...arts);
     });
-    for (const arts of [redditArticles, mastodonArticles, telegramArticles]) {
+    for (const arts of [redditArticles, mastodonArticles, telegramArticles, youtubeArticles]) {
       tally(arts);
       allArticles = [...allArticles, ...arts];
     }
+    // X bez zapytania nie ma sensownego trybu monitoringu (recent search
+    // wymaga słów kluczowych) — celowo pomijamy w trybie bez query, tak
+    // jak GDELT/Guardian też są tylko w trybie wyszukiwania.
   }
 
   allArticles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
@@ -899,9 +841,15 @@ export async function buildFeed(q: string, period: string, from?: string, to?: s
     ? allArticles
     : filterByTime(allArticles, period, from || undefined, to || undefined);
 
-  const filtered = (isSearchMode && searchMode === "google_news")
+  const queryFiltered = (isSearchMode && searchMode === "google_news")
     ? timeFiltered
     : filterByQuery(timeFiltered, q);
+
+  // Deduplikacja przedruków (ta sama depesza z pięciu portali → jeden wpis,
+  // ten o najwyższej wadze) — patrz lib/dedup.ts. Robimy to PO filtrach
+  // czasu/zapytania, PRZED liczeniem sentymentu/encji/narracji, żeby żadna
+  // z tych agregacji nie liczyła przedruku jako niezależnego sygnału.
+  const { articles: filtered, removedCount: dedupedCount } = dedupeArticles(queryFiltered);
 
   const sentimentCounts = {
     positive: filtered.filter(a => a.sentiment === "positive").length,
@@ -912,6 +860,9 @@ export async function buildFeed(q: string, period: string, from?: string, to?: s
   const entities   = await canonicalizeWithGemini(extractEntities(filtered));
   const narratives = clusterNarratives(filtered);
   const timeline   = buildTimeline(filtered);
+  // Korelacja między platformami — patrz lib/cross-platform.ts. Nie liczy
+  // się z nowego źródła danych, tylko z tego, co już zebraliśmy.
+  const crossPlatformSignals: CrossPlatformSignal[] = correlateAcrossPlatforms(filtered);
 
   const bySourceWeighted: Record<string, number> = {};
   let totalWeightedReach = 0;
@@ -927,8 +878,8 @@ export async function buildFeed(q: string, period: string, from?: string, to?: s
 
   const searchInfo = isSearchMode
     ? (searchMode === "google_news"
-        ? `Wyszukano w Google News + Reddit/Mastodon/GDELT/Guardian: ${allArticles.length} pozycji`
-        : `Google News niedostępny — wyniki z ${POLISH_FEEDS.length} feedów RSS + inne źródła (${allArticles.length})`)
+        ? `Wyszukano w Google News + Reddit/Mastodon/GDELT/Guardian/YouTube/X: ${allArticles.length} pozycji${dedupedCount > 0 ? `, usunięto ${dedupedCount} przedruków` : ""}`
+        : `Google News niedostępny — wyniki z ${POLISH_FEEDS.length} feedów RSS + inne źródła (${allArticles.length})${dedupedCount > 0 ? `, usunięto ${dedupedCount} przedruków` : ""}`)
     : null;
 
   return {
@@ -942,6 +893,7 @@ export async function buildFeed(q: string, period: string, from?: string, to?: s
     entities,
     narratives,
     timeline,
+    crossPlatformSignals,
     query: q,
     period,
     searchMode,

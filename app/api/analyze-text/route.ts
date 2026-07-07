@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { buildFeed } from "@/app/api/news/route";
+import { buildFeed, type FeedResult } from "@/app/api/news/route";
+import { fetchOpenGraphLink, extractFacebookOrInstagramUrl } from "@/lib/sources/og-link";
+
+function emptyFeed(query: string, period: string): FeedResult {
+  return {
+    articles: [], total: 0, totalAvailable: 0, bySource: {}, bySourceWeighted: {}, totalWeightedReach: 0,
+    sentimentCounts: { positive: 0, negative: 0, neutral: 0 }, entities: [], narratives: [], timeline: [],
+    crossPlatformSignals: [],
+    query, period, searchMode: "rss_filtered", searchInfo: null, rssNote: null, fetchedAt: new Date().toISOString(),
+  };
+}
 
 export const maxDuration = 30;
 
@@ -64,8 +74,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Jeśli wklejony tekst to (albo zawiera) link do Facebooka/Instagrama,
+  // dociągnij jego podgląd (og:title/og:description, bez logowania — patrz
+  // lib/sources/og-link.ts) i potraktuj jako dodatkowy, ręcznie wskazany
+  // materiał w wyniku — niezależnie od tego, czy wyciąganie fraz się uda.
+  const fbIgUrl = extractFacebookOrInstagramUrl(text);
+  const linkedArticlePromise = fbIgUrl ? fetchOpenGraphLink(fbIgUrl) : Promise.resolve(null);
+
   const phrases = await extractPhrasesWithGemini(text);
-  if (phrases.length === 0) {
+  const linkedArticle = await linkedArticlePromise;
+
+  if (phrases.length === 0 && !linkedArticle) {
     return NextResponse.json(
       { error: "Nie udało się wyodrębnić fraz z tekstu — spróbuj wkleić dłuższy fragment z konkretnymi nazwiskami lub nazwami." },
       { status: 422 }
@@ -74,11 +93,28 @@ export async function POST(req: NextRequest) {
 
   // Łączymy frazy spacją — filterByQuery i tak dopasowuje "którekolwiek słowo",
   // więc to działa jak OR bez literalnego tokenu "OR" zaśmiecającego zapytanie.
+  // Gdy nie udało się wyciągnąć żadnej frazy (np. wklejony był sam link), nie
+  // odpalamy pełnego trybu monitoringu (wolne, niezwiązane z linkiem) — wynik
+  // to wtedy sam podgląd linku, doklejony niżej.
   const query = phrases.join(" ");
-  const feed = await buildFeed(query, period);
+  const feed = phrases.length > 0 ? await buildFeed(query, period) : emptyFeed(query, period);
+
+  // Doklej ręcznie podany link FB/IG do wyniku (jeśli był i jeśli dało się
+  // go odczytać) — poza silnikiem buildFeed, bo to jeden, wskazany materiał,
+  // nie wynik przeszukania.
+  if (linkedArticle) {
+    feed.articles = [linkedArticle, ...feed.articles];
+    feed.total += 1;
+    feed.totalAvailable += 1;
+    feed.bySource[linkedArticle.source] = (feed.bySource[linkedArticle.source] ?? 0) + 1;
+    feed.bySourceWeighted[linkedArticle.source] = (feed.bySourceWeighted[linkedArticle.source] ?? 0) + linkedArticle.weight;
+    feed.totalWeightedReach = Math.round(feed.totalWeightedReach + linkedArticle.weight);
+    feed.sentimentCounts[linkedArticle.sentiment] += 1;
+  }
 
   return NextResponse.json({
     extractedPhrases: phrases,
+    linkedArticle,
     feed,
   }, { headers: { "Cache-Control": "no-store" } });
 }
