@@ -141,14 +141,18 @@ export async function queryInsight(
   return (data as InsightQueryResult) ?? EMPTY_RESULT;
 }
 
-// Grupa profilowa miesza dziś w jednej tabeli dwa bardzo różne rodzaje wiedzy
-// o grupie: (1) zaufanie/poparcie polityczne oraz (2) wartości, priorytety
-// życiowe, postawy wobec pracy/rodziny/religii itd. Dla użytkownika to nie jest
-// to samo pytanie - "za kim grupa głosuje" i "jak grupa patrzy na życie" trzeba
-// pokazywać osobno, żeby profil grupy nie sprowadzał się do listy sondaży
-// politycznych. To rozróżnienie jest heurystyką po prefiksie/słowach kluczowych
-// w `topic`, nie osobną kolumną w bazie - jeśli topic nie pasuje do żadnego
-// wzorca politycznego, trafia domyślnie do "wartości i stylu życia".
+// Grupa profilowa miesza dziś w jednej tabeli trzy bardzo różne rodzaje wiedzy
+// o grupie: (1) zaufanie/poparcie polityczne, (2) twarde dane demograficzno-
+// -materialne (dochody, ubóstwo, bezrobocie, cyfryzacja - fakty administracyjne
+// GUS, nie opinie) oraz (3) wartości, priorytety życiowe, postawy wobec pracy/
+// rodziny/religii itd. Jan wprost zażądał (2026-07-08), żeby charakterystyka
+// grupy pokazywała "scyfryzowany obraz" oparty na materialnej rzeczywistości,
+// nie tylko na sondażach opinii - dlatego dane demograficzno-materialne mają
+// WŁASNY koszyk, a nie giną wymieszane z "wartościami i stylem życia". To
+// rozróżnienie jest heurystyką po prefiksie/słowach kluczowych w `topic`, nie
+// osobną kolumną w bazie - jeśli topic nie pasuje do żadnego wzorca
+// politycznego ani demograficzno-materialnego, trafia domyślnie do "wartości
+// i stylu życia" (opinie, postawy, deklaracje - nie twarde fakty).
 const POLITICAL_TOPIC_PATTERNS = [
   /^zaufanie_do_/,
   /^poparcie_/,
@@ -159,11 +163,31 @@ const POLITICAL_TOPIC_PATTERNS = [
   /wybor/,
 ];
 
-export type FindingCategory = "polityka" | "wartosci_i_styl_zycia";
+// Twarde dane administracyjne/statystyczne (GUS i podobne) - fakty o sytuacji
+// materialnej i demograficznej grup, nie deklarowane opinie czy postawy.
+const DEMOGRAFIA_MATERIALNA_TOPIC_PATTERNS = [
+  /ubostwo/,
+  /^dochod/,
+  /^wydatki/,
+  /bezrobocia/,
+  /zatrudnien/,
+  /wynagrodze/,
+  /pensj/,
+  /internetu/,
+  /cyfrow/,
+  /nastroje_konsumenckie/,
+  /budzet(y)?_domow/,
+  /koszty_zycia/,
+  /warunki_mieszkaniow/,
+];
+
+export type FindingCategory = "polityka" | "demografia_i_sytuacja_materialna" | "wartosci_i_styl_zycia";
 
 export function categorizeTopic(topic: string): FindingCategory {
   const t = topic.toLowerCase();
-  return POLITICAL_TOPIC_PATTERNS.some((re) => re.test(t)) ? "polityka" : "wartosci_i_styl_zycia";
+  if (POLITICAL_TOPIC_PATTERNS.some((re) => re.test(t))) return "polityka";
+  if (DEMOGRAFIA_MATERIALNA_TOPIC_PATTERNS.some((re) => re.test(t))) return "demografia_i_sytuacja_materialna";
+  return "wartosci_i_styl_zycia";
 }
 
 export interface GroupProfileFinding {

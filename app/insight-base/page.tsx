@@ -465,26 +465,15 @@ function GroupProfileTab() {
             </EmptyNote>
           )}
 
-          {profile.syntheses.length > 0 && (
-            <div className="flex flex-col gap-3">
-              <div className="text-[11px] font-bold uppercase tracking-wide text-violet-300/70">
-                Syntezy między badaniami
-              </div>
-              {profile.syntheses.map((s, i) => (
-                <div key={i} className="pdm-panel p-4">
-                  <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-violet-300/80">
-                    {s.topic}
-                  </div>
-                  <p className="text-[13.5px] leading-relaxed text-slate-200">{s.synthesis_text}</p>
-                  {s.divergence_note && (
-                    <p className="mt-2 text-[12.5px] leading-relaxed text-amber-300/90">{s.divergence_note}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
           {(() => {
+            // Kolejność świadoma, nie alfabetyczna: twarde dane demograficzno-
+            // -materialne (fakty GUS o dochodach, ubóstwie, bezrobociu,
+            // cyfryzacji) idą PIERWSZE, przed opiniami i sondażami - Jan
+            // wprost zażądał (2026-07-08), żeby charakterystyka grupy zaczynała
+            // się od materialnej rzeczywistości, nie od tego, na kogo grupa
+            // głosuje. Polityka celowo na końcu, bo to kategoria, która i tak
+            // dotąd dominowała liczebnie.
+            const demografia = profile.findings.filter((f) => f.category === "demografia_i_sytuacja_materialna");
             const values = profile.findings.filter((f) => f.category === "wartosci_i_styl_zycia");
             const political = profile.findings.filter((f) => f.category === "polityka");
             const renderFinding = (f: GroupProfileFinding, i: number) => (
@@ -520,6 +509,32 @@ function GroupProfileTab() {
             );
             return (
               <>
+                {demografia.length > 0 && (
+                  <div className="flex flex-col gap-3">
+                    <div className="text-[11px] font-bold uppercase tracking-wide text-amber-300/70">
+                      Demografia i sytuacja materialna
+                    </div>
+                    {demografia.map(renderFinding)}
+                  </div>
+                )}
+                {profile.syntheses.length > 0 && (
+                  <div className="flex flex-col gap-3">
+                    <div className="text-[11px] font-bold uppercase tracking-wide text-violet-300/70">
+                      Syntezy między badaniami
+                    </div>
+                    {profile.syntheses.map((s, i) => (
+                      <div key={i} className="pdm-panel p-4">
+                        <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-violet-300/80">
+                          {s.topic}
+                        </div>
+                        <p className="text-[13.5px] leading-relaxed text-slate-200">{s.synthesis_text}</p>
+                        {s.divergence_note && (
+                          <p className="mt-2 text-[12.5px] leading-relaxed text-amber-300/90">{s.divergence_note}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {values.length > 0 && (
                   <div className="flex flex-col gap-3">
                     <div className="text-[11px] font-bold uppercase tracking-wide text-emerald-300/70">
