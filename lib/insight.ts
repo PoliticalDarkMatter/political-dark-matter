@@ -13,7 +13,10 @@ export type GroupDimension =
   | "historia_glosowania"
   | "dochod"
   | "plec"
-  | "grupa_spoleczno_zawodowa";
+  | "grupa_spoleczno_zawodowa"
+  | "poglady_polityczne"
+  | "praktyki_religijne"
+  | "segment_psychograficzny";
 
 export const DIMENSION_LABELS: Record<GroupDimension, string> = {
   wiek: "Wiek",
@@ -24,6 +27,9 @@ export const DIMENSION_LABELS: Record<GroupDimension, string> = {
   dochod: "Dochód",
   plec: "Płeć",
   grupa_spoleczno_zawodowa: "Grupa społeczno-zawodowa / źródło utrzymania",
+  poglady_polityczne: "Poglądy polityczne (deklarowane)",
+  praktyki_religijne: "Praktyki religijne",
+  segment_psychograficzny: "Segment psychograficzny (More in Common)",
 };
 
 export interface GroupTaxonomyRow {

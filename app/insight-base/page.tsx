@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Search, Users, Layers, Sparkles } from "lucide-react";
+import { ArrowLeft, Search, Users, Layers, Sparkles, MessageCircle } from "lucide-react";
+import AvatarChatTab from "@/components/insight/AvatarChatTab";
 import {
   DIMENSION_LABELS,
   ALL_POPULATION_VALUE,
@@ -15,10 +16,11 @@ import {
   type OverallStats,
 } from "@/lib/insight";
 
-type TabKey = "grupy" | "zapytaj" | "porownaj" | "charakterystyka";
+type TabKey = "grupy" | "awatar" | "zapytaj" | "porownaj" | "charakterystyka";
 
 const TABS: { key: TabKey; label: string; icon: typeof Users }[] = [
   { key: "grupy", label: "Grupy", icon: Users },
+  { key: "awatar", label: "Rozmowa z grupą", icon: MessageCircle },
   { key: "zapytaj", label: "Zapytaj grupę", icon: Search },
   { key: "porownaj", label: "Porównaj grupy", icon: Layers },
   { key: "charakterystyka", label: "Charakterystyka grupy", icon: Sparkles },
@@ -560,6 +562,11 @@ function GroupProfileTab() {
   );
 }
 
+function AvatarTabWithGroups() {
+  const { groups } = useGroups();
+  return <AvatarChatTab groups={groups} />;
+}
+
 export default function InsightBasePage() {
   const [tab, setTab] = useState<TabKey>("grupy");
 
@@ -601,6 +608,7 @@ export default function InsightBasePage() {
 
         <div className="mt-6">
           {tab === "grupy" && <GroupsTab />}
+          {tab === "awatar" && <AvatarTabWithGroups />}
           {tab === "zapytaj" && <AskGroupTab />}
           {tab === "porownaj" && <CompareGroupsTab />}
           {tab === "charakterystyka" && <GroupProfileTab />}
