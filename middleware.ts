@@ -6,7 +6,7 @@ const COOKIE_VALUE = "narrativescope_authenticated";
 const PUBLIC_PREFIXES = [
   "/login", "/api/auth", "/api/news", "/api/snapshot",
   "/_next", "/favicon.ico", "/logo.png", "/modules",
-  "/apex-grid", "/volt-stream", "/pulse-field",
+  "/volt-stream", "/pulse-field",
 ];
 
 // Dowolny statyczny plik z /public (obrazki, svg, itd.) ma być zawsze publiczny —
