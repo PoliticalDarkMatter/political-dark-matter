@@ -77,10 +77,14 @@ export interface InsightRawFinding {
   value_text: string | null;
   verbatim_quote: string | null;
   confidence: string;
+  comparison_note?: string | null;
   data_type: string;
   study_title: string;
   source_url: string;
   published_date: string | null;
+  // "ogolnopolski" = dane bez rozbicia na grupy (group_tags puste) pokazane
+  // jako kontekst, żeby pytanie o grupę nie kończyło się fałszywym "brak danych"
+  zakres?: "grupa" | "ogolnopolski";
 }
 
 export interface InsightQueryResult {
@@ -220,10 +224,47 @@ export interface GroupProfileSynthesis {
   last_updated_at: string;
 }
 
+// ── Portret narracyjny grupy (budowany przez nocną ingestię LLM na dowodach
+// z bazy; przenoszony między wersjami person przez rebuild_group_personas) ──
+export interface PortretSekcja {
+  tytul: string;
+  tekst: string;
+  finding_ids?: string[];
+  pewnosc?: string;
+  zastrzezenie?: string;
+}
+
+export interface PortretHipoteza {
+  teza: string;
+  typ?: string;
+  oparta_na?: string;
+}
+
+export interface PortretNarracyjny {
+  wersja?: string;
+  zbudowano_przez?: string;
+  naglowek?: string;
+  sekcje?: PortretSekcja[];
+  hipotezy_strategiczne?: PortretHipoteza[];
+  luki_w_danych?: string[];
+}
+
+// Zagregowana postawa z persony - podstawa wykresu "grupa na tle wymiaru"
+export interface PersonaPostawa {
+  temat: string;
+  wartosc: number | null;
+  srednia_w_wymiarze: number | null;
+  liczba_pomiarow?: number;
+  score?: number;
+}
+
 export interface GroupProfile {
   group: GroupTaxonomyRow;
   syntheses: GroupProfileSynthesis[];
   findings: GroupProfileFinding[];
+  portret: PortretNarracyjny | null;
+  postawy: PersonaPostawa[];
+  data_coverage: string | null;
 }
 
 export async function getGroupProfile(groupValue: string): Promise<GroupProfile | null> {
@@ -255,6 +296,9 @@ export async function getGroupProfile(groupValue: string): Promise<GroupProfile 
 
     return {
       group: syntheticGroup,
+      portret: null,
+      postawy: [],
+      data_coverage: null,
       syntheses: ((syntheses ?? []) as (GroupProfileSynthesis & { group_tags: string[] | null })[]).filter(
         (s) => !s.group_tags || s.group_tags.length === 0
       ),
@@ -284,8 +328,30 @@ export async function getGroupProfile(groupValue: string): Promise<GroupProfile 
     .limit(50);
   if (findErr) throw findErr;
 
+  // Persona grupy: portret narracyjny (synteza LLM z nocnej ingestii) oraz
+  // zagregowane postawy z porównaniem do średniej wymiaru (dla wykresów).
+  const { data: personaRows, error: personaErr } = await supabase
+    .from("insight_group_personas")
+    .select("profile, data_coverage")
+    .eq("group_id", group.id)
+    .eq("status", "aktualna")
+    .limit(1);
+  if (personaErr) throw personaErr;
+  const persona = personaRows?.[0] as
+    | { profile?: { portret_narracyjny?: PortretNarracyjny; postawy_i_zachowania?: PersonaPostawa[] }; data_coverage?: string }
+    | undefined;
+
   return {
     group,
+    portret: persona?.profile?.portret_narracyjny ?? null,
+    postawy: (persona?.profile?.postawy_i_zachowania ?? []).map((p) => ({
+      temat: p.temat,
+      wartosc: p.wartosc ?? null,
+      srednia_w_wymiarze: p.srednia_w_wymiarze ?? null,
+      liczba_pomiarow: p.liczba_pomiarow,
+      score: p.score,
+    })),
+    data_coverage: persona?.data_coverage ?? null,
     syntheses: (syntheses ?? []) as GroupProfileSynthesis[],
     findings: ((findings ?? []) as unknown as GroupProfileFinding[]).map((f) => ({
       ...f,

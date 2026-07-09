@@ -14,7 +14,19 @@ import {
   type GroupProfile,
   type GroupProfileFinding,
   type OverallStats,
+  type PortretNarracyjny,
+  type PersonaPostawa,
 } from "@/lib/insight";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  CartesianGrid,
+} from "recharts";
 
 type TabKey = "grupy" | "awatar" | "zapytaj" | "porownaj" | "charakterystyka";
 
@@ -206,7 +218,14 @@ function FindingRow({ f }: { f: InsightQueryResult["raw_findings"][number] }) {
     <div className="pdm-panel p-4">
       <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
         <span className="text-[11px] font-bold uppercase tracking-wide text-sky-300/80">{f.topic}</span>
-        <ConfidenceBadge confidence={f.confidence} />
+        <span className="flex items-center gap-1.5">
+          {f.zakres === "ogolnopolski" && (
+            <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+              dane ogólnopolskie
+            </span>
+          )}
+          <ConfidenceBadge confidence={f.confidence} />
+        </span>
       </div>
       {(f.value !== null || f.value_text) && (
         <div className="text-lg font-black text-white">
@@ -214,6 +233,7 @@ function FindingRow({ f }: { f: InsightQueryResult["raw_findings"][number] }) {
         </div>
       )}
       {f.verbatim_quote && <p className="mt-1 text-[13px] italic leading-relaxed text-slate-300">„{f.verbatim_quote}”</p>}
+      {f.comparison_note && <p className="mt-1 text-[12px] leading-relaxed text-slate-400">{f.comparison_note}</p>}
       <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-slate-500">
         <a href={f.source_url} target="_blank" rel="noreferrer" className="truncate text-sky-400/80 hover:text-sky-300">
           {f.study_title}
@@ -281,28 +301,142 @@ function GroupPicker({
   );
 }
 
+interface AnalystEvidence {
+  nr: number;
+  tekst: string;
+  zrodlo: string;
+  url: string | null;
+  data: string | null;
+  score: number | null;
+  rodzaj: string;
+}
+
+interface AnalystAnswer {
+  answer: string;
+  confidence: "wysoka" | "srednia" | "niska";
+  usedEvidence: number[];
+  caveats: string | null;
+  evidence: AnalystEvidence[];
+  coverage: string;
+  aiReal: boolean;
+}
+
+const ANSWER_CONFIDENCE_COLORS: Record<string, string> = {
+  wysoka: "#4ade80",
+  srednia: "#fbbf24",
+  niska: "#f87171",
+};
+
+const RODZAJ_LABELS: Record<string, string> = {
+  profil_grupy: "profil grupy",
+  dopasowane_do_pytania: "dane o grupie",
+  synteza: "synteza",
+  kontekst_spoza_grupy: "kontekst ogólnopolski",
+};
+
+function AnalystAnswerView({ a }: { a: AnalystAnswer }) {
+  const color = ANSWER_CONFIDENCE_COLORS[a.confidence] ?? "#94a3b8";
+  const used = new Set(a.usedEvidence);
+  return (
+    <div className="mt-4 flex flex-col gap-3">
+      <div className="pdm-panel border-sky-400/20 p-5">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <div className="pdm-kicker">Analiza na dowodach z bazy</div>
+          <span
+            className="rounded-full px-2.5 py-0.5 text-[11px] font-bold"
+            style={{ color, background: color + "1a", border: `1px solid ${color}55` }}
+          >
+            pewność: {a.confidence}
+          </span>
+        </div>
+        <p className="whitespace-pre-line text-[14px] leading-relaxed text-slate-100">{a.answer}</p>
+        {a.caveats && (
+          <p className="mt-3 text-[12.5px] leading-relaxed text-amber-300/90">Zastrzeżenia: {a.caveats}</p>
+        )}
+      </div>
+      {a.evidence.length > 0 && (
+        <details className="pdm-panel p-4">
+          <summary className="cursor-pointer text-[12px] font-bold uppercase tracking-wide text-slate-400">
+            Dowody ({a.evidence.length}, użyte w odpowiedzi: {a.usedEvidence.length})
+          </summary>
+          <div className="mt-3 flex flex-col gap-2">
+            {a.evidence.map((e) => (
+              <div
+                key={e.nr}
+                className={[
+                  "rounded-lg border p-3",
+                  used.has(e.nr) ? "border-sky-400/30 bg-sky-400/5" : "border-white/5 bg-white/[0.02]",
+                ].join(" ")}
+              >
+                <div className="mb-1 flex flex-wrap items-center gap-2 text-[10.5px]">
+                  <span className="font-black text-slate-400">[{e.nr}]</span>
+                  <span
+                    className={[
+                      "rounded-full px-2 py-0.5 font-bold",
+                      e.rodzaj === "kontekst_spoza_grupy"
+                        ? "border border-amber-400/30 bg-amber-400/10 text-amber-300"
+                        : "bg-white/5 text-slate-400",
+                    ].join(" ")}
+                  >
+                    {RODZAJ_LABELS[e.rodzaj] ?? e.rodzaj}
+                  </span>
+                  {e.data && <span className="text-slate-500">{new Date(e.data).toLocaleDateString("pl-PL")}</span>}
+                </div>
+                <p className="text-[12.5px] leading-relaxed text-slate-300">{e.tekst}</p>
+                {e.url ? (
+                  <a href={e.url} target="_blank" rel="noreferrer" className="mt-1 block truncate text-[11px] text-sky-400/80 hover:text-sky-300">
+                    {e.zrodlo}
+                  </a>
+                ) : (
+                  <div className="mt-1 truncate text-[11px] text-slate-500">{e.zrodlo}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
+
 function AskGroupTab() {
   const { groups } = useGroups();
   const [groupValue, setGroupValue] = useState("");
   const [topic, setTopic] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<InsightQueryResult | null>(null);
+  const [answer, setAnswer] = useState<AnalystAnswer | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const submit = useCallback(async () => {
     if (!topic.trim() || !groupValue) return;
     setLoading(true);
     setError(null);
+    setResult(null);
+    setAnswer(null);
     try {
-      const groupValues = groupValue === ALL_POPULATION_VALUE ? [] : [groupValue];
-      const res = await fetch("/api/insight/query", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, groupValues }),
-      });
-      const data = await res.json();
-      if (data.error) setError(data.error);
-      else setResult(data);
+      if (groupValue === ALL_POPULATION_VALUE) {
+        // Cała populacja nie ma persony - klasyczne przeszukanie bazy.
+        const res = await fetch("/api/insight/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ topic, groupValues: [] }),
+        });
+        const data = await res.json();
+        if (data.error) setError(data.error);
+        else setResult(data);
+      } else {
+        // Tryb analityczny: LLM kojarzy dowody o grupie z kontekstem
+        // ogólnopolskim (te same zasady dowodowe co awatar w "Rozmowie z grupą").
+        const res = await fetch("/api/insight/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ group: groupValue, question: topic }),
+        });
+        const data = await res.json();
+        if (data.error) setError(data.error);
+        else setAnswer(data);
+      }
     } catch {
       setError("Nie udało się połączyć z Insight Base.");
     } finally {
@@ -313,13 +447,13 @@ function AskGroupTab() {
   return (
     <div className="flex flex-col gap-4">
       <div className="pdm-panel p-5">
-        <div className="pdm-kicker">Pytanie do jednej grupy</div>
+        <div className="pdm-kicker">Pytanie do jednej grupy · analiza sztabowa na dowodach</div>
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto]">
           <GroupPicker groups={groups} value={groupValue} onChange={setGroupValue} />
           <input
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="Temat, np. zaufanie do rządu, ocena gospodarki…"
+            placeholder="Pytanie, np. czy byliby skłonni głosować na nowy projekt polityczny?"
             className="pdm-searchbar rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-200 placeholder:text-slate-500"
           />
           <button
@@ -327,11 +461,12 @@ function AskGroupTab() {
             disabled={loading || !topic.trim() || !groupValue}
             className="pdm-btn-primary rounded-lg px-5 py-2.5 text-sm font-bold text-white"
           >
-            {loading ? "Pytam…" : "Zapytaj"}
+            {loading ? "Analizuję…" : "Zapytaj"}
           </button>
         </div>
       </div>
       {error && <EmptyNote>{error}</EmptyNote>}
+      {answer && <AnalystAnswerView a={answer} />}
       <QueryResultView result={result} />
     </div>
   );
@@ -412,6 +547,55 @@ function CompareGroupsTab() {
   );
 }
 
+function GroupVsAverageChart({ postawy }: { postawy: PersonaPostawa[] }) {
+  // Tylko wskaźniki procentowe (0-100) z policzalną średnią wymiaru;
+  // kwoty w zł i inne skale nie mieszają się z procentami na jednym wykresie.
+  const rows = postawy
+    .filter(
+      (p) =>
+        p.wartosc !== null &&
+        p.srednia_w_wymiarze !== null &&
+        p.wartosc >= 0 &&
+        p.wartosc <= 100 &&
+        p.srednia_w_wymiarze >= 0 &&
+        p.srednia_w_wymiarze <= 100
+    )
+    .map((p) => ({
+      temat: p.temat.replace(/_/g, " "),
+      grupa: p.wartosc as number,
+      srednia: p.srednia_w_wymiarze as number,
+      roznica: Math.abs((p.wartosc as number) - (p.srednia_w_wymiarze as number)),
+    }))
+    .sort((a, b) => b.roznica - a.roznica)
+    .slice(0, 14);
+  if (rows.length < 2) return null;
+  return (
+    <div className="pdm-panel p-4">
+      <div className="mb-1 text-[11px] font-bold uppercase tracking-wide text-sky-300/70">
+        Co najbardziej odróżnia tę grupę (vs średnia grup tego samego wymiaru, %)
+      </div>
+      <div className="mb-2 text-[11px] text-slate-500">
+        Posortowane po wielkości różnicy - to są wskaźniki, w których grupa najmocniej odstaje.
+      </div>
+      <ResponsiveContainer width="100%" height={rows.length * 36 + 70}>
+        <BarChart data={rows} layout="vertical" margin={{ left: 8, right: 24, top: 4, bottom: 4 }} barGap={2}>
+          <CartesianGrid horizontal={false} stroke="#ffffff14" />
+          <XAxis type="number" domain={[0, 100]} tick={{ fill: "#94a3b8", fontSize: 11 }} />
+          <YAxis type="category" dataKey="temat" width={220} tick={{ fill: "#cbd5e1", fontSize: 11 }} />
+          <Tooltip
+            contentStyle={{ background: "#0b1120", border: "1px solid #ffffff22", fontSize: 12 }}
+            labelStyle={{ color: "#e2e8f0" }}
+            cursor={{ fill: "#ffffff0a" }}
+          />
+          <Legend wrapperStyle={{ fontSize: 12 }} />
+          <Bar dataKey="grupa" name="ta grupa" fill="#38bdf8" radius={[0, 4, 4, 0]} barSize={10} />
+          <Bar dataKey="srednia" name="średnia wymiaru" fill="#64748b" radius={[0, 4, 4, 0]} barSize={10} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 function GroupProfileTab() {
   const { groups } = useGroups();
   const [groupValue, setGroupValue] = useState("");
@@ -460,6 +644,62 @@ function GroupProfileTab() {
             <div className="text-xl font-black text-white">{profile.group.label_pl}</div>
           </div>
 
+          {profile.portret && (
+            <div className="pdm-panel border-sky-400/20 p-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="pdm-kicker">Portret grupy · synteza z dowodów</div>
+                {profile.data_coverage && (
+                  <span className="rounded-full bg-white/5 px-2.5 py-0.5 text-[11px] font-semibold text-slate-400">
+                    pokrycie danymi: {profile.data_coverage}
+                  </span>
+                )}
+              </div>
+              {profile.portret.naglowek && (
+                <p className="mt-2 text-[16px] font-semibold leading-relaxed text-white">{profile.portret.naglowek}</p>
+              )}
+              <div className="mt-4 flex flex-col gap-4">
+                {(profile.portret.sekcje ?? []).map((sek, i) => (
+                  <div key={i}>
+                    <div className="text-[11px] font-bold uppercase tracking-wide text-sky-300/80">{sek.tytul}</div>
+                    <p className="mt-1 text-[13.5px] leading-relaxed text-slate-200">{sek.tekst}</p>
+                    {sek.zastrzezenie && (
+                      <p className="mt-1 text-[12px] text-amber-300/80">Zastrzeżenie: {sek.zastrzezenie}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {(profile.portret.hipotezy_strategiczne ?? []).length > 0 && (
+                <div className="mt-5 border-t border-white/10 pt-4">
+                  <div className="text-[11px] font-bold uppercase tracking-wide text-amber-300/80">
+                    Hipotezy strategiczne (interpretacja analityka, nie twardy fakt)
+                  </div>
+                  {(profile.portret.hipotezy_strategiczne ?? []).map((h, i) => (
+                    <p key={i} className="mt-2 text-[13px] leading-relaxed text-amber-100/90">{h.teza}</p>
+                  ))}
+                </div>
+              )}
+              {(profile.portret.luki_w_danych ?? []).length > 0 && (
+                <div className="mt-5 border-t border-white/10 pt-4">
+                  <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                    Czego jeszcze nie wiemy - baza łata te luki w kolejnych nocach
+                  </div>
+                  <ul className="mt-2 flex flex-col gap-1">
+                    {(profile.portret.luki_w_danych ?? []).map((l, i) => (
+                      <li key={i} className="text-[12.5px] text-slate-400">• {l}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+          {!profile.portret && profile.findings.length > 0 && (
+            <EmptyNote>
+              Portret narracyjny tej grupy powstanie przy najbliższej nocnej przebudowie bazy - poniżej dane źródłowe.
+            </EmptyNote>
+          )}
+
+          {profile.postawy.length > 0 && <GroupVsAverageChart postawy={profile.postawy} />}
+
           {profile.syntheses.length === 0 && profile.findings.length === 0 && (
             <EmptyNote>
               Brak jeszcze zebranych danych dla tej grupy. To normalne dla świeżo działającej bazy, uzupełni się z
@@ -467,6 +707,11 @@ function GroupProfileTab() {
             </EmptyNote>
           )}
 
+          <details open={!profile.portret} className="flex flex-col gap-4">
+            <summary className="cursor-pointer text-[12px] font-bold uppercase tracking-wide text-slate-400">
+              Wszystkie pomiary źródłowe ({profile.findings.length})
+            </summary>
+            <div className="mt-3 flex flex-col gap-4">
           {(() => {
             // Kolejność świadoma, nie alfabetyczna: twarde dane demograficzno-
             // -materialne (fakty GUS o dochodach, ubóstwie, bezrobociu,
@@ -556,6 +801,8 @@ function GroupProfileTab() {
               </>
             );
           })()}
+            </div>
+          </details>
         </div>
       )}
     </div>
