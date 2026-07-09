@@ -21,15 +21,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Podaj grupę i pytanie." }, { status: 400 });
     }
 
-    // Dowody dopasowane do treści pytania (niezależnie od profilu persony).
+    // Dowody dopasowane do pytania: (1) otagowane grupą, (2) kontekst z całej
+    // bazy (dane ogólnopolskie i inne grupy) — do jawnie oznaczanego wnioskowania.
     let matched = null;
+    let matchedGlobal = null;
     try {
-      matched = await queryInsight(question, [group]);
+      [matched, matchedGlobal] = await Promise.all([
+        queryInsight(question, [group]),
+        queryInsight(question, []),
+      ]);
     } catch {
-      matched = null; // brak dopasowania nie blokuje odpowiedzi z profilu
+      // brak dopasowania nie blokuje odpowiedzi z profilu
     }
 
-    const result = await askAvatar(group, question, body.history ?? [], matched);
+    const result = await askAvatar(group, question, body.history ?? [], matched, matchedGlobal);
     if (!result) {
       return NextResponse.json(
         { error: "Nie znaleziono persony dla tej grupy. Uruchom przebudowę person (rebuild_group_personas)." },

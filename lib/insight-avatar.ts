@@ -51,7 +51,7 @@ export interface AvatarEvidence {
   url: string | null;
   data: string | null;
   score: number | null;
-  rodzaj: "profil_grupy" | "dopasowane_do_pytania" | "synteza";
+  rodzaj: "profil_grupy" | "dopasowane_do_pytania" | "synteza" | "kontekst_spoza_grupy";
 }
 
 export interface AvatarAnswer {
@@ -95,7 +95,8 @@ function fmtDate(d?: string | null): string {
 export function buildEvidenceList(
   persona: PersonaRow,
   matched: InsightQueryResult | null,
-  cap = 40
+  matchedGlobal: InsightQueryResult | null = null,
+  cap = 60
 ): AvatarEvidence[] {
   const out: AvatarEvidence[] = [];
   let nr = 1;
@@ -122,6 +123,26 @@ export function buildEvidenceList(
       data: f.published_date ?? null,
       score: f.confidence === "twardy_wynik_sondazowy" ? 90 : 55,
       rodzaj: "dopasowane_do_pytania",
+    });
+  }
+
+  // Kontekst spoza grupy: ten sam temat w calej populacji lub innych grupach.
+  // Awatar NIE moze przypisywac tych liczb wlasnej grupie - sluza do wnioskowania,
+  // zawsze oznaczanego w odpowiedzi jako wnioskowanie, nie fakt o grupie.
+  const seen = new Set(out.map((e) => e.tekst));
+  for (const f of matchedGlobal?.raw_findings ?? []) {
+    if (out.length >= cap) break;
+    const tekst = f.verbatim_quote ?? `${f.topic}: ${f.value ?? f.value_text ?? "?"}`;
+    if (seen.has(tekst)) continue;
+    seen.add(tekst);
+    out.push({
+      nr: nr++,
+      tekst,
+      zrodlo: f.study_title,
+      url: f.source_url ?? null,
+      data: f.published_date ?? null,
+      score: f.confidence === "twardy_wynik_sondazowy" ? 75 : 45,
+      rodzaj: "kontekst_spoza_grupy",
     });
   }
 
@@ -169,6 +190,7 @@ function buildPrompt(
   evidence: AvatarEvidence[],
   history: AvatarTurn[]
 ): string {
+  const today = new Date().toISOString().slice(0, 10);
   const evidenceBlock = evidence
     .map((e) => `[${e.nr}] ${e.tekst} — źródło: ${e.zrodlo}${fmtDate(e.data)}`)
     .join("\n");
@@ -182,21 +204,25 @@ function buildPrompt(
 
   return `Jesteś awatarem polskiej grupy społecznej: ${label}. Mówisz w pierwszej osobie, naturalnym, potocznym polskim językiem, jak zwykły człowiek z tej grupy — bez karykatury, bez przerysowania, bez urzędowego tonu.
 
-ŻELAZNE ZASADY (ważniejsze niż wszystko inne):
-1. Wolno Ci twierdzić WYŁĄCZNIE to, co wynika z ponumerowanych DOWODÓW poniżej. Zero własnej wiedzy o świecie, zero stereotypów, zero zgadywania.
-2. Po każdej tezie wstaw numer dowodu w nawiasie kwadratowym, np. [3].
-3. Jeżeli dowody nie pozwalają odpowiedzieć na pytanie, powiedz wprost: na ten temat nie ma o nas danych w bazie — i zaproponuj, o co można zapytać (tematy z dowodów).
-4. Liczby podawaj dokładnie tak, jak w dowodach. Nie uśredniaj, nie zaokrąglaj po swojemu.
-5. Gdy dowody są rozbieżne, powiedz o tym otwarcie.
-6. Nie wypowiadasz się w imieniu innych grup.
+MASZ DWA TRYBY MÓWIENIA I OBA SĄ DOZWOLONE:
+A) FAKT O NAS — twierdzenie wprost poparte dowodem o Twojej grupie. Po takim zdaniu numer dowodu: [3].
+B) WNIOSKOWANIE — skojarzenie kilku dowodów w spójny obraz. Wolno Ci (a wręcz masz obowiązek, gdy pytanie tego wymaga) ŁĄCZYĆ: profil wartości i stylu życia Twojej grupy + dowody o temacie pytania spoza grupy (dane ogólnopolskie, inne grupy — oznaczone jako KONTEKST) i wyciągać z tego psychologicznie sensowny wniosek, jak Twoja grupa najpewniej to odbiera. Takie zdanie MUSI zaczynać się od sygnału niepewności w naturalnym języku („pewnie", „chyba", „zgaduję, że", „sądząc po tym, jak żyjemy") i kończyć numerami dowodów, z których wnioskujesz: (wnioskuję z [2], [7]).
 
-DOWODY O TWOJEJ GRUPIE:
+ŻELAZNE ZASADY:
+1. Żadnych liczb, nazwisk ani zdarzeń, których nie ma w dowodach. Liczby tylko dokładnie takie, jak w dowodach, i tylko przy trybie A lub jako jawnie cytowany kontekst.
+2. Liczb z dowodów KONTEKST nie wolno przypisywać Twojej grupie — możesz je przywołać jako „w całej Polsce…", „ogólnie…", a potem wnioskować, jak to się ma do Was.
+3. Gdy nie ma ani dowodów o grupie, ani kontekstu do sensownego wnioskowania — powiedz wprost, że danych brak, i zaproponuj tematy, o które można Cię zapytać (z dowodów, które masz).
+4. Gdy dowody są rozbieżne, powiedz o tym otwarcie.
+5. Nie wypowiadasz się w imieniu innych grup — kontekst o innych grupach służy tylko porównaniu.
+6. AKTUALNOŚĆ: dzisiejsza data to ${today}. Każdy dowód ma datę — sprawdzaj ją. Danych starszych niż rok nie wolno podawać jako stanu obecnego: powiedz „w lutym 2026 było…", „to badanie z 2023 roku, od tego czasu mogło się zmienić". Poparcie, zaufanie i oceny sprzed lat to historia, nie teraźniejszość. Gdy masz dowody z różnych dat na ten sam temat, pierwszeństwo mają najnowsze, a różnicę między starym a nowym możesz przywołać jako zmianę w czasie.
+
+DOWODY:
 ${evidenceBlock}
 ${historyBlock}
 PYTANIE: ${question}
 
 Odpowiedz TYLKO poprawnym JSON (bez markdown):
-{"odpowiedz":"...twoja wypowiedź w pierwszej osobie z numerami dowodów...","uzyte_dowody":[1,2],"pewnosc":"wysoka|srednia|niska","zastrzezenia":"czego brakuje w danych albo null"}`;
+{"odpowiedz":"...wypowiedź w pierwszej osobie; fakty z [n], wnioskowania z sygnałem niepewności i (wnioskuję z [n])...","uzyte_dowody":[1,2],"pewnosc":"wysoka|srednia|niska","zastrzezenia":"czego brakuje w danych albo null"}`;
 }
 
 function extractJson(raw: string): Record<string, unknown> | null {
@@ -232,13 +258,14 @@ export async function askAvatar(
   groupValue: string,
   question: string,
   history: AvatarTurn[],
-  matched: InsightQueryResult | null
+  matched: InsightQueryResult | null,
+  matchedGlobal: InsightQueryResult | null = null
 ): Promise<AvatarAnswer | null> {
   const persona = await getPersonaByGroupValue(groupValue);
   if (!persona) return null;
 
   const label = persona.profile.grupa?.etykieta ?? groupValue;
-  const evidence = buildEvidenceList(persona, matched);
+  const evidence = buildEvidenceList(persona, matched, matchedGlobal);
 
   const provider = getAIProvider();
   let answer: string | null = null;
