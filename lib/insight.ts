@@ -107,37 +107,35 @@ export async function getGroupTaxonomy(): Promise<GroupTaxonomyRow[]> {
 export async function getGroupsWithCounts(): Promise<GroupWithCount[]> {
   const groups = await getGroupTaxonomy();
 
-  const { data: findingsRows, error } = await supabase
-    .from("insight_findings")
-    .select("group_tags");
+  // Liczenie po stronie bazy (RPC). Wcześniejsze select("group_tags") na całej
+  // tabeli ucinało się na limicie 1000 wierszy PostgREST — przy >1000 findings
+  // liczniki grup przestawały rosnąć, mimo że dane były w bazie.
+  const { data: countRows, error } = await supabase.rpc("insight_group_counts");
   if (error) throw error;
 
   const counts = new Map<string, number>();
-  for (const row of (findingsRows ?? []) as { group_tags: string[] | null }[]) {
-    for (const groupId of row.group_tags ?? []) {
-      counts.set(groupId, (counts.get(groupId) ?? 0) + 1);
-    }
+  for (const row of (countRows ?? []) as { group_id: string; findings_count: number }[]) {
+    counts.set(row.group_id, Number(row.findings_count));
   }
 
   return groups.map((g) => ({ ...g, findings_count: counts.get(g.id) ?? 0 }));
 }
 
 export async function getOverallStats(): Promise<OverallStats> {
-  const [{ count: totalStudies, error: studiesErr }, { data: findingsRows, error: findingsErr }] =
-    await Promise.all([
-      supabase.from("insight_studies").select("id", { count: "exact", head: true }),
-      supabase.from("insight_findings").select("group_tags"),
-    ]);
-  if (studiesErr) throw studiesErr;
-  if (findingsErr) throw findingsErr;
+  // Liczenie po stronie bazy (RPC) — patrz komentarz w getGroupsWithCounts.
+  const { data, error } = await supabase.rpc("insight_overall_stats");
+  if (error) throw error;
 
-  const rows = (findingsRows ?? []) as { group_tags: string[] | null }[];
-  const findingsWithoutGroup = rows.filter((r) => !r.group_tags || r.group_tags.length === 0).length;
+  const s = (data ?? {}) as {
+    total_studies?: number;
+    total_findings?: number;
+    findings_without_group?: number;
+  };
 
   return {
-    totalStudies: totalStudies ?? 0,
-    totalFindings: rows.length,
-    findingsWithoutGroup,
+    totalStudies: Number(s.total_studies ?? 0),
+    totalFindings: Number(s.total_findings ?? 0),
+    findingsWithoutGroup: Number(s.findings_without_group ?? 0),
   };
 }
 
