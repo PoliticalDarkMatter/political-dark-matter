@@ -3,6 +3,7 @@ import type { InsightQueryResult } from "@/lib/insight";
 import {
   getPersonaByGroupValue,
   buildEvidenceList,
+  runGroundedTurn,
   type AvatarAnswer,
   type AvatarEvidence,
 } from "@/lib/insight-avatar";
@@ -48,17 +49,6 @@ Odpowiedz TYLKO poprawnym JSON (bez markdown):
 {"odpowiedz":"...analiza; fakty z [n], wnioskowania z prefiksem Wnioskowanie: i (wnioskuję z [n])...","uzyte_dowody":[1,2],"pewnosc":"wysoka|srednia|niska","zastrzezenia":"czego brakuje w danych albo null"}`;
 }
 
-function extractJson(raw: string): Record<string, unknown> | null {
-  const start = raw.indexOf("{");
-  const end = raw.lastIndexOf("}");
-  if (start < 0 || end <= start) return null;
-  try {
-    return JSON.parse(raw.slice(start, end + 1)) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
 export async function askAnalyst(
   groupValue: string,
   question: string,
@@ -69,7 +59,7 @@ export async function askAnalyst(
   if (!persona) return null;
 
   const label = persona.profile.grupa?.etykieta ?? groupValue;
-  const evidence = buildEvidenceList(persona, matched, matchedGlobal);
+  const evidence = buildEvidenceList(persona, matched, matchedGlobal, question, 20);
 
   const provider = getAIProvider();
   let answer: string | null = null;
@@ -78,42 +68,31 @@ export async function askAnalyst(
   let caveats: string | null = null;
 
   if (provider.isReal && evidence.length > 0) {
-    const raw = await provider.generateText(buildAnalystPrompt(label, question, evidence), {
-      maxTokens: 1200,
-      temperature: 0.3,
-      timeoutMs: 25000,
-    });
-    const parsed = raw ? extractJson(raw) : null;
-    if (parsed && typeof parsed.odpowiedz === "string" && parsed.odpowiedz.trim()) {
-      answer = parsed.odpowiedz.trim();
-      used = Array.isArray(parsed.uzyte_dowody)
-        ? (parsed.uzyte_dowody as unknown[]).filter((n): n is number => typeof n === "number")
-        : [];
-      confidence =
-        parsed.pewnosc === "wysoka" || parsed.pewnosc === "srednia" || parsed.pewnosc === "niska"
-          ? parsed.pewnosc
-          : evidence.length >= 10
-            ? "srednia"
-            : "niska";
-      caveats =
-        typeof parsed.zastrzezenia === "string" && parsed.zastrzezenia !== "null" ? parsed.zastrzezenia : null;
+    const g = await runGroundedTurn(buildAnalystPrompt(label, question, evidence), evidence.length, 0.3);
+    if (g) {
+      answer = g.answer;
+      used = g.used;
+      confidence = g.confidence;
+      caveats = g.caveats;
     }
   }
 
   if (!answer) {
-    // Uczciwy fallback bez LLM: surowe dowody zamiast analizy, jawnie oznaczone.
+    // Fallback bez LLM: dowody są już oczyszczone, więc podajemy najmocniejsze
+    // czytelnie, uczciwie oznaczając brak pełnej analizy — nie surowe tabele.
     if (!evidence.length) {
       answer = `Brak w bazie danych o grupie „${label}" na ten temat oraz danych ogólnopolskich do wnioskowania. Baza uzupełnia się co noc.`;
     } else {
-      const top = evidence.slice(0, 5);
+      const top = evidence.slice(0, 4);
       answer =
-        `Tryb bez modelu językowego — surowe dowody zamiast analizy. ` +
-        top.map((e) => `${e.tekst} [${e.nr}]`).join(" • ");
+        `Nie udało się złożyć pełnej analizy modelem. Najmocniejsze dane: ` +
+        top.map((e) => `${e.tekst} [${e.nr}]`).join("; ") +
+        ".";
       used = top.map((e) => e.nr);
     }
     confidence = "niska";
     caveats = provider.isReal
-      ? "Model językowy nie odpowiedział poprawnie, pokazuję surowe dowody."
+      ? "Model językowy nie odpowiedział poprawnie, pokazuję najmocniejsze dane."
       : "Brak klucza modelu językowego w środowisku.";
   }
 

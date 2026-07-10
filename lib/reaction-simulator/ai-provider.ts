@@ -17,6 +17,13 @@ export interface AIGenerateOptions {
   maxTokens?: number;
   temperature?: number;
   timeoutMs?: number;
+  // Wymusza structured output (application/json) — model zwraca poprawny JSON,
+  // koniec z kruchym wyłuskiwaniem nawiasów z prozy.
+  json?: boolean;
+  // Włącza wewnętrzne "myślenie" modelu (thinkingBudget dynamiczny). Domyślnie
+  // wyłączone dla szybkości/kosztu, ale przy zadaniach wymagających kojarzenia
+  // wielu dowodów (awatar) warto włączyć.
+  thinking?: boolean;
 }
 
 export interface AIProvider {
@@ -31,8 +38,15 @@ export class GeminiProvider implements AIProvider {
   constructor(private apiKey: string) {}
 
   async generateText(prompt: string, opts: AIGenerateOptions = {}): Promise<string | null> {
-    const { maxTokens = 2000, temperature = 0.5, timeoutMs = 25000 } = opts;
+    const { maxTokens = 2000, temperature = 0.5, timeoutMs = 25000, json = false, thinking = false } = opts;
     try {
+      const generationConfig: Record<string, unknown> = {
+        temperature,
+        maxOutputTokens: maxTokens,
+        // thinkingBudget: 0 = bez myślenia (szybko); -1 = dynamiczne myślenie.
+        thinkingConfig: { thinkingBudget: thinking ? -1 : 0 },
+      };
+      if (json) generationConfig.responseMimeType = "application/json";
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`,
         {
@@ -40,7 +54,7 @@ export class GeminiProvider implements AIProvider {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature, maxOutputTokens: maxTokens, thinkingConfig: { thinkingBudget: 0 } },
+            generationConfig,
           }),
           signal: AbortSignal.timeout(timeoutMs),
         }

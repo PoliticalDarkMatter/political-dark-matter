@@ -73,6 +73,7 @@ export interface InsightSynthesis {
 
 export interface InsightRawFinding {
   topic: string;
+  question_text?: string | null;
   value: number | null;
   value_text: string | null;
   verbatim_quote: string | null;
