@@ -244,13 +244,44 @@ function FindingRow({ f }: { f: InsightQueryResult["raw_findings"][number] }) {
   );
 }
 
+function OpinionsBlock({ opinions }: { opinions: NonNullable<InsightQueryResult["opinions"]> }) {
+  return (
+    <div className="mt-3 rounded-lg border border-amber-400/25 bg-amber-400/[0.04] p-3">
+      <div className="mb-2 text-[11px] font-bold uppercase tracking-wide text-amber-300/90">
+        Trudno powiedzieć na twardych danych — opinie z publicystyki
+      </div>
+      <div className="flex flex-col gap-1.5">
+        {opinions.map((o, i) => (
+          <a
+            key={i}
+            href={o.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex flex-wrap items-baseline gap-x-2 text-[12.5px] leading-snug text-slate-200 hover:text-white"
+          >
+            <span className="font-semibold text-amber-200/90">{o.source}</span>
+            <span className="text-slate-300 group-hover:underline">{o.title}</span>
+            {o.date && <span className="text-[10.5px] text-slate-500">({o.date})</span>}
+          </a>
+        ))}
+      </div>
+      <p className="mt-2 text-[10.5px] leading-relaxed text-slate-500">
+        To głosy z mediów, nie pomiar o tej grupie — traktuj jako sygnał, nie dowód.
+      </p>
+    </div>
+  );
+}
+
 function QueryResultView({ result }: { result: InsightQueryResult | null }) {
   if (!result) return null;
   if (result.syntheses.length === 0 && result.raw_findings.length === 0) {
+    if (result.opinions && result.opinions.length > 0) {
+      return <OpinionsBlock opinions={result.opinions} />;
+    }
     return (
       <EmptyNote>
-        Brak jeszcze danych dla tego tematu i tej grupy. Baza uzupełnia się co noc, spróbuj ponownie za kilka dni
-        albo zawęź/rozszerz temat.
+        Brak jeszcze twardych danych dla tego tematu i tej grupy, nie znalazły się też wyraźne głosy w publicystyce.
+        Baza uzupełnia się co noc, spróbuj ponownie za kilka dni albo zawęź/rozszerz temat.
       </EmptyNote>
     );
   }
@@ -332,6 +363,7 @@ const RODZAJ_LABELS: Record<string, string> = {
   dopasowane_do_pytania: "dane o grupie",
   synteza: "synteza",
   kontekst_spoza_grupy: "kontekst ogólnopolski",
+  opinia_z_sieci: "opinia z sieci",
 };
 
 function AnalystAnswerView({ a }: { a: AnalystAnswer }) {

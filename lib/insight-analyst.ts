@@ -4,6 +4,7 @@ import {
   getPersonaByGroupValue,
   buildEvidenceList,
   runGroundedTurn,
+  withOpinionLayer,
   type AvatarAnswer,
   type AvatarEvidence,
 } from "@/lib/insight-avatar";
@@ -28,17 +29,20 @@ function buildAnalystPrompt(label: string, question: string, evidence: AvatarEvi
 
   return `Jesteś analitykiem sztabu politycznego. Odpowiadasz na pytanie o polską grupę społeczną: ${label}. Piszesz zwięźle, konkretnie, po polsku, w trzeciej osobie ("ta grupa", "wśród nich"), bez korpomowy.
 
+ZASADA NACZELNA: opieraj się przede wszystkim na TWARDYCH danych (dowody typu dopasowane_do_pytania i synteza). Dopiero gdy ich brakuje, schodź niżej: kontekst ogólnopolski → opinie z publicystyki. Zawsze udziel odpowiedzi.
+
 STRUKTURA ODPOWIEDZI (zwięzła proza, nie nagłówki):
-1. Najpierw bezpośrednia odpowiedź na pytanie w 1-2 zdaniach, z najmocniejszym dowodem.
-2. Potem co mówią twarde dane O TEJ GRUPIE - liczby dokładnie takie jak w dowodach, każda z numerem dowodu [n]. Porównuj do średniej wymiaru i innych grup, jeśli dowody to zawierają.
-3. Jeśli o grupie nie ma danych wprost, użyj dowodów oznaczonych jako kontekst_spoza_grupy (dane ogólnopolskie): przywołaj je JAWNIE jako "w całej populacji..." i dopiero z tego wnioskuj. Każde wnioskowanie zaczynaj od "Wnioskowanie:" i kończ numerami dowodów (wnioskuję z [2], [7]). Liczb ogólnopolskich nie wolno przypisywać grupie.
-4. Na końcu jedno zdanie o tym, czego w danych brakuje, żeby odpowiedzieć pewniej.
+1. Bezpośrednia odpowiedź na pytanie w 1-2 zdaniach, z najmocniejszym dostępnym dowodem.
+2. Twarde dane O TEJ GRUPIE - liczby dokładnie takie jak w dowodach, każda z numerem [n]. Porównuj do średniej wymiaru i innych grup, jeśli dowody to zawierają.
+3. Jeśli o grupie nie ma danych wprost, użyj dowodów kontekst_spoza_grupy (ogólnopolskie): przywołaj je JAWNIE jako "w całej populacji..." i z tego wnioskuj ("Wnioskowanie: ... (wnioskuję z [2], [7])"). Liczb ogólnopolskich nie przypisuj grupie.
+4. Jeśli i tego brak lub jest wątły, sięgnij po dowody opinia_z_sieci (realna publicystyka). Wprowadź je zwrotem typu "Trudno to rozstrzygnąć na twardych danych, ale w publicystyce pojawiają się opinie, że..." i ZAWSZE podaj źródło z numerem ("wg komentarza w Rzeczpospolitej [n]", "analitycy cytowani przez OKO.press [n]"). To cudze opinie, nie pomiar - tak je oznaczaj.
+5. Na końcu jedno zdanie o tym, czego w danych brakuje, żeby odpowiedzieć pewniej.
 
 ŻELAZNE ZASADY:
-- Żadnych liczb, nazwisk ani zdarzeń spoza dowodów.
+- Liczby, wyniki badań i konkretne nazwiska/cytaty TYLKO z dowodów. W warstwie opinii wolno przytoczyć nazwę źródła i tytuł/tezę dokładnie tak, jak w dowodzie opinia_z_sieci - nie wymyślaj żadnego publicysty, eksperta, cytatu ani liczby, których tam nie ma.
+- Nigdy nie pisz, że "nie udało się złożyć analizy", że model zawiódł, ani niczego o błędach technicznych. Gdy danych mało, po prostu zejdź do warstwy opinii i wyraźnie oznacz niepewność.
 - AKTUALNOŚĆ: dziś jest ${today}. Dane starsze niż rok opisuj z datą ("w lutym 2026...", "badanie z 2023 r."), nie jako stan obecny. Przy sprzecznych datach pierwszeństwo mają najnowsze.
 - Gdy dowody się rozjeżdżają, powiedz to wprost.
-- Gdy nie ma ani danych o grupie, ani sensownego kontekstu: napisz to uczciwie i wskaż 3-5 tematów z dowodów, o które można zapytać.
 
 DOWODY:
 ${evidenceBlock}
@@ -46,7 +50,7 @@ ${evidenceBlock}
 PYTANIE: ${question}
 
 Odpowiedz TYLKO poprawnym JSON (bez markdown):
-{"odpowiedz":"...analiza; fakty z [n], wnioskowania z prefiksem Wnioskowanie: i (wnioskuję z [n])...","uzyte_dowody":[1,2],"pewnosc":"wysoka|srednia|niska","zastrzezenia":"czego brakuje w danych albo null"}`;
+{"odpowiedz":"...analiza; fakty z [n]; wnioskowania z prefiksem Wnioskowanie: i (wnioskuję z [n]); opinie z sieci z nazwą źródła i [n]...","uzyte_dowody":[1,2],"pewnosc":"wysoka|srednia|niska","zastrzezenia":"czego brakuje w danych albo null"}`;
 }
 
 export async function askAnalyst(
@@ -54,12 +58,14 @@ export async function askAnalyst(
   question: string,
   matched: InsightQueryResult | null,
   matchedGlobal: InsightQueryResult | null = null
-): Promise<AvatarAnswer | null> {
+): Promise<AvatarAnswer> {
   const persona = await getPersonaByGroupValue(groupValue);
-  if (!persona) return null;
+  const label = persona?.profile.grupa?.etykieta ?? groupValue;
 
-  const label = persona.profile.grupa?.etykieta ?? groupValue;
-  const evidence = buildEvidenceList(persona, matched, matchedGlobal, question, 20);
+  // Brak persony nie jest błędem dla użytkownika: nadal składamy odpowiedź z
+  // kontekstu i opinii z sieci. Twarde dane najpierw, opinie tylko gdy ich brak.
+  const baseEvidence = persona ? buildEvidenceList(persona, matched, matchedGlobal, question, 20) : [];
+  const evidence = await withOpinionLayer(label, question, baseEvidence);
 
   const provider = getAIProvider();
   let answer: string | null = null;
@@ -78,22 +84,32 @@ export async function askAnalyst(
   }
 
   if (!answer) {
-    // Fallback bez LLM: dowody są już oczyszczone, więc podajemy najmocniejsze
-    // czytelnie, uczciwie oznaczając brak pełnej analizy — nie surowe tabele.
+    // Fallback bez LLM: bez wzmianki o błędzie. Twarde dane najpierw, potem
+    // opinie z publicystyki z nazwą źródła, jawnie oznaczone jako opinie.
+    const opinions = evidence.filter((e) => e.rodzaj === "opinia_z_sieci").slice(0, 3);
+    const hard = evidence.filter((e) => e.rodzaj !== "opinia_z_sieci").slice(0, 4);
     if (!evidence.length) {
-      answer = `Brak w bazie danych o grupie „${label}" na ten temat oraz danych ogólnopolskich do wnioskowania. Baza uzupełnia się co noc.`;
+      answer = `Trudno to rozstrzygnąć: o grupie „${label}" nie ma na ten temat ani twardych danych, ani danych ogólnopolskich, ani wyraźnych głosów w publicystyce. Baza uzupełnia się co noc.`;
     } else {
-      const top = evidence.slice(0, 4);
-      answer =
-        `Nie udało się złożyć pełnej analizy modelem. Najmocniejsze dane: ` +
-        top.map((e) => `${e.tekst} [${e.nr}]`).join("; ") +
-        ".";
-      used = top.map((e) => e.nr);
+      const parts: string[] = [];
+      if (hard.length) {
+        parts.push(`Najmocniejsze dane: ` + hard.map((e) => `${e.tekst} [${e.nr}]`).join("; ") + ".");
+        used = used.concat(hard.map((e) => e.nr));
+      }
+      if (opinions.length) {
+        parts.push(
+          `Trudno przesądzić to twardymi danymi, ale w publicystyce temat podejmują ` +
+            opinions.map((e) => `${e.zrodlo} [${e.nr}]`).join(", ") +
+            " — to opinie, nie pomiar o tej grupie."
+        );
+        used = used.concat(opinions.map((e) => e.nr));
+      }
+      answer = parts.join(" ");
     }
     confidence = "niska";
-    caveats = provider.isReal
-      ? "Model językowy nie odpowiedział poprawnie, pokazuję najmocniejsze dane."
-      : "Brak klucza modelu językowego w środowisku.";
+    caveats = evidence.some((e) => e.rodzaj === "opinia_z_sieci")
+      ? "Brakuje twardych danych o tej grupie — część odpowiedzi opiera się na opiniach z publicystyki, nie na pomiarze."
+      : null;
   }
 
   return {
@@ -102,8 +118,8 @@ export async function askAnalyst(
     usedEvidence: used,
     caveats,
     evidence,
-    coverage: persona.data_coverage,
-    personaVersion: persona.version,
+    coverage: persona?.data_coverage ?? "brak",
+    personaVersion: persona?.version ?? 0,
     aiReal: provider.isReal,
   };
 }

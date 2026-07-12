@@ -91,6 +91,9 @@ export interface InsightRawFinding {
 export interface InsightQueryResult {
   syntheses: InsightSynthesis[];
   raw_findings: InsightRawFinding[];
+  // Opcjonalna warstwa opinii z publicystyki — dołączana przez route'y, gdy
+  // twardych danych (syntez/findings) brak, żeby użytkownik nie trafiał w pustkę.
+  opinions?: import("@/lib/insight-opinions").OpinionItem[];
 }
 
 const EMPTY_RESULT: InsightQueryResult = { syntheses: [], raw_findings: [] };

@@ -7,6 +7,8 @@ import { queryInsight } from "@/lib/insight";
 // dowodu". force-dynamic obowiązkowe: dane w bazie zmieniają się co noc.
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+// Warstwa opinii dociąga publicystykę z sieci, więc dajemy zapas czasu.
+export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,17 +36,21 @@ export async function POST(req: NextRequest) {
       // brak dopasowania nie blokuje odpowiedzi z profilu
     }
 
+    // askAvatar zawsze zwraca odpowiedź (opinie/kontekst nawet bez persony).
     const result = await askAvatar(group, question, body.history ?? [], matched, matchedGlobal);
-    if (!result) {
-      return NextResponse.json(
-        { error: "Nie znaleziono persony dla tej grupy. Uruchom przebudowę person (rebuild_group_personas)." },
-        { status: 404 }
-      );
-    }
-
     return NextResponse.json(result);
   } catch (err) {
     console.error("[api/insight/avatar]", err);
-    return NextResponse.json({ error: "Nie udało się uzyskać odpowiedzi awatara." }, { status: 500 });
+    // Nie pokazujemy błędu w UI — łagodna odpowiedź zastępcza.
+    return NextResponse.json({
+      answer: "Trudno mi teraz odpowiedzieć na to pytanie. Spróbuj ponownie za moment albo zapytaj inaczej.",
+      confidence: "niska",
+      usedEvidence: [],
+      caveats: null,
+      evidence: [],
+      coverage: "brak",
+      personaVersion: 0,
+      aiReal: false,
+    });
   }
 }
