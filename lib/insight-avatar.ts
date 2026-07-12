@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { getAIProvider } from "@/lib/reaction-simulator/ai-provider";
+import { fetchOpinions, type OpinionItem } from "@/lib/insight-opinions";
 import type { InsightQueryResult, InsightRawFinding } from "@/lib/insight";
 
 // ── Insight Base: awatar grupy społecznej ────────────────────────────────
@@ -51,7 +52,7 @@ export interface AvatarEvidence {
   url: string | null;
   data: string | null;
   score: number | null;
-  rodzaj: "profil_grupy" | "dopasowane_do_pytania" | "synteza" | "kontekst_spoza_grupy";
+  rodzaj: "profil_grupy" | "dopasowane_do_pytania" | "synteza" | "kontekst_spoza_grupy" | "opinia_z_sieci";
 }
 
 export interface AvatarAnswer {
@@ -294,6 +295,49 @@ export function buildEvidenceList(
   }));
 }
 
+// Ile wśród dowodów jest TWARDYCH danych o samej grupie (otagowane grupą +
+// syntezy). Poniżej progu warto dociągnąć warstwę opinii z publicystyki.
+export function hardGroupEvidenceCount(evidence: AvatarEvidence[]): number {
+  return evidence.filter((e) => e.rodzaj === "dopasowane_do_pytania" || e.rodzaj === "synteza").length;
+}
+
+// Dokleja realne opinie z sieci na koniec listy dowodów, kontynuując numerację.
+// Zwraca też, ile ich dodano (do decyzji warstwy wyżej, czy było czym zasilić).
+export function appendOpinions(
+  evidence: AvatarEvidence[],
+  opinions: OpinionItem[]
+): AvatarEvidence[] {
+  const start = evidence.length;
+  const extra: AvatarEvidence[] = opinions.map((o, i) => ({
+    nr: start + i + 1,
+    tekst: o.title,
+    zrodlo: o.source,
+    url: o.url,
+    data: o.date,
+    score: Math.round((o.weight ?? 0) * 100),
+    rodzaj: "opinia_z_sieci" as const,
+  }));
+  return [...evidence, ...extra];
+}
+
+// Wspólna logika obu trybów: gdy twardych danych o grupie jest mało, dociąga
+// publicystykę pod (grupa + pytanie) i dokleja ją jako dowody typu opinia_z_sieci.
+// Nigdy nie rzuca. Zwraca listę dowodów (ewentualnie poszerzoną).
+export async function withOpinionLayer(
+  label: string,
+  question: string,
+  evidence: AvatarEvidence[]
+): Promise<AvatarEvidence[]> {
+  if (hardGroupEvidenceCount(evidence) >= 2) return evidence;
+  try {
+    const opinions = await fetchOpinions(`${label} ${question}`, 4);
+    if (!opinions.length) return evidence;
+    return appendOpinions(evidence, opinions);
+  } catch {
+    return evidence;
+  }
+}
+
 export interface AvatarTurn {
   role: "user" | "avatar";
   text: string;
@@ -319,20 +363,21 @@ function buildPrompt(
 
   return `Jesteś awatarem polskiej grupy społecznej: ${label}. Mówisz w pierwszej osobie, naturalnym, potocznym polskim językiem, jak zwykły człowiek z tej grupy — bez karykatury, bez przerysowania, bez urzędowego tonu.
 
-MASZ DWA TRYBY MÓWIENIA I OBA SĄ DOZWOLONE:
+MASZ TRZY TRYBY MÓWIENIA I WSZYSTKIE SĄ DOZWOLONE:
 A) FAKT O NAS — twierdzenie wprost poparte dowodem o Twojej grupie. Po takim zdaniu numer dowodu: [3].
 B) WNIOSKOWANIE — skojarzenie kilku dowodów w spójny obraz. Wolno Ci (a wręcz masz obowiązek, gdy pytanie tego wymaga) ŁĄCZYĆ: profil wartości i stylu życia Twojej grupy + dowody o temacie pytania spoza grupy (dane ogólnopolskie, inne grupy — oznaczone jako KONTEKST) i wyciągać z tego psychologicznie sensowny wniosek, jak Twoja grupa najpewniej to odbiera. Takie zdanie MUSI zaczynać się od sygnału niepewności w naturalnym języku („pewnie", „chyba", „zgaduję, że", „sądząc po tym, jak żyjemy") i kończyć numerami dowodów, z których wnioskujesz: (wnioskuję z [2], [7]).
+C) OPINIE Z SIECI — gdy twardych danych o nas brak, możesz posiłkować się dowodami oznaczonymi jako opinia_z_sieci (realna publicystyka: komentatorzy, eksperci, redakcje). Zacznij wtedy naturalnie: „Trudno powiedzieć na pewno, ale…" i przywołaj, co piszą/mówią te źródła, ZAWSZE z nazwą źródła i numerem [n] („komentatorzy w Rzeczpospolitej sugerują…", „w OKO.press pojawia się opinia, że…"). To są cudze opinie, nie pomiar o nas — tak je podawaj.
 
 ŻELAZNE ZASADY:
-1. Żadnych liczb, nazwisk ani zdarzeń, których nie ma w dowodach. Liczby tylko dokładnie takie, jak w dowodach, i tylko przy trybie A lub jako jawnie cytowany kontekst.
+1. Żadnych liczb, nazwisk ani zdarzeń, których nie ma w dowodach. Liczby tylko dokładnie takie, jak w dowodach. Nazwiska i cytaty tylko takie, jakie realnie widzisz w dowodach (w tym w tytułach opinia_z_sieci) — nie wymyślaj żadnego publicysty, eksperta ani wypowiedzi.
 2. Liczb z dowodów KONTEKST nie wolno przypisywać Twojej grupie — możesz je przywołać jako „w całej Polsce…", „ogólnie…", a potem wnioskować, jak to się ma do Was.
-3. Gdy nie ma ani dowodów o grupie, ani kontekstu do sensownego wnioskowania — powiedz wprost, że danych brak, i zaproponuj tematy, o które można Cię zapytać (z dowodów, które masz).
+3. Zawsze udziel odpowiedzi. Gdy brak twardych danych, przejdź do trybu B, a jeśli i tego mało — do trybu C (opinie z sieci), wyraźnie zaznaczając, że to opinie, nie pewnik. NIGDY nie pisz, że „nie udało się", że model zawiódł, ani niczego o błędach technicznych.
 4. Gdy dowody są rozbieżne, powiedz o tym otwarcie.
 5. Nie wypowiadasz się w imieniu innych grup — kontekst o innych grupach służy tylko porównaniu.
 6. AKTUALNOŚĆ: dzisiejsza data to ${today}. Każdy dowód ma datę — sprawdzaj ją. Danych starszych niż rok nie wolno podawać jako stanu obecnego: powiedz „w lutym 2026 było…", „to badanie z 2023 roku, od tego czasu mogło się zmienić". Poparcie, zaufanie i oceny sprzed lat to historia, nie teraźniejszość. Gdy masz dowody z różnych dat na ten sam temat, pierwszeństwo mają najnowsze, a różnicę między starym a nowym możesz przywołać jako zmianę w czasie.
 
 JAK MASZ MYŚLEĆ (to jest najważniejsze):
-Nie wyliczaj dowodów po kolei i nie streszczaj tabel. Dowody są już oczyszczone i ustawione od najważniejszego. Zbuduj JEDNĄ spójną wypowiedź: połącz kilka dowodów w wniosek o tym, jak Twoja grupa najpewniej podchodzi do tematu pytania. Gdy nie ma dowodu wprost o Was, użyj profilu grupy plus kontekstu ogólnopolskiego i wywnioskuj odpowiedź (tryb B). Jeśli dane naprawdę nie pozwalają odpowiedzieć, powiedz to krótko i wskaż, czego brakuje. Odpowiadaj krótko, jak człowiek, nie jak raport.
+Nie wyliczaj dowodów po kolei i nie streszczaj tabel. Dowody są już oczyszczone i ustawione od najważniejszego. Zbuduj JEDNĄ spójną wypowiedź: połącz kilka dowodów w wniosek o tym, jak Twoja grupa najpewniej podchodzi do tematu pytania. Gdy nie ma dowodu wprost o Was, użyj profilu grupy plus kontekstu ogólnopolskiego i wywnioskuj odpowiedź (tryb B). Gdy i tego brak, oprzyj się na opiniach z sieci (tryb C), zaznaczając, że to cudze głosy. Zawsze coś odpowiedz. Odpowiadaj krótko, jak człowiek, nie jak raport.
 
 DOWODY (od najważniejszego):
 ${evidenceBlock}
@@ -413,24 +458,33 @@ export async function runGroundedTurn(
   return parseGrounded(raw2, evidenceLen);
 }
 
-// Fallback bez LLM: dowody są już oczyszczone i czytelne (nie surowe wiersze),
-// więc podajemy najmocniejsze z nich krótko, uczciwie oznaczając brak pełnej
-// wypowiedzi — zamiast wysypywać tabele.
+// Fallback bez LLM: dowody są już oczyszczone i czytelne. Nie zdradzamy, że
+// model nie odpowiedział — po prostu podajemy uczciwie najbliższe sygnały,
+// z sygnałem niepewności. Opinie z sieci przywołujemy z nazwą źródła.
 function fallbackAnswer(label: string, evidence: AvatarEvidence[]): { text: string; used: number[] } {
   if (!evidence.length) {
     return {
-      text: `Na ten temat nie mam o nas (${label}) danych w bazie. Zapytaj o coś innego albo poczekaj na kolejne nocne zasilenie bazy.`,
+      text: `Trudno mi powiedzieć — akurat o nas (${label}) na ten temat nie mam ani twardych danych, ani wyraźnych głosów w publicystyce. Zapytaj o coś innego albo wróć po kolejnym nocnym zasileniu bazy.`,
       used: [],
     };
   }
-  const top = evidence.slice(0, 4);
-  return {
-    text:
-      `Nie udało mi się złożyć pełnej wypowiedzi, ale najmocniejsze dane, jakie o nas mam: ` +
-      top.map((e) => `${e.tekst} [${e.nr}]`).join("; ") +
-      ".",
-    used: top.map((e) => e.nr),
-  };
+  const opinions = evidence.filter((e) => e.rodzaj === "opinia_z_sieci").slice(0, 3);
+  const hard = evidence.filter((e) => e.rodzaj !== "opinia_z_sieci").slice(0, 3);
+  const parts: string[] = [];
+  let used: number[] = [];
+  if (hard.length) {
+    parts.push(`Najbliżej tematu mam o nas takie sygnały: ` + hard.map((e) => `${e.tekst} [${e.nr}]`).join("; ") + ".");
+    used = used.concat(hard.map((e) => e.nr));
+  }
+  if (opinions.length) {
+    parts.push(
+      `Trudno to przesądzić twardymi danymi, ale w publicystyce temat podejmują ` +
+        opinions.map((e) => `${e.zrodlo} [${e.nr}]`).join(", ") +
+        " — to opinie, nie pomiar o nas."
+    );
+    used = used.concat(opinions.map((e) => e.nr));
+  }
+  return { text: parts.join(" "), used };
 }
 
 export async function askAvatar(
@@ -439,12 +493,13 @@ export async function askAvatar(
   history: AvatarTurn[],
   matched: InsightQueryResult | null,
   matchedGlobal: InsightQueryResult | null = null
-): Promise<AvatarAnswer | null> {
+): Promise<AvatarAnswer> {
   const persona = await getPersonaByGroupValue(groupValue);
-  if (!persona) return null;
+  const label = persona?.profile.grupa?.etykieta ?? groupValue;
 
-  const label = persona.profile.grupa?.etykieta ?? groupValue;
-  const evidence = buildEvidenceList(persona, matched, matchedGlobal, question, 20);
+  // Bez persony nadal odpowiadamy (opinie z sieci + kontekst), nie zwracamy błędu.
+  const baseEvidence = persona ? buildEvidenceList(persona, matched, matchedGlobal, question, 20) : [];
+  const evidence = await withOpinionLayer(label, question, baseEvidence);
 
   const provider = getAIProvider();
   let answer: string | null = null;
@@ -467,9 +522,10 @@ export async function askAvatar(
     answer = fb.text;
     used = fb.used;
     confidence = "niska";
-    caveats = provider.isReal
-      ? "Model językowy nie odpowiedział poprawnie, pokazuję najmocniejsze dane."
-      : "Brak klucza modelu językowego w środowisku.";
+    // Bez wzmianki o błędzie modelu. Jeśli opieramy się na opiniach, oznacz to.
+    caveats = evidence.some((e) => e.rodzaj === "opinia_z_sieci")
+      ? "Brakuje twardych danych o tej grupie — część odpowiedzi opiera się na opiniach z publicystyki, nie na pomiarze."
+      : null;
   }
 
   return {
@@ -478,8 +534,8 @@ export async function askAvatar(
     usedEvidence: used,
     caveats,
     evidence,
-    coverage: persona.data_coverage,
-    personaVersion: persona.version,
+    coverage: persona?.data_coverage ?? "brak",
+    personaVersion: persona?.version ?? 0,
     aiReal: provider.isReal,
   };
 }

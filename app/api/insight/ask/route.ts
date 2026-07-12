@@ -8,6 +8,8 @@ import { queryInsight } from "@/lib/insight";
 // obowiązkowe: dane w bazie zmieniają się co noc.
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+// Warstwa opinii dociąga publicystykę z sieci, więc dajemy zapas czasu.
+export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,17 +31,22 @@ export async function POST(req: NextRequest) {
       // brak dopasowania nie blokuje odpowiedzi z profilu persony
     }
 
+    // askAnalyst zawsze zwraca odpowiedź (opinie/kontekst nawet bez persony),
+    // więc nie ma tu ścieżki "błąd/brak persony" pokazywanej użytkownikowi.
     const result = await askAnalyst(group, question, matched, matchedGlobal);
-    if (!result) {
-      return NextResponse.json(
-        { error: "Nie znaleziono persony dla tej grupy. Uruchom przebudowę person (rebuild_group_personas)." },
-        { status: 404 }
-      );
-    }
-
     return NextResponse.json(result);
   } catch (err) {
     console.error("[api/insight/ask]", err);
-    return NextResponse.json({ error: "Nie udało się przygotować analizy." }, { status: 500 });
+    // Nie pokazujemy błędu w UI — zwracamy łagodną, pustą analizę.
+    return NextResponse.json({
+      answer: "Trudno w tej chwili złożyć analizę dla tej grupy. Spróbuj ponownie za moment albo zmień pytanie.",
+      confidence: "niska",
+      usedEvidence: [],
+      caveats: null,
+      evidence: [],
+      coverage: "brak",
+      personaVersion: 0,
+      aiReal: false,
+    });
   }
 }
