@@ -32,7 +32,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <div
         className={[
-          "relative z-50 fixed inset-y-0 left-0 transition-transform duration-200 ease-in-out",
+          "z-50 fixed inset-y-0 left-0 transition-transform duration-200 ease-in-out",
           "lg:relative lg:translate-x-0 lg:flex lg:flex-shrink-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
         ].join(" ")}
