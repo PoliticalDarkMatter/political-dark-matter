@@ -295,7 +295,7 @@ function InsightBaseComet() {
         <div className="mt-2 min-w-[92px] rounded-md border border-indigo-300/25 bg-slate-950/70 px-2.5 py-1 text-center backdrop-blur-md shadow-[0_0_20px_rgba(15,23,42,0.9)] sm:min-w-[104px]">
           <div className="text-[10px] font-semibold text-white whitespace-nowrap sm:text-[11px]">e-wyborcy</div>
           <div className="mt-0.5 text-[7px] font-bold tracking-wide text-indigo-300 whitespace-nowrap sm:text-[8px]">
-            BAZA WIEDZY
+            opinie społeczne
           </div>
         </div>
       </div>
@@ -314,6 +314,50 @@ function InsightBaseComet() {
 // Inny kolor (bursztyn zamiast indygo), żeby dało się je rozróżnić na
 // pierwszy rzut oka. Ogon komety skierowany w lewo, tak jak w e-wyborcy
 // — ten sam kierunek lotu dla obu komet, nie lustrzane odbicie.
+// e-Petru, jak e-wyborcy i Konsylium, to warstwa pomocnicza (wzorzec języka i
+// sposobu myślenia Ryszarda Petru wspierający PRZEKAZ), nie piąta planeta.
+// Ten sam wzorzec komety, wisi nad TRZECIĄ kartą na dole (PRZEKAZ), kolor
+// szmaragdowy dla odróżnienia od indygo (e-wyborcy) i bursztynu (Konsylium).
+function PetruIcon() {
+  return (
+    <svg viewBox="0 0 64 40" className="h-7 w-11 text-emerald-700">
+      <circle cx="26" cy="16" r="7" stroke="currentColor" strokeWidth="3" fill="none" />
+      <path d="M14 34c2-6 8-9 12-9s10 3 12 9" stroke="currentColor" strokeWidth="3" fill="none" />
+      <path d="M44 10c4 2 6 5 6 9s-2 7-6 9" stroke="currentColor" strokeWidth="2.5" fill="none" opacity=".7" />
+      <path d="M49 6c6 3 9 8 9 13s-3 10-9 13" stroke="currentColor" strokeWidth="2" fill="none" opacity=".45" />
+    </svg>
+  );
+}
+
+function PetruComet() {
+  return (
+    <Link
+      href="/e-petru"
+      className="absolute z-20 hidden -translate-x-1/2 flex-col items-center sm:flex"
+      style={{ left: "64%", top: "94%" }}
+    >
+      <div className="group flex flex-col items-center">
+        <div className="pointer-events-none absolute right-full top-1/2 h-[2px] w-16 -translate-y-1/2 bg-gradient-to-r from-transparent to-emerald-200/70 opacity-70 sm:w-20" />
+        <div
+          className="relative flex h-12 w-20 items-center justify-center rounded-full ring-1 ring-emerald-200/50 sm:h-14 sm:w-24"
+          style={{
+            background: "radial-gradient(circle at 35% 30%, #ffffff, #d1fae5 55%, #a7f3d0)",
+            boxShadow: "0 0 26px rgba(16,185,129,0.4)",
+          }}
+        >
+          <PetruIcon />
+        </div>
+        <div className="mt-2 min-w-[92px] rounded-md border border-emerald-300/25 bg-slate-950/70 px-2.5 py-1 text-center backdrop-blur-md shadow-[0_0_20px_rgba(15,23,42,0.9)] sm:min-w-[104px]">
+          <div className="text-[10px] font-semibold text-white whitespace-nowrap sm:text-[11px]">e-Petru</div>
+          <div className="mt-0.5 text-[7px] font-bold tracking-wide text-emerald-300 whitespace-nowrap sm:text-[8px]">
+            wirtualny polityk
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 function KonsyliumIcon() {
   return (
     <svg viewBox="0 0 64 40" className="h-7 w-11 text-amber-700">
@@ -519,6 +563,7 @@ export default function OrbitHub() {
 
           <InsightBaseComet />
           <KonsyliumComet />
+          <PetruComet />
         </div>
 
         <div className="mx-auto mt-16 grid w-full max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
