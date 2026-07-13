@@ -136,68 +136,6 @@ function NeonIcon({ type }: { type: string }) {
   );
 }
 
-function HudPanel({
-  title,
-  className,
-  type,
-}: {
-  title: string;
-  className: string;
-  type: "line" | "bars" | "map" | "radar";
-}) {
-  return (
-    <div
-      className={[
-        "absolute hidden lg:block rounded-xl border border-sky-400/15 bg-slate-950/30 p-4",
-        "shadow-[0_0_40px_rgba(59,130,246,0.08)] backdrop-blur-md",
-        className,
-      ].join(" ")}
-    >
-      <div className="mb-3 whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-200/45">
-        {title}
-      </div>
-      {type === "line" && (
-        <svg viewBox="0 0 180 54" className="h-14 w-44 text-sky-400/70">
-          <path d="M5 38L24 21L42 34L61 18L83 30L105 15L126 35L146 20L172 31" fill="none" stroke="currentColor" strokeWidth="2" />
-          <path d="M5 46H175" stroke="currentColor" strokeOpacity=".2" />
-        </svg>
-      )}
-      {type === "bars" && (
-        <svg viewBox="0 0 180 54" className="h-14 w-44 text-violet-400/70">
-          {Array.from({ length: 16 }).map((_, i) => (
-            <rect
-              key={i}
-              x={8 + i * 10}
-              y={44 - ((i * 7) % 32)}
-              width="5"
-              height={12 + ((i * 7) % 32)}
-              rx="2"
-              fill="currentColor"
-              opacity={i % 3 === 0 ? 1 : 0.45}
-            />
-          ))}
-        </svg>
-      )}
-      {type === "map" && (
-        <div className="relative h-14 w-44 overflow-hidden rounded-lg">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(56,189,248,.35),transparent_2px),radial-gradient(circle_at_60%_35%,rgba(124,58,237,.35),transparent_2px),radial-gradient(circle_at_70%_70%,rgba(56,189,248,.25),transparent_2px)] bg-[length:18px_18px]" />
-          <div className="absolute bottom-2 left-2 h-1 w-20 rounded-full bg-sky-500/70" />
-          <div className="pdm-pulse-bar absolute bottom-2 left-24 h-1 w-10 rounded-full bg-violet-500/70" />
-        </div>
-      )}
-      {type === "radar" && (
-        <svg viewBox="0 0 90 54" className="h-14 w-44 text-sky-400/60">
-          <circle cx="28" cy="27" r="20" fill="none" stroke="currentColor" strokeWidth="1" opacity=".4" />
-          <circle cx="28" cy="27" r="11" fill="none" stroke="currentColor" strokeWidth="1" opacity=".6" />
-          <path d="M28 27L44 15" stroke="currentColor" strokeWidth="2" />
-          <circle cx="28" cy="27" r="3" fill="currentColor" className="pdm-radar-dot" />
-          <path d="M65 14H88M65 27H82M65 40H90" stroke="currentColor" strokeWidth="2" opacity=".45" />
-        </svg>
-      )}
-    </div>
-  );
-}
-
 function ModuleOrb({ module: m }: { module: ModuleDef }) {
   const pos = pointOnEllipse(m.angle, RX, RY);
   const leftPct = (pos.x / VB_W) * 100;
@@ -418,13 +356,6 @@ export default function OrbitHub() {
       <div className="pdm-comet pdm-comet--b" />
       <div className="pdm-comet pdm-comet--c" />
 
-      {/* Cztery narożne widgety — kotwiczone do krawędzi całej sekcji, jak we wzorcu */}
-      <div className="pointer-events-none absolute inset-0 z-[6]">
-        <HudPanel title="DANE NARRACYJNE" type="line" className="left-[18%] top-[35%]" />
-        <HudPanel title="ANALIZA SCENARIUSZOWA" type="bars" className="right-[21%] top-[35%]" />
-        <HudPanel title="AKTYWNOŚĆ W SIECI" type="map" className="left-[14%] top-[68%]" />
-        <HudPanel title="ZASIĘG I DYSTRYBUCJA" type="radar" className="right-[14%] top-[68%]" />
-      </div>
 
       <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-3 pb-8 pt-8 sm:px-6">
         <header className="mx-auto max-w-4xl text-center">
@@ -474,6 +405,11 @@ export default function OrbitHub() {
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-xs">
             <Link href="/sprawy" className="rounded-lg border border-sky-300/25 bg-slate-950/40 px-4 py-2 font-semibold text-slate-100 hover:border-sky-300/50 hover:bg-slate-900/60">Sprawy →</Link>
             <Link href="/zalozenia" className="rounded-lg border border-violet-300/25 bg-slate-950/40 px-4 py-2 font-semibold text-slate-100 hover:border-violet-300/50 hover:bg-slate-900/60">Założenia strategiczne →</Link>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs sm:hidden">
+            <Link href="/insight-base" className="rounded-lg border border-indigo-300/30 bg-slate-950/50 px-3 py-1.5 font-semibold text-slate-100">e-wyborcy</Link>
+            <Link href="/konsylium" className="rounded-lg border border-amber-300/30 bg-slate-950/50 px-3 py-1.5 font-semibold text-slate-100">Konsylium</Link>
+            <Link href="/e-petru" className="rounded-lg border border-emerald-300/30 bg-slate-950/50 px-3 py-1.5 font-semibold text-slate-100">e-Petru</Link>
           </div>
         </header>
 
