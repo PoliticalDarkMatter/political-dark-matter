@@ -14,6 +14,9 @@ export async function POST(req: NextRequest) {
     if (text.length > 4000) return NextResponse.json({ error: "Przekaz zbyt długi (limit 4000 znaków)." }, { status: 400 });
     const tryb: PetruMode = VALID.has(body?.tryb as PetruMode) ? (body!.tryb as PetruMode) : "wypowiedz";
     const result = await convertText(text, tryb);
+    if (!result.przerobiony) {
+      return NextResponse.json({ error: "Silnik chwilowo nie odpowiedział. Spróbuj ponownie za moment." }, { status: 502 });
+    }
     return NextResponse.json({ result });
   } catch (err) {
     console.error("[api/petru/convert]", err);
