@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { askAvatar, type AvatarTurn } from "@/lib/insight-avatar";
-import { queryInsight } from "@/lib/insight";
+import { queryInsightHybrid } from "@/lib/insight";
 
 // Odpowiedź awatara grupy: profil persony + dowody dobrane pod pytanie
 // (query_insight, fuzzy match) → model językowy z żelazną zasadą "nic bez
@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
     let matchedGlobal = null;
     try {
       [matched, matchedGlobal] = await Promise.all([
-        queryInsight(question, [group]),
-        queryInsight(question, []),
+        queryInsightHybrid(question, [group]),
+        queryInsightHybrid(question, []),
       ]);
     } catch {
       // brak dopasowania nie blokuje odpowiedzi z profilu

@@ -2,7 +2,7 @@
 // Pipeline pięciu warstw (spec: Apex_Grid_plan_modulu.docx):
 //
 //   Sygnał (Narrative Scope)  ┐ RÓWNOLEGLE — obie warstwy są niezależne
-//   Grunt  (Insight Base)     ┘ (Promise.all)
+//   Grunt  (e-wyborcy)     ┘ (Promise.all)
 //   Narada (Konsylium)        → eksperci RÓWNOLEGLE (skład per produkt)
 //   Scenariusze               → sekwencyjnie, na digest'cie warstw 1-3
 //   Decyzja                   → sekwencyjnie, na digest'cie warstw 1-4
@@ -23,7 +23,7 @@ import { extractJson, validateDecision, validateScenarios } from "./validate";
 
 const LABELS = {
   signal: "Sygnał (Narrative Scope)",
-  ground: "Grunt (Insight Base)",
+  ground: "Grunt (e-wyborcy)",
   council: "Narada (Konsylium)",
   scenarios: "Scenariusze",
   decision: "Decyzja",
@@ -50,7 +50,7 @@ export async function runApexGrid(input: ApexInput, onEvent: (e: ApexStageEvent)
     status: ground.hasData ? "gotowe" : "fallback",
     label: LABELS.ground,
     data: { syntheses: ground.syntheses.length, findings: ground.findings.length },
-    error: ground.hasData ? undefined : "Brak dopasowanych badań w Insight Base — reakcje grup będą hipotezami, nie danymi.",
+    error: ground.hasData ? undefined : "Brak dopasowanych badań w e-wyborcy — reakcje grup będą hipotezami, nie danymi.",
   });
 
   // ── Warstwa 3: Narada (eksperci równolegle) ──────────────────────────

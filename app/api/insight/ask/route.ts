@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { askAnalyst } from "@/lib/insight-analyst";
-import { queryInsight } from "@/lib/insight";
+import { queryInsightHybrid } from "@/lib/insight";
 
 // "Zapytaj grupę" w trybie analitycznym: te same dowody co awatar
 // (persona + fuzzy match + kontekst ogólnopolski), ale odpowiedź sztabowa
@@ -24,8 +24,8 @@ export async function POST(req: NextRequest) {
     let matchedGlobal = null;
     try {
       [matched, matchedGlobal] = await Promise.all([
-        queryInsight(question, [group]),
-        queryInsight(question, []),
+        queryInsightHybrid(question, [group]),
+        queryInsightHybrid(question, []),
       ]);
     } catch {
       // brak dopasowania nie blokuje odpowiedzi z profilu persony

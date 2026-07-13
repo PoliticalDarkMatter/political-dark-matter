@@ -9,7 +9,7 @@ import {
   type AvatarEvidence,
 } from "@/lib/insight-avatar";
 
-// ── Insight Base: tryb analityczny ("Zapytaj grupę") ─────────────────────
+// ── e-wyborcy: tryb analityczny ("Zapytaj grupę") ─────────────────────
 // Ten sam silnik dowodowy co awatar (persona + query_insight + kontekst
 // ogólnopolski), ale głos sztabowego analityka zamiast pierwszej osoby:
 // liczby, porównania do średniej, jawnie oznaczone wnioskowanie i luki.

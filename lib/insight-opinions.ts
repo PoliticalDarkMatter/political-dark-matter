@@ -1,7 +1,7 @@
 import type { Article } from "@/app/api/news/route";
 import { parseRSS } from "@/lib/rss";
 
-// ── Insight Base: warstwa opinii ──────────────────────────────────────────
+// ── e-wyborcy: warstwa opinii ──────────────────────────────────────────
 // Gdy o grupie brak twardych danych (findings/syntez otagowanych grupą), a
 // pytanie i tak wymaga odpowiedzi, sięgamy po REALNĄ publicystykę zamiast
 // zmyślać. Źródło: Google News RSS (fallback Bing) — bez klucza API. Wynik

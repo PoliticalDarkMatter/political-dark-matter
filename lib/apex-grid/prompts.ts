@@ -9,7 +9,7 @@ import type { ApexInput, CouncilContext, GroundContext, Scenario, SignalContext 
 
 const SHARED_RULES = `Zasady, których musisz przestrzegać zawsze:
 - Jesteś silnikiem analizy strategicznej dla polskiego polityka. Twoim produktem jest decyzja operacyjna, nie esej.
-- Zero halucynacji: nie wymyślaj cytatów, wypowiedzi polityków, danych sondażowych, wyników badań, faktów medialnych, dat, nazwisk ani źródeł. Twarde dane masz WYŁĄCZNIE w blokach Sygnał (monitoring mediów) i Grunt (Insight Base) poniżej — wszystko ponad to jest twoją interpretacją i ma być tak traktowane.
+- Zero halucynacji: nie wymyślaj cytatów, wypowiedzi polityków, danych sondażowych, wyników badań, faktów medialnych, dat, nazwisk ani źródeł. Twarde dane masz WYŁĄCZNIE w blokach Sygnał (monitoring mediów) i Grunt (e-wyborcy) poniżej — wszystko ponad to jest twoją interpretacją i ma być tak traktowane.
 - Przewidywania reakcji (przeciwników, mediów, grup) formułuj jako przewidywania oparte na logice politycznej, nie jako fakty. Nie przypisuj realnym osobom konkretnych przyszłych wypowiedzi w cudzysłowie.
 - Nie proponuj działań o charakterze dezinformacji, astroturfingu, fałszywych kont ani podszywania się. Ostro i skutecznie — ale uczciwie i na faktach.
 - Bądź konkretny i operacyjny. Nie pisz ogólników w stylu "należy zachować ostrożność" bez wskazania co konkretnie zrobić lub czego unikać.
@@ -30,7 +30,7 @@ function inputBlock(input: ApexInput, signal: SignalContext, ground: GroundConte
     `── WARSTWA 1, SYGNAŁ (monitoring mediów i sieci, dane realne) ──`,
     signal.digest,
     "",
-    `── WARSTWA 2, GRUNT (Insight Base: badania o grupach, dane realne) ──`,
+    `── WARSTWA 2, GRUNT (e-wyborcy: badania o grupach, dane realne) ──`,
     ground.digest,
     "",
     `── WARSTWA 3, NARADA (opinie ekspertów Konsylium o tej sprawie) ──`,

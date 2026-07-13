@@ -7,7 +7,7 @@
 //      narada jest tu jedną z pięciu warstw pipeline'u, a każdy dodatkowy
 //      ekspert to jedno równoległe wywołanie AI w budżecie czasowym route'a.
 //   2. Eksperci dostają w "researchu" połączony digest Sygnału (Narrative
-//      Scope) i Gruntu (Insight Base) — czyli więcej niż w samodzielnym
+//      Scope) i Gruntu (e-wyborcy) — czyli więcej niż w samodzielnym
 //      Konsylium, które robi tylko własny research medialny.
 //   3. Nie ma tu syntezy Konsylium — syntezą w Apex Grid są warstwy
 //      Scenariusze i Decyzja (orchestrator.ts).

@@ -3,7 +3,7 @@ import { getAIProvider } from "@/lib/reaction-simulator/ai-provider";
 import { fetchOpinions, type OpinionItem } from "@/lib/insight-opinions";
 import type { InsightQueryResult, InsightRawFinding } from "@/lib/insight";
 
-// ── Insight Base: awatar grupy społecznej ────────────────────────────────
+// ── e-wyborcy: awatar grupy społecznej ────────────────────────────────
 // Wirtualna osobowość grupy zbudowana WYŁĄCZNIE z dowodów w bazie
 // (insight_group_personas — profil deterministyczny przebudowywany po każdej
 // ingestii, plus dowody dobrane pod konkretne pytanie przez query_insight).

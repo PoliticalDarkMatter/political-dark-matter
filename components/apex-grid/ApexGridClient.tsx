@@ -106,7 +106,7 @@ export function ApexGridClient() {
           </div>
         </div>
         <p style={{ margin: "8px 0 20px", fontSize: 13, color: "#64748b", maxWidth: 760, lineHeight: 1.6 }}>
-          Od sygnału do decyzji w pięciu warstwach: monitoring z Narrative Scope, twarde dane o grupach z Insight Base,
+          Od sygnału do decyzji w pięciu warstwach: monitoring z Narrative Scope, twarde dane o grupach z e-wyborcy,
           narada ekspertów Konsylium, scenariusze z osią czasu i jedna jednoznaczna rekomendacja z mapą skutków.
           Produktem tego modułu jest decyzja, nie raport.
         </p>

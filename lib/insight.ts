@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 
-// ── Insight Base: warstwa dostępu do bazy badań/sondaży o polskich grupach
+// ── e-wyborcy: warstwa dostępu do bazy badań/sondaży o polskich grupach
 // społecznych (Supabase, tabele insight_*). Odczyt idzie przez klucz anon,
 // zabezpieczony politykami RLS "tylko odczyt" ustawionymi po stronie bazy —
 // zapis (nocna ingestia) idzie osobną drogą, kluczem serwisowym.
@@ -16,7 +16,8 @@ export type GroupDimension =
   | "grupa_spoleczno_zawodowa"
   | "poglady_polityczne"
   | "praktyki_religijne"
-  | "segment_psychograficzny";
+  | "segment_psychograficzny"
+  | "jednostka_terytorialna";
 
 export const DIMENSION_LABELS: Record<GroupDimension, string> = {
   wiek: "Wiek",
@@ -30,6 +31,7 @@ export const DIMENSION_LABELS: Record<GroupDimension, string> = {
   poglady_polityczne: "Poglądy polityczne (deklarowane)",
   praktyki_religijne: "Praktyki religijne",
   segment_psychograficzny: "Segment psychograficzny (More in Common)",
+  jednostka_terytorialna: "Miasto / jednostka terytorialna",
 };
 
 export interface GroupTaxonomyRow {
@@ -153,6 +155,70 @@ export async function queryInsight(
   });
   if (error) throw error;
   return (data as InsightQueryResult) ?? EMPTY_RESULT;
+}
+
+// Wyszukiwanie semantyczne przez edge function insight-search (embeduje pytanie
+// modelem gte-small i dobiera findings/evidence po podobieństwie wektorowym).
+// Zwraca kształt zgodny z query_insight albo null przy błędzie/braku embeddingów.
+export async function semanticSearch(
+  query: string,
+  groupValues: string[]
+): Promise<Record<string, unknown> | null> {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!base || !key) return null;
+  try {
+    const res = await fetch(`${base}/functions/v1/insight-search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({ query, group_values: groupValues, match_count: 14 }),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+// Hybryda: dopasowanie słownikowe (query_insight) + semantyczne (embeddingi).
+// Semantyczne trafienia idą pierwsze, resztę uzupełnia keyword. Nigdy nie
+// pogarsza wyniku — przy braku embeddingów działa jak samo query_insight.
+export async function queryInsightHybrid(
+  topic: string,
+  groupValues: string[]
+): Promise<InsightQueryResult> {
+  const [kw, sem] = await Promise.all([
+    queryInsight(topic, groupValues).catch(() => EMPTY_RESULT),
+    semanticSearch(topic, groupValues),
+  ]);
+  const kwAny = kw as unknown as Record<string, unknown>;
+  if (!sem) return kw;
+
+  const key = (f: Record<string, unknown>) =>
+    `${f?.topic ?? ""}|${(f?.verbatim_quote as string) ?? (f?.value as number) ?? ""}`;
+  const merge = (a: unknown[] = [], b: unknown[] = [], cap: number) => {
+    const seen = new Set<string>();
+    const out: Record<string, unknown>[] = [];
+    for (const x of [...(b ?? []), ...(a ?? [])] as Record<string, unknown>[]) {
+      const k = key(x);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push(x);
+      if (out.length >= cap) break;
+    }
+    return out;
+  };
+
+  return {
+    ...(kwAny as object),
+    raw_findings: merge(
+      kwAny.raw_findings as unknown[],
+      sem.raw_findings as unknown[],
+      25
+    ),
+    evidence: merge(kwAny.evidence as unknown[], sem.evidence as unknown[], 12),
+    syntheses: (kwAny.syntheses as unknown[]) ?? (sem.syntheses as unknown[]) ?? [],
+  } as unknown as InsightQueryResult;
 }
 
 // Grupa profilowa miesza dziś w jednej tabeli trzy bardzo różne rodzaje wiedzy
@@ -360,4 +426,72 @@ export async function getGroupProfile(groupValue: string): Promise<GroupProfile 
       category: categorizeTopic(f.topic),
     })),
   };
+}
+
+// ── Szeregi czasowe i okna przedwyborcze ────────────────────────────────────
+// Trend jest uczciwy tylko przy zgodnej metodzie i brzmieniu pytania; widok
+// v_insight_timeseries niesie flagę `ostrzezenie` (mieszane techniki/pracownie),
+// a `punkt_czasu` bierze datę realizacji terenu (fallback: publikacja).
+
+export interface TimeseriesTopic {
+  topic: string;
+  liczba_dat: number;
+  punktow: number;
+  ostrzezenie: boolean;
+}
+
+export interface TimeseriesPoint {
+  punkt_czasu: string;
+  value: number | null;
+  question_text: string | null;
+  source_name: string | null;
+  technika: string | null;
+  sample_size: number | null;
+  confidence: string | null;
+  ostrzezenie: boolean;
+}
+
+export interface ElectionEvent {
+  event_name: string;
+  event_date: string;
+  event_type: string;
+  round: number | null;
+  scope: string;
+}
+
+export async function listTimeseriesTopics(): Promise<TimeseriesTopic[]> {
+  const { data, error } = await supabase.rpc("insight_timeseries_topics");
+  if (error) throw error;
+  return ((data ?? []) as TimeseriesTopic[]).map((t) => ({
+    topic: t.topic,
+    liczba_dat: Number(t.liczba_dat),
+    punktow: Number(t.punktow),
+    ostrzezenie: Boolean(t.ostrzezenie),
+  }));
+}
+
+export async function getTimeseriesPoints(
+  topic: string,
+  groupId: string | null
+): Promise<TimeseriesPoint[]> {
+  const { data, error } = await supabase.rpc("insight_timeseries_points", {
+    p_topic: topic,
+    p_group_id: groupId,
+  });
+  if (error) throw error;
+  return ((data ?? []) as TimeseriesPoint[]).map((p) => ({
+    ...p,
+    value: p.value === null ? null : Number(p.value),
+    sample_size: p.sample_size === null ? null : Number(p.sample_size),
+    ostrzezenie: Boolean(p.ostrzezenie),
+  }));
+}
+
+export async function listElectionEvents(): Promise<ElectionEvent[]> {
+  const { data, error } = await supabase
+    .from("insight_reference_events")
+    .select("event_name, event_date, event_type, round, scope")
+    .order("event_date", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as ElectionEvent[];
 }

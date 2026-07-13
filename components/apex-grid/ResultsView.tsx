@@ -10,7 +10,7 @@ import { BulletList, CopyButton, EmptyNote, Panel, PriorityBadge, ScoreBar, Sect
 // spodem (zasada "decyzja przed analizą" z dokumentu koncepcyjnego).
 // Kolejność: pakiet decyzyjny → gotowe linie → kontrgra → mapa skutków →
 // wiedza/interpretacja/do-sprawdzenia → scenariusze → głosy narady →
-// materiał dowodowy (Insight Base + monitoring). Wszystko poniżej decyzji
+// materiał dowodowy (e-wyborcy + monitoring). Wszystko poniżej decyzji
 // jest do rozwijania, nie do obowiązkowego czytania.
 
 function FallbackBanner(p: { result: ApexResult }) {
@@ -270,7 +270,7 @@ function EvidencePanel(p: { result: ApexResult }) {
         <SectionHeading
           icon="📚"
           title="Materiał dowodowy"
-          subtitle={`Monitoring: ${signal.totalFound} materiałów · Insight Base: ${ground.syntheses.length} syntez, ${ground.findings.length} wyników`}
+          subtitle={`Monitoring: ${signal.totalFound} materiałów · e-wyborcy: ${ground.syntheses.length} syntez, ${ground.findings.length} wyników`}
         />
         <button type="button" onClick={() => setOpen(!open)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 11, fontWeight: 700, color: "#818cf8" }}>
           {open ? "▾ zwiń" : "▸ rozwiń"}
@@ -296,7 +296,7 @@ function EvidencePanel(p: { result: ApexResult }) {
           </div>
           <div>
             <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.05em", textTransform: "uppercase", color: "#94a3b8", marginBottom: 6 }}>
-              Grunt · Insight Base
+              Grunt · e-wyborcy
             </div>
             {!ground.hasData ? (
               <EmptyNote>Brak dopasowanych badań o grupach dla tej sprawy — reakcje grup w analizie są hipotezami, nie danymi.</EmptyNote>

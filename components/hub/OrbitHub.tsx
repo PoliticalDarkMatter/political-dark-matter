@@ -259,7 +259,7 @@ function ModuleOrb({ module: m }: { module: ModuleDef }) {
   );
 }
 
-// Insight Base nie jest piątym modułem operacyjnym, tylko warstwą danych pod
+// e-wyborcy nie jest piątym modułem operacyjnym, tylko warstwą danych pod
 // spodem, dlatego nie orbituje jak cztery planety: to nieruchomy punkt z boku,
 // osobny kształt (wydłużona kometa, nie koło) i bez pulsującej animacji "aktywności".
 function InsightBaseIcon() {
@@ -293,7 +293,7 @@ function InsightBaseComet() {
           <InsightBaseIcon />
         </div>
         <div className="mt-2 min-w-[92px] rounded-md border border-indigo-300/25 bg-slate-950/70 px-2.5 py-1 text-center backdrop-blur-md shadow-[0_0_20px_rgba(15,23,42,0.9)] sm:min-w-[104px]">
-          <div className="text-[10px] font-semibold text-white whitespace-nowrap sm:text-[11px]">Insight Base</div>
+          <div className="text-[10px] font-semibold text-white whitespace-nowrap sm:text-[11px]">e-wyborcy</div>
           <div className="mt-0.5 text-[7px] font-bold tracking-wide text-indigo-300 whitespace-nowrap sm:text-[8px]">
             BAZA WIEDZY
           </div>
@@ -303,16 +303,16 @@ function InsightBaseComet() {
   );
 }
 
-// Konsylium, tak jak Insight Base, nie jest piątym modułem operacyjnym z
+// Konsylium, tak jak e-wyborcy, nie jest piątym modułem operacyjnym z
 // czwórki planet — to osobna, pomocnicza warstwa (narada ekspercka, nie
 // monitoring/analiza/przekaz/emisja), więc dostaje ten sam wzorzec komety:
 // nieruchomy punkt z boku, bez orbitowania i bez pulsującej animacji
-// "aktywności". Insight Base wisi nad pierwszą kartą na dole (SŁUCHANIE,
+// "aktywności". e-wyborcy wisi nad pierwszą kartą na dole (SŁUCHANIE,
 // left: 6%) — Konsylium ma wisieć nad DRUGĄ kartą na dole (ANALIZA, ta sama
 // logika pozycjonowania, tylko przesunięta o jedną kolumnę w prawo w tym
 // samym układzie 4-kolumnowym), NIE nad orbitującą planetą Apex Grid.
 // Inny kolor (bursztyn zamiast indygo), żeby dało się je rozróżnić na
-// pierwszy rzut oka. Ogon komety skierowany w lewo, tak jak w Insight Base
+// pierwszy rzut oka. Ogon komety skierowany w lewo, tak jak w e-wyborcy
 // — ten sam kierunek lotu dla obu komet, nie lustrzane odbicie.
 function KonsyliumIcon() {
   return (
@@ -336,7 +336,7 @@ function KonsyliumComet() {
       style={{ left: "35%", top: "94%" }}
     >
       <div className="group flex flex-col items-center">
-        {/* ogon komety w lewo — ten sam kierunek co Insight Base */}
+        {/* ogon komety w lewo — ten sam kierunek co e-wyborcy */}
         <div className="pointer-events-none absolute right-full top-1/2 h-[2px] w-16 -translate-y-1/2 bg-gradient-to-r from-transparent to-amber-200/70 opacity-70 sm:w-20" />
         <div
           className="relative flex h-12 w-20 items-center justify-center rounded-full ring-1 ring-amber-200/50 sm:h-14 sm:w-24"

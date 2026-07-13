@@ -4,7 +4,7 @@
 // "Apex_Grid_plan_modulu.docx" w folderze projektu):
 //
 //   1. Sygnał   → Narrative Scope (buildFeed): co się dzieje, jak szybko
-//   2. Grunt    → Insight Base (query_insight): co myślą grupy społeczne
+//   2. Grunt    → e-wyborcy (query_insight): co myślą grupy społeczne
 //   3. Narada   → Konsylium (reużyte profile ekspertów, skład per produkt)
 //   4. Scenariusze → warianty działania z osią czasu i oceną ryzyko/zysk
 //   5. Decyzja  → jedna rekomendacja z mapą skutków i kontratakami
@@ -56,7 +56,7 @@ export interface SignalContext {
   digest: string; // gotowe do wstrzyknięcia w prompty streszczenie warstwy
 }
 
-// ── Warstwa 2: Grunt (Insight Base) ────────────────────────────────────
+// ── Warstwa 2: Grunt (e-wyborcy) ────────────────────────────────────
 // W CAŁOŚCI deterministyczna (zero LLM) — odpytuje query_insight w
 // Supabase i składa digest z realnych syntez i findings z podanymi
 // źródłami. Pusta baza / brak trafień = hasData:false, jawnie w digest.
