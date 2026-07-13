@@ -427,6 +427,10 @@ export default function OrbitHub() {
               <span className="ml-5 inline-block transition group-hover:translate-x-1">→</span>
             </a>
           </div>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-xs">
+            <Link href="/sprawy" className="rounded-lg border border-sky-300/25 bg-slate-950/40 px-4 py-2 font-semibold text-slate-100 hover:border-sky-300/50 hover:bg-slate-900/60">Sprawy →</Link>
+            <Link href="/zalozenia" className="rounded-lg border border-violet-300/25 bg-slate-950/40 px-4 py-2 font-semibold text-slate-100 hover:border-violet-300/50 hover:bg-slate-900/60">Założenia strategiczne →</Link>
+          </div>
         </header>
 
         {/* Orbita — elipsa proporcjonalna do wzorca (VB_W x VB_H), z animowanymi

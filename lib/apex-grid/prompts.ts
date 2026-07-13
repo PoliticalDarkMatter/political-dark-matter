@@ -19,6 +19,8 @@ const SHARED_RULES = `Zasady, których musisz przestrzegać zawsze:
 function inputBlock(input: ApexInput, signal: SignalContext, ground: GroundContext, council: CouncilContext): string {
   const product = getProduct(input.product);
   const lines = [
+    input.zalozenia && input.zalozenia,
+    input.zalozenia && "",
     `Produkt: ${product.label} — ${product.shortDescription}`,
     `Sprawa / pytanie / dylemat: """${input.topic.slice(0, 3000)}"""`,
     input.context && `Kontekst polityczny: ${input.context}`,

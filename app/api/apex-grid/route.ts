@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { runApexGrid } from "@/lib/apex-grid/orchestrator";
 import { APEX_PRODUCTS } from "@/lib/apex-grid/products";
 import type { ApexInput, ApexProduct, ApexStageEvent } from "@/lib/apex-grid/types";
+import { getZalozeniaPreamble } from "@/lib/zalozenia";
 
 // ── Apex Grid — API route ze streamingiem ──────────────────────────────
 // Ten sam wzorzec NDJSON co app/api/consilium/route.ts: jeden obiekt JSON
@@ -37,7 +38,9 @@ export async function POST(req: NextRequest) {
     ? (raw!.product as ApexProduct)
     : "sdp";
 
+  const zalozenia = await getZalozeniaPreamble();
   const input: ApexInput = {
+    zalozenia,
     topic,
     context: (raw?.context ?? "").slice(0, 2000),
     politicalGoal: (raw?.politicalGoal ?? "").slice(0, 500),

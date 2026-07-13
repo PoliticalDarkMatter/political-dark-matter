@@ -34,6 +34,7 @@ export interface ConsiliumInput {
   context: string; // kontekst polityczny — wolny opis (opcjonalnie)
   politicalGoal: string; // co polityk chce osiągnąć (opcjonalnie)
   targetAudience: string; // do kogo ma to trafić (opcjonalnie)
+  zalozenia?: string; // konstytucja zalozen strategicznych (lib/zalozenia)
   mode: ConsiliumMode;
 }
 

@@ -25,6 +25,7 @@ export interface ApexInput {
   context: string; // kontekst polityczny — wolny opis (opcjonalnie)
   politicalGoal: string; // co polityk chce osiągnąć (opcjonalnie)
   targetAudience: string; // o które grupy toczy się gra (opcjonalnie)
+  zalozenia?: string; // konstytucja zalozen strategicznych (lib/zalozenia)
   product: ApexProduct;
 }
 

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { runConsilium } from "@/lib/consilium/orchestrator";
 import { CONSILIUM_MODES } from "@/lib/consilium/modes";
 import type { ConsiliumInput, ConsiliumMode, StageEvent } from "@/lib/consilium/types";
+import { getZalozeniaPreamble } from "@/lib/zalozenia";
 
 // ── Konsylium — API route ze streamingiem ──────────────────────────────
 // Ten sam wzorzec NDJSON co app/api/reaction-simulator/route.ts: jeden
@@ -36,7 +37,9 @@ export async function POST(req: NextRequest) {
 
   const mode: ConsiliumMode = VALID_MODES.has(raw?.mode as ConsiliumMode) ? (raw!.mode as ConsiliumMode) : "strategia";
 
+  const zalozenia = await getZalozeniaPreamble();
   const input: ConsiliumInput = {
+    zalozenia,
     topic,
     context: (raw?.context ?? "").slice(0, 2000),
     politicalGoal: (raw?.politicalGoal ?? "").slice(0, 500),

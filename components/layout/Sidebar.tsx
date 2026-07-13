@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import {
-  TrendingUp, Network, FileText, Settings, X, ArrowLeft, Radar, ImageIcon, FileSearch, ScanSearch,
+  TrendingUp, Network, FileText, Settings, X, ArrowLeft, Radar, ImageIcon, FileSearch, ScanSearch, FolderKanban, ShieldCheck,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -16,6 +16,8 @@ import { clsx } from "clsx";
 // projekcie (celowo nieusunięty — Jan wybrał bezpieczniejszą opcję: tylko
 // zdjąć z nawigacji, nie kasować), dostępny wyłącznie po bezpośrednim URL.
 const NAV_ITEMS = [
+  { href: "/sprawy",               icon: FolderKanban, label: "Sprawy" },
+  { href: "/zalozenia",            icon: ShieldCheck, label: "Założenia strategiczne" },
   { href: "/reaction-check",       icon: FileSearch, label: "Reakcja na przekaz" },
   { href: "/image-reaction-check", icon: ScanSearch,  label: "Reakcja na zdjęcie/mem" },
   { href: "/reaction-lab",         icon: Radar,       label: "Symulator Reakcji" },

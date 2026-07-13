@@ -22,6 +22,8 @@ const SHARED_RULES = `Zasady, których musisz przestrzegać zawsze:
 function inputBlock(input: ConsiliumInput, research: ResearchContext): string {
   const mode = getMode(input.mode);
   const lines = [
+    input.zalozenia && input.zalozenia,
+    input.zalozenia && "",
     `Tryb pracy: ${mode.label} — ${mode.shortDescription}`,
     `Temat / pytanie / dylemat: """${input.topic.slice(0, 3000)}"""`,
     input.context && `Kontekst polityczny: ${input.context}`,
