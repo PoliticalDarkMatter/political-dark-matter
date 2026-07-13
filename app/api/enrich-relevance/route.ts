@@ -22,7 +22,7 @@ export const maxDuration = 30;
 // is_political, narrative_label, relevance_checked_at), a to jest zmiana
 // schematu bazy, której nie robię bez wyraźnej decyzji. Dziś każde
 // wywołanie liczy się na nowo — przy BATCH_LIMIT=30 i tanim modelu
-// (gemini-2.5-flash, thinkingBudget=0) to nadal szybkie i tanie, tylko
+// (gemini-3.5-flash, thinkingBudget=0) to nadal szybkie i tanie, tylko
 // nie jest cache'owane między odświeżeniami tak jak sentyment/zasięg.
 
 const BATCH_LIMIT = 30;
@@ -52,7 +52,7 @@ Odpowiedz TYLKO czystym JSON, bez markdown: {"0": {"political": true, "narrative
 
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

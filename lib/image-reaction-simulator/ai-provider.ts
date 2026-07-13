@@ -28,7 +28,7 @@ export interface VisionAIProvider {
 }
 
 export class GeminiVisionProvider implements VisionAIProvider {
-  readonly name = "gemini-2.5-flash";
+  readonly name = "gemini-3.5-flash";
   readonly isReal = true;
   constructor(private apiKey: string) {}
 
@@ -36,7 +36,7 @@ export class GeminiVisionProvider implements VisionAIProvider {
     const { maxTokens = 2000, temperature = 0.5, timeoutMs = 28000 } = opts;
     try {
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${this.apiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

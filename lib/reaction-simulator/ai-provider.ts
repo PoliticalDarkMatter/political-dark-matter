@@ -33,7 +33,7 @@ export interface AIProvider {
 }
 
 export class GeminiProvider implements AIProvider {
-  readonly name = "gemini-2.5-flash";
+  readonly name = "gemini-3.5-flash";
   readonly isReal = true;
   constructor(private apiKey: string) {}
 
@@ -48,7 +48,7 @@ export class GeminiProvider implements AIProvider {
       };
       if (json) generationConfig.responseMimeType = "application/json";
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${this.apiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
