@@ -386,25 +386,14 @@ export default function OrbitHub() {
             <br className="hidden sm:block" />
             i dystrybucja w jednym systemie wspieranym przez AI.
           </p>
-          <div className="mt-7 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <div className="mt-8 flex justify-center">
             <Link
-              href="/dashboard"
-              className="pdm-cta-glow group rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-8 py-3 text-sm font-bold text-white ring-1 ring-white/20 transition hover:scale-[1.02]"
+              href="/zalozenia"
+              className="pdm-cta-glow group rounded-xl bg-gradient-to-r from-blue-600 to-sky-500 px-10 py-4 text-base font-bold text-white ring-1 ring-white/25 shadow-[0_0_45px_rgba(37,99,235,0.55)] transition hover:scale-[1.03]"
             >
-              Uruchom prototyp
-              <span className="ml-5 inline-block transition group-hover:translate-x-1">→</span>
+              Założenia strategiczne
+              <span className="ml-4 inline-block transition group-hover:translate-x-1">→</span>
             </Link>
-            <a
-              href="#modules"
-              className="group rounded-lg border border-slate-400/20 bg-slate-950/40 px-8 py-3 text-sm font-bold text-slate-100 backdrop-blur-md transition hover:border-sky-300/40 hover:bg-slate-900/60"
-            >
-              Zobacz moduły
-              <span className="ml-5 inline-block transition group-hover:translate-x-1">→</span>
-            </a>
-          </div>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-xs">
-            <Link href="/sprawy" className="rounded-lg border border-sky-300/25 bg-slate-950/40 px-4 py-2 font-semibold text-slate-100 hover:border-sky-300/50 hover:bg-slate-900/60">Sprawy →</Link>
-            <Link href="/zalozenia" className="rounded-lg border border-violet-300/25 bg-slate-950/40 px-4 py-2 font-semibold text-slate-100 hover:border-violet-300/50 hover:bg-slate-900/60">Założenia strategiczne →</Link>
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs sm:hidden">
             <Link href="/insight-base" className="rounded-lg border border-indigo-300/30 bg-slate-950/50 px-3 py-1.5 font-semibold text-slate-100">e-wyborcy</Link>
@@ -480,18 +469,19 @@ export default function OrbitHub() {
           </svg>
 
           {/* Centrum — Profil projektu, tętniące */}
-          <div
-            className="absolute left-1/2 top-1/2 z-10 flex h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-violet-300/70 bg-slate-950/80 text-center"
+          <Link
+            href="/sprawy"
+            className="group absolute left-1/2 top-1/2 z-10 flex h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-violet-300/70 bg-slate-950/80 text-center transition hover:scale-105"
             style={{ boxShadow: "0 0 70px rgba(124,58,237,.8), 0 0 120px rgba(37,99,235,.35)" }}
           >
             <div className="pdm-core-breathe absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(124,58,237,0.55)_0%,transparent_70%)]" />
             <div className="pdm-ping absolute -inset-3 sm:-inset-4 lg:-inset-5 rounded-full border border-violet-400/40" />
             <div className="pdm-ping absolute -inset-3 sm:-inset-4 lg:-inset-5 rounded-full border border-sky-400/30" style={{ animationDelay: "1.5s" }} />
             <div className="relative">
-              <div className="text-sm sm:text-base lg:text-lg font-bold text-white whitespace-nowrap">Profil</div>
-              <div className="text-[11px] sm:text-xs lg:text-sm text-slate-300/70 whitespace-nowrap">projektu</div>
+              <div className="text-sm sm:text-base lg:text-lg font-bold text-white whitespace-nowrap">Ryszard</div>
+              <div className="text-[11px] sm:text-xs lg:text-sm text-slate-300/70 whitespace-nowrap">Petru</div>
             </div>
-          </div>
+          </Link>
 
           {modules.map((m) => (
             <ModuleOrb key={m.key} module={m} />
