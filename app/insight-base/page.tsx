@@ -990,7 +990,7 @@ function TrendyTab() {
         <select
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
-          className="min-w-[260px] rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[13px] text-white outline-none"
+          className="w-full sm:w-auto sm:min-w-[260px] rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[13px] text-white outline-none"
         >
           <option value="">— wybierz temat (szereg czasowy) —</option>
           {(topics ?? []).map((t) => (
@@ -1003,7 +1003,7 @@ function TrendyTab() {
         <select
           value={groupId}
           onChange={(e) => setGroupId(e.target.value)}
-          className="min-w-[200px] rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[13px] text-white outline-none"
+          className="w-full sm:w-auto sm:min-w-[200px] rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[13px] text-white outline-none"
         >
           <option value="">Dane ogólnopolskie</option>
           {cityGroups.map((g) => (
