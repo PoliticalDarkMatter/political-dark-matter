@@ -8,7 +8,7 @@ import Header from "./Header";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const STANDALONE_PREFIXES = ["/login", "/apex-grid", "/volt-stream", "/pulse-field", "/narrative-scope", "/insight-base", "/sprawy", "/zalozenia", "/e-petru"];
+  const STANDALONE_PREFIXES = ["/login", "/apex-grid", "/volt-stream", "/pulse-field", "/narrative-scope", "/insight-base", "/sprawy", "/zalozenia", "/e-petru", "/e-media"];
   const isStandalone = pathname === "/" || STANDALONE_PREFIXES.some((p) => pathname.startsWith(p));
   const [sidebarOpen, setSidebarOpen] = useState(false);
 

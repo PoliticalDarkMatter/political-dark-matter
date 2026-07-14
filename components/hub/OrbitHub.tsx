@@ -296,6 +296,48 @@ function PetruComet() {
   );
 }
 
+// e-Media, jak pozostałe komety, to warstwa pomocnicza pod EMISJĘ: wirtualna
+// redakcja przewidująca, jak media zatytułują i zramują przekaz. Kolor
+// pomarańczowo-czerwony, wisi nad CZWARTĄ kartą na dole (EMISJA).
+function MediaIcon() {
+  return (
+    <svg viewBox="0 0 64 40" className="h-7 w-11 text-rose-700">
+      <rect x="10" y="8" width="34" height="26" rx="3" stroke="currentColor" strokeWidth="3" fill="none" />
+      <path d="M44 16h9v14a4 4 0 0 1-4 4h-5" stroke="currentColor" strokeWidth="3" fill="none" />
+      <path d="M16 15h16M16 21h16M16 27h10" stroke="currentColor" strokeWidth="2.5" opacity=".7" />
+    </svg>
+  );
+}
+
+function MediaComet() {
+  return (
+    <Link
+      href="/e-media"
+      className="absolute z-20 hidden -translate-x-1/2 flex-col items-center sm:flex"
+      style={{ left: "92%", top: "94%" }}
+    >
+      <div className="group flex flex-col items-center">
+        <div className="pointer-events-none absolute right-full top-1/2 h-[2px] w-16 -translate-y-1/2 bg-gradient-to-r from-transparent to-rose-200/70 opacity-70 sm:w-20" />
+        <div
+          className="relative flex h-12 w-20 items-center justify-center rounded-full ring-1 ring-rose-200/50 sm:h-14 sm:w-24"
+          style={{
+            background: "radial-gradient(circle at 35% 30%, #ffffff, #ffe4e6 55%, #fecdd3)",
+            boxShadow: "0 0 26px rgba(244,63,94,0.4)",
+          }}
+        >
+          <MediaIcon />
+        </div>
+        <div className="mt-2 min-w-[92px] rounded-md border border-rose-300/25 bg-slate-950/70 px-2.5 py-1 text-center backdrop-blur-md shadow-[0_0_20px_rgba(15,23,42,0.9)] sm:min-w-[104px]">
+          <div className="text-[10px] font-semibold text-white whitespace-nowrap sm:text-[11px]">e-Media</div>
+          <div className="mt-0.5 text-[7px] font-bold tracking-wide text-rose-300 whitespace-nowrap sm:text-[8px]">
+            wirtualna redakcja
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 function KonsyliumIcon() {
   return (
     <svg viewBox="0 0 64 40" className="h-7 w-11 text-amber-700">
@@ -399,6 +441,7 @@ export default function OrbitHub() {
             <Link href="/insight-base" className="rounded-lg border border-indigo-300/30 bg-slate-950/50 px-3 py-1.5 font-semibold text-slate-100">e-wyborcy</Link>
             <Link href="/konsylium" className="rounded-lg border border-amber-300/30 bg-slate-950/50 px-3 py-1.5 font-semibold text-slate-100">Konsylium</Link>
             <Link href="/e-petru" className="rounded-lg border border-emerald-300/30 bg-slate-950/50 px-3 py-1.5 font-semibold text-slate-100">e-Petru</Link>
+            <Link href="/e-media" className="rounded-lg border border-rose-300/30 bg-slate-950/50 px-3 py-1.5 font-semibold text-slate-100">e-Media</Link>
           </div>
         </header>
 
@@ -490,6 +533,7 @@ export default function OrbitHub() {
           <InsightBaseComet />
           <KonsyliumComet />
           <PetruComet />
+          <MediaComet />
         </div>
 
         <div className="mx-auto mt-16 grid w-full max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
