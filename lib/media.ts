@@ -21,20 +21,22 @@ export interface MediaOutlet {
 export async function getOutlets(withHeadlines = true): Promise<MediaOutlet[]> {
   const { data, error } = await supabase
     .from("media_outlets")
-    .select("name, slug, typ, orientacja, profil")
+    .select("id, name, slug, typ, orientacja, profil")
     .eq("aktywne", true)
     .order("name");
   if (error) throw error;
-  const outlets = (data as MediaOutlet[]) ?? [];
+  const outlets = (data as Array<MediaOutlet & { id: string }>) ?? [];
   if (!withHeadlines) return outlets;
+  const idToSlug = new Map<string, string>(outlets.map((o) => [o.id, o.slug]));
   const { data: hs } = await supabase
     .from("media_headlines")
-    .select("headline, framing_note, published_date, outlet_id, media_outlets!inner(slug)")
+    .select("headline, framing_note, published_date, outlet_id")
     .order("published_date", { ascending: false, nullsFirst: false })
     .limit(200);
-  const bySlug = new Map<string, MediaOutlet["headlines"]>();
-  for (const row of (hs ?? []) as Array<{ headline: string; framing_note: string | null; published_date: string | null; media_outlets: { slug: string } }>) {
-    const slug = row.media_outlets?.slug;
+  type HRow = { headline: string; framing_note: string | null; published_date: string | null; outlet_id: string | null };
+  const bySlug = new Map<string, NonNullable<MediaOutlet["headlines"]>>();
+  for (const row of (hs ?? []) as HRow[]) {
+    const slug = row.outlet_id ? idToSlug.get(row.outlet_id) : undefined;
     if (!slug) continue;
     const arr = bySlug.get(slug) ?? [];
     if (arr.length < 4) arr.push({ headline: row.headline, framing_note: row.framing_note, published_date: row.published_date });
