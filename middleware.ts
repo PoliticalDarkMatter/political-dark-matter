@@ -8,7 +8,7 @@ const COOKIE_VALUE = "narrativescope_authenticated";
 // wyrenderować). Wszystko inne — łącznie z hubem "/" i każdym modułem — wymaga
 // zalogowania. Ekran logowania pojawia się zanim cokolwiek innego zostanie pokazane.
 const PUBLIC_PREFIXES = [
-  "/login", "/api/auth",
+  "/login", "/api/auth", "/api/snapshot",
   "/_next", "/favicon.ico",
 ];
 

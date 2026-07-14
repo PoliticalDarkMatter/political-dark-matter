@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { InsightBaseIcon, KonsyliumIcon, PetruIcon, MediaIcon } from "@/components/hub/badges";
 
 interface ModuleDef {
   key: string;
@@ -200,17 +201,6 @@ function ModuleOrb({ module: m }: { module: ModuleDef }) {
 // e-wyborcy nie jest piątym modułem operacyjnym, tylko warstwą danych pod
 // spodem, dlatego nie orbituje jak cztery planety: to nieruchomy punkt z boku,
 // osobny kształt (wydłużona kometa, nie koło) i bez pulsującej animacji "aktywności".
-function InsightBaseIcon() {
-  return (
-    <svg viewBox="0 0 64 40" className="h-7 w-11 text-indigo-700">
-      <ellipse cx="20" cy="12" rx="16" ry="5" stroke="currentColor" strokeWidth="3" fill="none" />
-      <path d="M4 12v10c0 2.8 7.2 5 16 5s16-2.2 16-5V12" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />
-      <path d="M4 17c0 2.8 7.2 5 16 5s16-2.2 16-5" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" opacity=".55" />
-      <path d="M46 8l3 6 6 1.5-6 1.5-3 6-3-6-6-1.5 6-1.5z" fill="currentColor" opacity=".85" />
-    </svg>
-  );
-}
-
 function InsightBaseComet() {
   return (
     <Link
@@ -256,17 +246,6 @@ function InsightBaseComet() {
 // sposobu myślenia Ryszarda Petru wspierający PRZEKAZ), nie piąta planeta.
 // Ten sam wzorzec komety, wisi nad TRZECIĄ kartą na dole (PRZEKAZ), kolor
 // szmaragdowy dla odróżnienia od indygo (e-wyborcy) i bursztynu (Konsylium).
-function PetruIcon() {
-  return (
-    <svg viewBox="0 0 64 40" className="h-7 w-11 text-emerald-700">
-      <circle cx="26" cy="16" r="7" stroke="currentColor" strokeWidth="3" fill="none" />
-      <path d="M14 34c2-6 8-9 12-9s10 3 12 9" stroke="currentColor" strokeWidth="3" fill="none" />
-      <path d="M44 10c4 2 6 5 6 9s-2 7-6 9" stroke="currentColor" strokeWidth="2.5" fill="none" opacity=".7" />
-      <path d="M49 6c6 3 9 8 9 13s-3 10-9 13" stroke="currentColor" strokeWidth="2" fill="none" opacity=".45" />
-    </svg>
-  );
-}
-
 function PetruComet() {
   return (
     <Link
@@ -299,16 +278,6 @@ function PetruComet() {
 // e-Media, jak pozostałe komety, to warstwa pomocnicza pod EMISJĘ: wirtualna
 // redakcja przewidująca, jak media zatytułują i zramują przekaz. Kolor
 // pomarańczowo-czerwony, wisi nad CZWARTĄ kartą na dole (EMISJA).
-function MediaIcon() {
-  return (
-    <svg viewBox="0 0 64 40" className="h-7 w-11 text-rose-700">
-      <rect x="10" y="8" width="34" height="26" rx="3" stroke="currentColor" strokeWidth="3" fill="none" />
-      <path d="M44 16h9v14a4 4 0 0 1-4 4h-5" stroke="currentColor" strokeWidth="3" fill="none" />
-      <path d="M16 15h16M16 21h16M16 27h10" stroke="currentColor" strokeWidth="2.5" opacity=".7" />
-    </svg>
-  );
-}
-
 function MediaComet() {
   return (
     <Link
@@ -335,20 +304,6 @@ function MediaComet() {
         </div>
       </div>
     </Link>
-  );
-}
-
-function KonsyliumIcon() {
-  return (
-    <svg viewBox="0 0 64 40" className="h-7 w-11 text-amber-700">
-      <circle cx="32" cy="20" r="6" stroke="currentColor" strokeWidth="3" fill="none" />
-      <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="3" fill="none" opacity=".85" />
-      <circle cx="52" cy="12" r="4" stroke="currentColor" strokeWidth="3" fill="none" opacity=".85" />
-      <circle cx="12" cy="30" r="4" stroke="currentColor" strokeWidth="3" fill="none" opacity=".85" />
-      <circle cx="52" cy="30" r="4" stroke="currentColor" strokeWidth="3" fill="none" opacity=".85" />
-      <path d="M17 14L27 18M47 14L37 18M17 28L27 22M47 28L37 22" stroke="currentColor" strokeWidth="2" opacity=".55" />
-      <path d="M46 8l3 6 6 1.5-6 1.5-3 6-3-6-6-1.5 6-1.5z" fill="currentColor" opacity=".85" />
-    </svg>
   );
 }
 
