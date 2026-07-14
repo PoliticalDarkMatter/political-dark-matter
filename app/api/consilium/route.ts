@@ -4,7 +4,7 @@ import { CONSILIUM_MODES } from "@/lib/consilium/modes";
 import type { ConsiliumInput, ConsiliumMode, StageEvent } from "@/lib/consilium/types";
 import { getZalozeniaPreamble } from "@/lib/zalozenia";
 
-// ── Konsylium — API route ze streamingiem ──────────────────────────────
+// ── e-Konsylium — API route ze streamingiem ──────────────────────────────
 // Ten sam wzorzec NDJSON co app/api/reaction-simulator/route.ts: jeden
 // obiekt JSON na linię, ostatnia linia to {"stage":"synthesis", ...,
 // "result": ConsiliumResult} z pełnym wynikiem. maxDuration wyższy niż
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       }
       try {
         const result = await runConsilium(input, (event: StageEvent) => send(event));
-        send({ stage: "synthesis", status: "gotowe", label: "Konsylium gotowe", result });
+        send({ stage: "synthesis", status: "gotowe", label: "e-Konsylium gotowe", result });
       } catch (err) {
         send({ stage: "synthesis", status: "blad", label: "Błąd analizy", error: err instanceof Error ? err.message : "Nieznany błąd." });
       } finally {

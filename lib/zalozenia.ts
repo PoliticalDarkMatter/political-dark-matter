@@ -2,7 +2,7 @@ import { supabase, DEFAULT_PROJECT_SLUG } from "@/lib/supabase";
 
 // ── Założenia strategiczne — konstytucja systemu ───────────────────────
 // Trwały, edytowalny, WERSJONOWANY obiekt ponad wszystkimi sprawami. Jest
-// wstrzykiwany jako nadrzędna preambuła do promptów modułów (Konsylium,
+// wstrzykiwany jako nadrzędna preambuła do promptów modułów (e-Konsylium,
 // Apex Grid…), żeby cały system mówił głosem Ryszarda Petru, a nie
 // generycznie. Zapis idzie przez funkcję SQL zapisz_zalozenia (archiwizuje
 // poprzednią wersję, jedna aktualna na projekt). Odczyt kluczem anon.

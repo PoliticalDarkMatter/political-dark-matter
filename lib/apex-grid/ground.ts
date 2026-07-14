@@ -1,4 +1,4 @@
-// ── Warstwa 2: Grunt (e-wyborcy) ────────────────────────────────────
+// ── Warstwa 2: Grunt (e-Wyborcy) ────────────────────────────────────
 // W CAŁOŚCI deterministyczna, zero LLM — odpytuje funkcję query_insight
 // w Supabase (fuzzy matching po temacie, patrz lib/insight.ts) i składa
 // z realnych syntez oraz findings digest z podanymi źródłami. Zasada
@@ -42,7 +42,7 @@ export async function gatherGround(input: ApexInput): Promise<GroundContext> {
       syntheses: [],
       findings: [],
       digest:
-        "e-wyborcy: błąd połączenia z bazą nastawień grup społecznych — dalsze warstwy mają jawnie zaznaczyć brak danych o gruncie społecznym, nie zgadywać nastrojów.",
+        "e-Wyborcy: błąd połączenia z bazą nastawień grup społecznych — dalsze warstwy mają jawnie zaznaczyć brak danych o gruncie społecznym, nie zgadywać nastrojów.",
     };
   }
 
@@ -75,11 +75,11 @@ export async function gatherGround(input: ApexInput): Promise<GroundContext> {
 }
 
 function emptyDigest(query: string): string {
-  return `e-wyborcy${query ? ` (zapytanie: „${query.slice(0, 120)}")` : ""}: brak dopasowanych badań i syntez o nastawieniu grup społecznych do tej sprawy. Wnioski o reakcjach grup formułuj wyłącznie jako hipotezy do sprawdzenia, jawnie oznaczone — nie jako dane.`;
+  return `e-Wyborcy${query ? ` (zapytanie: „${query.slice(0, 120)}")` : ""}: brak dopasowanych badań i syntez o nastawieniu grup społecznych do tej sprawy. Wnioski o reakcjach grup formułuj wyłącznie jako hipotezy do sprawdzenia, jawnie oznaczone — nie jako dane.`;
 }
 
 function buildGroundDigest(syntheses: GroundSynthesis[], findings: GroundFinding[]): string {
-  const lines: string[] = ["e-wyborcy (realne badania i sondaże o grupach społecznych):"];
+  const lines: string[] = ["e-Wyborcy (realne badania i sondaże o grupach społecznych):"];
 
   if (syntheses.length > 0) {
     lines.push("Syntezy międzyźródłowe:");

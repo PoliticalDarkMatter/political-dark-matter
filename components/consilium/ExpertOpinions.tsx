@@ -16,7 +16,7 @@ export function ExpertOpinions(p: { opinions: ExpertOpinion[]; usedFallback: str
 
   return (
     <Panel>
-      <SectionHeading icon="🧭" title="Głosy ekspertów Konsylium" subtitle="Materiał źródłowy pod syntezą — dziesięć niezależnych perspektyw" />
+      <SectionHeading icon="🧭" title="Głosy ekspertów e-Konsylium" subtitle="Materiał źródłowy pod syntezą — dziesięć niezależnych perspektyw" />
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
         {p.opinions.map((o, i) => {
           const isActive = i === active;

@@ -198,7 +198,7 @@ function ModuleOrb({ module: m }: { module: ModuleDef }) {
   );
 }
 
-// e-wyborcy nie jest piątym modułem operacyjnym, tylko warstwą danych pod
+// e-Wyborcy nie jest piątym modułem operacyjnym, tylko warstwą danych pod
 // spodem, dlatego nie orbituje jak cztery planety: to nieruchomy punkt z boku,
 // osobny kształt (wydłużona kometa, nie koło) i bez pulsującej animacji "aktywności".
 function InsightBaseComet() {
@@ -221,7 +221,7 @@ function InsightBaseComet() {
           <InsightBaseIcon />
         </div>
         <div className="mt-2 min-w-[92px] rounded-md border border-indigo-300/25 bg-slate-950/70 px-2.5 py-1 text-center backdrop-blur-md shadow-[0_0_20px_rgba(15,23,42,0.9)] sm:min-w-[104px]">
-          <div className="text-[10px] font-semibold text-white whitespace-nowrap sm:text-[11px]">e-wyborcy</div>
+          <div className="text-[10px] font-semibold text-white whitespace-nowrap sm:text-[11px]">e-Wyborcy</div>
           <div className="mt-0.5 text-[7px] font-bold tracking-wide text-indigo-300 whitespace-nowrap sm:text-[8px]">
             opinie społeczne
           </div>
@@ -231,21 +231,21 @@ function InsightBaseComet() {
   );
 }
 
-// Konsylium, tak jak e-wyborcy, nie jest piątym modułem operacyjnym z
+// e-Konsylium, tak jak e-Wyborcy, nie jest piątym modułem operacyjnym z
 // czwórki planet — to osobna, pomocnicza warstwa (narada ekspercka, nie
 // monitoring/analiza/przekaz/emisja), więc dostaje ten sam wzorzec komety:
 // nieruchomy punkt z boku, bez orbitowania i bez pulsującej animacji
-// "aktywności". e-wyborcy wisi nad pierwszą kartą na dole (SŁUCHANIE,
-// left: 6%) — Konsylium ma wisieć nad DRUGĄ kartą na dole (ANALIZA, ta sama
+// "aktywności". e-Wyborcy wisi nad pierwszą kartą na dole (SŁUCHANIE,
+// left: 6%) — e-Konsylium ma wisieć nad DRUGĄ kartą na dole (ANALIZA, ta sama
 // logika pozycjonowania, tylko przesunięta o jedną kolumnę w prawo w tym
 // samym układzie 4-kolumnowym), NIE nad orbitującą planetą Apex Grid.
 // Inny kolor (bursztyn zamiast indygo), żeby dało się je rozróżnić na
-// pierwszy rzut oka. Ogon komety skierowany w lewo, tak jak w e-wyborcy
+// pierwszy rzut oka. Ogon komety skierowany w lewo, tak jak w e-Wyborcy
 // — ten sam kierunek lotu dla obu komet, nie lustrzane odbicie.
-// e-Petru, jak e-wyborcy i Konsylium, to warstwa pomocnicza (wzorzec języka i
+// e-Petru, jak e-Wyborcy i e-Konsylium, to warstwa pomocnicza (wzorzec języka i
 // sposobu myślenia Ryszarda Petru wspierający PRZEKAZ), nie piąta planeta.
 // Ten sam wzorzec komety, wisi nad TRZECIĄ kartą na dole (PRZEKAZ), kolor
-// szmaragdowy dla odróżnienia od indygo (e-wyborcy) i bursztynu (Konsylium).
+// szmaragdowy dla odróżnienia od indygo (e-Wyborcy) i bursztynu (e-Konsylium).
 function PetruComet() {
   return (
     <Link
@@ -315,7 +315,7 @@ function KonsyliumComet() {
       style={{ left: "35%", top: "94%" }}
     >
       <div className="group flex flex-col items-center">
-        {/* ogon komety w lewo — ten sam kierunek co e-wyborcy */}
+        {/* ogon komety w lewo — ten sam kierunek co e-Wyborcy */}
         <div className="pointer-events-none absolute right-full top-1/2 h-[2px] w-16 -translate-y-1/2 bg-gradient-to-r from-transparent to-amber-200/70 opacity-70 sm:w-20" />
         <div
           className="relative flex h-12 w-20 items-center justify-center rounded-full ring-1 ring-amber-200/50 sm:h-14 sm:w-24"
@@ -327,7 +327,7 @@ function KonsyliumComet() {
           <KonsyliumIcon />
         </div>
         <div className="mt-2 min-w-[92px] rounded-md border border-amber-300/25 bg-slate-950/70 px-2.5 py-1 text-center backdrop-blur-md shadow-[0_0_20px_rgba(15,23,42,0.9)] sm:min-w-[104px]">
-          <div className="text-[10px] font-semibold text-white whitespace-nowrap sm:text-[11px]">Konsylium</div>
+          <div className="text-[10px] font-semibold text-white whitespace-nowrap sm:text-[11px]">e-Konsylium</div>
           <div className="mt-0.5 text-[7px] font-bold tracking-wide text-amber-300 whitespace-nowrap sm:text-[8px]">
             10 EKSPERTÓW AI
           </div>
@@ -393,8 +393,8 @@ export default function OrbitHub() {
             </Link>
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs sm:hidden">
-            <Link href="/insight-base" className="rounded-lg border border-indigo-300/30 bg-slate-950/50 px-3 py-1.5 font-semibold text-slate-100">e-wyborcy</Link>
-            <Link href="/konsylium" className="rounded-lg border border-amber-300/30 bg-slate-950/50 px-3 py-1.5 font-semibold text-slate-100">Konsylium</Link>
+            <Link href="/insight-base" className="rounded-lg border border-indigo-300/30 bg-slate-950/50 px-3 py-1.5 font-semibold text-slate-100">e-Wyborcy</Link>
+            <Link href="/konsylium" className="rounded-lg border border-amber-300/30 bg-slate-950/50 px-3 py-1.5 font-semibold text-slate-100">e-Konsylium</Link>
             <Link href="/e-petru" className="rounded-lg border border-emerald-300/30 bg-slate-950/50 px-3 py-1.5 font-semibold text-slate-100">e-Petru</Link>
             <Link href="/e-media" className="rounded-lg border border-rose-300/30 bg-slate-950/50 px-3 py-1.5 font-semibold text-slate-100">e-Media</Link>
           </div>

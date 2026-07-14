@@ -1,8 +1,8 @@
-// ── Konsylium — narada strategiczna dziesięciu ekspertów ──────────────
+// ── e-Konsylium — narada strategiczna dziesięciu ekspertów ──────────────
 // Ten sam kontrakt-typów-jako-dane co lib/reaction-simulator/types.ts i
 // lib/image-reaction-simulator/types.ts: AI nigdy nie zwraca do UI luźnej
 // ściany tekstu, tylko wypełnia strukturę zdefiniowaną tutaj. Różnica
-// względem symulatorów: Konsylium nie ocenia jednego draftu pod kątem
+// względem symulatorów: e-Konsylium nie ocenia jednego draftu pod kątem
 // ryzyka publikacji, tylko zwołuje dziesięciu niezależnych ekspertów wokół
 // dowolnego tematu/pytania/dylematu i syntetyzuje ich stanowiska w jeden
 // protokół decyzyjny — to moduł DECYZYJNY, nie chat z ekspertami (patrz
@@ -84,7 +84,7 @@ export interface ExpertOpinion {
   researchNotes: ResearchNotes;
 }
 
-// ── Synteza Konsylium ───────────────────────────────────────────────
+// ── Synteza e-Konsylium ───────────────────────────────────────────────
 export interface RiskMap {
   political: string[];
   legal: string[];
@@ -117,7 +117,7 @@ export interface ConsiliumSynthesis {
   verificationChecklist: string[]; // co jeszcze sprawdzić przed publicznym użyciem
 }
 
-// ── Pełny wynik Konsylium ──────────────────────────────────────────
+// ── Pełny wynik e-Konsylium ──────────────────────────────────────────
 export interface ConsiliumResult {
   input: ConsiliumInput;
   researchContext: ResearchContext;

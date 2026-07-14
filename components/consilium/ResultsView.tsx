@@ -14,7 +14,7 @@ const RISK_MAP_LABELS: Record<keyof ConsiliumResult["synthesis"]["riskMap"], str
   reputational: "Wizerunkowe",
 };
 
-// ── Widok wyniku Konsylium — ŚCISŁA HIERARCHIA (wymóg specyfikacji) ────
+// ── Widok wyniku e-Konsylium — ŚCISŁA HIERARCHIA (wymóg specyfikacji) ────
 // Polityk czytający ten widok ma w kilka sekund wiedzieć, co robić — więc
 // finalna rekomendacja jest PIERWSZA, a dziesięć opinii ekspertów, mimo że
 // to one "wykonały pracę", są na samym końcu, jako materiał źródłowy do
@@ -53,7 +53,7 @@ export function ResultsView(p: { result: ConsiliumResult }) {
         <div style={{ position: "relative", zIndex: 1 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 10 }}>
             <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "#7dd3fc" }}>
-              Rekomendacja Konsylium — {synthesis.caseTitle}
+              Rekomendacja e-Konsylium — {synthesis.caseTitle}
             </div>
             <PriorityBadge priority={synthesis.finalRecommendation.priority} />
           </div>
@@ -98,7 +98,7 @@ export function ResultsView(p: { result: ConsiliumResult }) {
       <Panel>
         <SectionHeading icon="🛡️" title="Mapa ryzyka" subtitle="Wyłącznie kategorie, w których zidentyfikowano realne ryzyko" />
         {riskEntries.length === 0 ? (
-          <EmptyNote>Konsylium nie zidentyfikowało istotnych ryzyk w żadnej kategorii.</EmptyNote>
+          <EmptyNote>e-Konsylium nie zidentyfikowało istotnych ryzyk w żadnej kategorii.</EmptyNote>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
             {riskEntries.map((r) => (

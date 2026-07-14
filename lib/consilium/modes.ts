@@ -1,6 +1,6 @@
 import type { ConsiliumMode } from "./types";
 
-// ── Tryby pracy Konsylium ───────────────────────────────────────────────
+// ── Tryby pracy e-Konsylium ───────────────────────────────────────────────
 // Tryb nie zmienia listy ekspertów (zawsze naradza się wszystkich 10 —
 // to jest sens "konsylium"), tylko przestawia akcenty analizy: które
 // pytania są priorytetowe, jak ma wyglądać finalna rekomendacja i jaki
@@ -93,6 +93,6 @@ export const CONSILIUM_MODES: ConsiliumModeConfig[] = [
 
 export function getMode(id: ConsiliumMode): ConsiliumModeConfig {
   const found = CONSILIUM_MODES.find((m) => m.id === id);
-  if (!found) throw new Error(`Nieznany tryb Konsylium: ${id}`);
+  if (!found) throw new Error(`Nieznany tryb e-Konsylium: ${id}`);
   return found;
 }

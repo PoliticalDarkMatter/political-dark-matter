@@ -92,7 +92,7 @@ export function ApexGridClient() {
       <div className="pointer-events-none absolute inset-0 opacity-40 [background-image:radial-gradient(0.6px_0.6px_at_20px_30px,#fff,transparent),radial-gradient(0.6px_0.6px_at_140px_80px,#fff,transparent),radial-gradient(0.6px_0.6px_at_90px_180px,#fff,transparent)] [background-size:340px_340px]" />
 
       <div className="relative z-10 mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-6" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
-<PageHeader title="Apex Grid" subtitle="Od sygnału do decyzji w pięciu warstwach: monitoring z Narrative Scope, dane o grupach z e-wyborcy, narada Konsylium, scenariusze i jedna jednoznaczna rekomendacja. Produktem jest decyzja, nie raport." logo="/logos/apex-grid.png" status="AKTYWNY" />
+<PageHeader title="Apex Grid" subtitle="Od sygnału do decyzji w pięciu warstwach: monitoring z Narrative Scope, dane o grupach z e-Wyborcy, narada e-Konsylium, scenariusze i jedna jednoznaczna rekomendacja. Produktem jest decyzja, nie raport." logo="/logos/apex-grid.png" status="AKTYWNY" />
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <InputPanel onSubmit={runAnalysis} running={running} />

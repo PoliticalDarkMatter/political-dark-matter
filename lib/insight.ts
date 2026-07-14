@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 
-// ── e-wyborcy: warstwa dostępu do bazy badań/sondaży o polskich grupach
+// ── e-Wyborcy: warstwa dostępu do bazy badań/sondaży o polskich grupach
 // społecznych (Supabase, tabele insight_*). Odczyt idzie przez klucz anon,
 // zabezpieczony politykami RLS "tylko odczyt" ustawionymi po stronie bazy —
 // zapis (nocna ingestia) idzie osobną drogą, kluczem serwisowym.

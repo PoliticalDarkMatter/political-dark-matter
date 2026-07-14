@@ -7,7 +7,7 @@ import { getZalozeniaPreamble } from "@/lib/zalozenia";
 // ── Apex Grid — API route ze streamingiem ──────────────────────────────
 // Ten sam wzorzec NDJSON co app/api/consilium/route.ts: jeden obiekt JSON
 // na linię, ostatnia linia to {"stage":"decision", ..., "result": ApexResult}.
-// maxDuration wyższy niż w Konsylium (90): pipeline ma dwa dodatkowe
+// maxDuration wyższy niż w e-Konsylium (90): pipeline ma dwa dodatkowe
 // SEKWENCYJNE wywołania AI po naradzie (scenariusze, potem decyzja), więc
 // ściana czasu to research + najwolniejszy ekspert + scenariusze + decyzja.
 

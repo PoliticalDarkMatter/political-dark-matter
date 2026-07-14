@@ -1,4 +1,4 @@
-// ── Fallback lokalny (bez AI) — Konsylium ──────────────────────────────
+// ── Fallback lokalny (bez AI) — e-Konsylium ──────────────────────────────
 // Ten sam wzorzec co lib/reaction-simulator/mock-generators.ts: gdy provider
 // nie jest realny albo odpowiedź nie przejdzie walidacji, orchestrator
 // podstawia w to miejsce w pełni wypełnioną (nie pustą) strukturę danych,
@@ -27,7 +27,7 @@ export function mockExpertOpinion(expert: ExpertProfile, input: ConsiliumInput):
     researchNotes: {
       usedSources: [],
       missingSources: ["Cała analiza AI dla tej roli."],
-      verificationNeeded: ["Ponowne uruchomienie Konsylium z działającym providerem AI."],
+      verificationNeeded: ["Ponowne uruchomienie e-Konsylium z działającym providerem AI."],
     },
   };
 }
@@ -55,7 +55,7 @@ export function mockSynthesis(input: ConsiliumInput, opinions: ExpertOpinion[]):
     },
     opportunityMap: opinions.flatMap((o) => o.opportunities).slice(0, 5),
     finalRecommendation: {
-      decision: "Nie podejmować decyzji na podstawie tej analizy — uruchom Konsylium ponownie z działającym providerem AI.",
+      decision: "Nie podejmować decyzji na podstawie tej analizy — uruchom e-Konsylium ponownie z działającym providerem AI.",
       rationale: `Synteza jest fallbackiem lokalnym (${realOpinions.length}/${opinions.length} ekspertów zwróciło realną analizę). Rekomendacja końcowa wymaga realnej syntezy AI, nie mechanicznego złożenia surowych ustaleń.`,
       priority: "medium",
     },
@@ -63,7 +63,7 @@ export function mockSynthesis(input: ConsiliumInput, opinions: ExpertOpinion[]):
     thingsNotToSay: opinions.flatMap((o) => o.thingsNotToSay).slice(0, 5),
     verificationChecklist: [
       "Sprawdź, czy zmienna środowiskowa GEMINI_API_KEY jest ustawiona i aktualna.",
-      "Uruchom Konsylium ponownie po naprawie konfiguracji providera AI.",
+      "Uruchom e-Konsylium ponownie po naprawie konfiguracji providera AI.",
       ...allRecommendations.slice(0, 3),
     ],
   };

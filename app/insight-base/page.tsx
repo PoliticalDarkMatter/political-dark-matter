@@ -114,7 +114,7 @@ function useGroups() {
         }
       })
       .catch(() => {
-        if (!cancelled) setError("Nie udało się połączyć z bazą e-wyborcy.");
+        if (!cancelled) setError("Nie udało się połączyć z bazą e-Wyborcy.");
       });
     return () => {
       cancelled = true;
@@ -498,7 +498,7 @@ function AskGroupTab() {
         else setAnswer(data);
       }
     } catch {
-      setError("Nie udało się połączyć z bazą e-wyborcy.");
+      setError("Nie udało się połączyć z bazą e-Wyborcy.");
     } finally {
       setLoading(false);
     }
@@ -555,7 +555,7 @@ function CompareGroupsTab() {
       if (data.error) setError(data.error);
       else setResults(data.results);
     } catch {
-      setError("Nie udało się połączyć z bazą e-wyborcy.");
+      setError("Nie udało się połączyć z bazą e-Wyborcy.");
     } finally {
       setLoading(false);
     }
@@ -673,7 +673,7 @@ function GroupProfileTab() {
       if (data.error) setError(data.error);
       else setProfile(data);
     } catch {
-      setError("Nie udało się połączyć z bazą e-wyborcy.");
+      setError("Nie udało się połączyć z bazą e-Wyborcy.");
     } finally {
       setLoading(false);
     }
@@ -1100,7 +1100,7 @@ export default function InsightBasePage() {
       <div className="pointer-events-none absolute inset-0 opacity-70 [background-image:radial-gradient(1.4px_1.4px_at_60px_120px,#fff,transparent),radial-gradient(1.3px_1.3px_at_200px_40px,#fff,transparent),radial-gradient(1.5px_1.5px_at_320px_200px,#fff,transparent)] [background-size:460px_460px]" />
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 pb-16 pt-8 sm:px-6">
-<PageHeader title="e-wyborcy" subtitle="Opinie społeczne i awatary grup. Zagregowana wiedza o poglądach polskich grup społecznych z realnych badań i sondaży, aktualizowana automatycznie co noc." comet="ewyborcy" />
+<PageHeader title="e-Wyborcy" subtitle="Opinie społeczne i awatary grup. Zagregowana wiedza o poglądach polskich grup społecznych z realnych badań i sondaży, aktualizowana automatycznie co noc." comet="ewyborcy" />
 
         <div className="mt-8 flex flex-wrap gap-2">
           {TABS.map(({ key, label, icon: Icon }) => (

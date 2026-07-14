@@ -4,8 +4,8 @@
 // "Apex_Grid_plan_modulu.docx" w folderze projektu):
 //
 //   1. Sygnał   → Narrative Scope (buildFeed): co się dzieje, jak szybko
-//   2. Grunt    → e-wyborcy (query_insight): co myślą grupy społeczne
-//   3. Narada   → Konsylium (reużyte profile ekspertów, skład per produkt)
+//   2. Grunt    → e-Wyborcy (query_insight): co myślą grupy społeczne
+//   3. Narada   → e-Konsylium (reużyte profile ekspertów, skład per produkt)
 //   4. Scenariusze → warianty działania z osią czasu i oceną ryzyko/zysk
 //   5. Decyzja  → jedna rekomendacja z mapą skutków i kontratakami
 //
@@ -56,7 +56,7 @@ export interface SignalContext {
   digest: string; // gotowe do wstrzyknięcia w prompty streszczenie warstwy
 }
 
-// ── Warstwa 2: Grunt (e-wyborcy) ────────────────────────────────────
+// ── Warstwa 2: Grunt (e-Wyborcy) ────────────────────────────────────
 // W CAŁOŚCI deterministyczna (zero LLM) — odpytuje query_insight w
 // Supabase i składa digest z realnych syntez i findings z podanymi
 // źródłami. Pusta baza / brak trafień = hasData:false, jawnie w digest.
@@ -85,9 +85,9 @@ export interface GroundContext {
   digest: string;
 }
 
-// ── Warstwa 3: Narada (Konsylium) ──────────────────────────────────────
+// ── Warstwa 3: Narada (e-Konsylium) ──────────────────────────────────────
 // Reużywa profile ekspertów, prompty per ekspert i walidację z
-// lib/consilium/* — skład narady jest MNIEJSZY niż pełne Konsylium
+// lib/consilium/* — skład narady jest MNIEJSZY niż pełne e-Konsylium
 // (dobierany per produkt w products.ts), bo tu narada jest jedną z pięciu
 // warstw pipeline'u, nie samodzielnym modułem. Pełna narada dziesięciu
 // ekspertów pozostaje dostępna w /konsylium.

@@ -1,8 +1,8 @@
-// ── Walidacja odpowiedzi AI — Konsylium ────────────────────────────────
+// ── Walidacja odpowiedzi AI — e-Konsylium ────────────────────────────────
 // Reużywa istniejące, sprawdzone helpery z lib/reaction-simulator/validate.ts
 // (extractJson/isRecord/str/arr) zamiast pisać je od nowa — dokładnie
 // zgodnie z instrukcją "użyj istniejącego mechanizmu walidacji". Ten plik
-// dokłada tylko kształty specyficzne dla Konsylium (ExpertOpinion,
+// dokłada tylko kształty specyficzne dla e-Konsylium (ExpertOpinion,
 // ConsiliumSynthesis).
 
 import { arr, extractJson, isRecord, str } from "@/lib/reaction-simulator/validate";

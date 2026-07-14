@@ -1,15 +1,15 @@
-// ── Warstwa 3: Narada (Konsylium) ──────────────────────────────────────
-// To jest INTEGRACJA z modułem Konsylium, nie jego kopia: reużywamy
+// ── Warstwa 3: Narada (e-Konsylium) ──────────────────────────────────────
+// To jest INTEGRACJA z modułem e-Konsylium, nie jego kopia: reużywamy
 // profile ekspertów (lib/consilium/experts.ts), budowę promptu per ekspert
 // (lib/consilium/prompts.ts) i walidację opinii (lib/consilium/validate.ts).
-// Różnice względem samodzielnego Konsylium:
+// Różnice względem samodzielnego e-Konsylium:
 //   1. Skład narady jest dobierany per produkt (products.ts), nie zawsze 10 —
 //      narada jest tu jedną z pięciu warstw pipeline'u, a każdy dodatkowy
 //      ekspert to jedno równoległe wywołanie AI w budżecie czasowym route'a.
 //   2. Eksperci dostają w "researchu" połączony digest Sygnału (Narrative
-//      Scope) i Gruntu (e-wyborcy) — czyli więcej niż w samodzielnym
-//      Konsylium, które robi tylko własny research medialny.
-//   3. Nie ma tu syntezy Konsylium — syntezą w Apex Grid są warstwy
+//      Scope) i Gruntu (e-Wyborcy) — czyli więcej niż w samodzielnym
+//      e-Konsylium, które robi tylko własny research medialny.
+//   3. Nie ma tu syntezy e-Konsylium — syntezą w Apex Grid są warstwy
 //      Scenariusze i Decyzja (orchestrator.ts).
 
 import type { AIProvider } from "@/lib/reaction-simulator/ai-provider";
@@ -21,7 +21,7 @@ import { extractJson, validateExpertOpinion } from "@/lib/consilium/validate";
 import { getProduct } from "./products";
 import type { ApexInput, ApexProduct, CouncilContext, GroundContext, SignalContext } from "./types";
 
-// Mapowanie produktu Apex Grid na tryb Konsylium — tryb steruje akcentem
+// Mapowanie produktu Apex Grid na tryb e-Konsylium — tryb steruje akcentem
 // w promptach ekspertów (patrz lib/consilium/modes.ts), więc dobieramy
 // najbliższy odpowiednik zamiast neutralnego domyślnego.
 const PRODUCT_TO_MODE: Record<ApexProduct, ConsiliumInput["mode"]> = {
@@ -40,7 +40,7 @@ function toConsiliumInput(input: ApexInput): ConsiliumInput {
   };
 }
 
-// Eksperci Konsylium znają kontrakt ResearchContext — składamy go z dwóch
+// Eksperci e-Konsylium znają kontrakt ResearchContext — składamy go z dwóch
 // warstw Apex Grid, żeby narada widziała i media, i twarde dane o grupach.
 function toResearchContext(signal: SignalContext, ground: GroundContext): ResearchContext {
   return {

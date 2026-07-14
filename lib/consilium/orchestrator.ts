@@ -1,4 +1,4 @@
-// ── Orchestrator — Konsylium ─────────────────────────────────────────
+// ── Orchestrator — e-Konsylium ─────────────────────────────────────────
 // WAŻNE: to NIE jest chat z dziesięcioma ekspertami. To jest moduł
 // DECYZYJNY — użytkownik ma dostać jeden protokół decyzyjny, nie dziesięć
 // osobnych esejów do samodzielnego czytania. Dlatego pipeline ma dwa
@@ -24,7 +24,7 @@ import type { ConsiliumInput, ConsiliumResult, ExpertId, ExpertOpinion, StageEve
 import { extractJson, validateExpertOpinion, validateSynthesis } from "./validate";
 
 function stageLabels(): Record<StageId, string> {
-  const labels: Partial<Record<StageId, string>> = { research: "Research", synthesis: "Synteza Konsylium" };
+  const labels: Partial<Record<StageId, string>> = { research: "Research", synthesis: "Synteza e-Konsylium" };
   for (const e of CONSILIUM_EXPERTS) labels[e.id] = e.name;
   return labels as Record<StageId, string>;
 }

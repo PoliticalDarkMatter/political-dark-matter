@@ -1,6 +1,6 @@
 import type { ExpertId } from "./types";
 
-// ── Konfiguracja dziesięciu ekspertów Konsylium ────────────────────────
+// ── Konfiguracja dziesięciu ekspertów e-Konsylium ────────────────────────
 // Dane, nie rozrzucony kod — każdy ekspert to jeden obiekt z rolą,
 // perspektywą i pytaniami, na które odpowiada (spec Jana, sekcja 4).
 // lib/consilium/prompts.ts składa z tego prompt systemowy per ekspert;
@@ -182,6 +182,6 @@ export const CONSILIUM_EXPERTS: ExpertProfile[] = [
 
 export function getExpert(id: ExpertId): ExpertProfile {
   const found = CONSILIUM_EXPERTS.find((e) => e.id === id);
-  if (!found) throw new Error(`Nieznany ekspert Konsylium: ${id}`);
+  if (!found) throw new Error(`Nieznany ekspert e-Konsylium: ${id}`);
   return found;
 }

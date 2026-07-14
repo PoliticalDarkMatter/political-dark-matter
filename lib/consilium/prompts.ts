@@ -2,7 +2,7 @@ import { getMode } from "./modes";
 import type { ExpertProfile } from "./experts";
 import type { ConsiliumInput, ExpertOpinion, ResearchContext } from "./types";
 
-// ── Biblioteka promptów — Konsylium ────────────────────────────────────
+// ── Biblioteka promptów — e-Konsylium ────────────────────────────────────
 // Ten sam wzorzec co lib/reaction-simulator/prompts.ts: SHARED_RULES
 // sklejane z blokiem kontekstu, osobna funkcja na etap. Różnica: tu etapów
 // jest 11 (10 ekspertów o identycznej strukturze wyjścia + 1 synteza), więc
@@ -83,7 +83,7 @@ export function buildSynthesisPrompt(input: ConsiliumInput, research: ResearchCo
   const mode = getMode(input.mode);
   return `${SHARED_RULES}
 
-Twoja rola: przewodniczący Konsylium — scalasz stanowiska dziesięciu ekspertów w jeden protokół decyzyjny dla polityka. To NIE ma być streszczenie dziesięciu opinii, tylko decyzja: polityk czytający twoją syntezę ma w kilka sekund wiedzieć, co robić.
+Twoja rola: przewodniczący e-Konsylium — scalasz stanowiska dziesięciu ekspertów w jeden protokół decyzyjny dla polityka. To NIE ma być streszczenie dziesięciu opinii, tylko decyzja: polityk czytający twoją syntezę ma w kilka sekund wiedzieć, co robić.
 
 ${inputBlock(input, research)}
 

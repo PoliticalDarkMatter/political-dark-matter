@@ -19,7 +19,7 @@ function TextField(p: { label: string; value: string; onChange: (v: string) => v
   );
 }
 
-// Konsylium ZAWSZE zwołuje wszystkich dziesięciu ekspertów — tryb pracy
+// e-Konsylium ZAWSZE zwołuje wszystkich dziesięciu ekspertów — tryb pracy
 // nie ogranicza listy, tylko przestawia akcenty analizy i syntezy (patrz
 // lib/consilium/modes.ts). Dlatego formularz jest prostszy niż w
 // reaction-lab: temat + kontekst + tryb, bez trybów wejścia wymagających
@@ -96,7 +96,7 @@ export function InputPanel(p: { onSubmit: (input: ConsiliumInput) => void; runni
             className="pdm-btn-primary"
             style={{ height: 46, padding: "0 26px", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 800, cursor: p.running ? "default" : "pointer" }}
           >
-            {p.running ? "Naradzam Konsylium…" : "Zwołaj Konsylium"}
+            {p.running ? "Naradzam e-Konsylium…" : "Zwołaj e-Konsylium"}
           </button>
         </div>
       </div>

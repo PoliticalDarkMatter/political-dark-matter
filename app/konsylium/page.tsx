@@ -8,7 +8,7 @@ import { ResultsView } from "@/components/consilium/ResultsView";
 import PageHeader from "@/components/layout/PageHeader";
 import { Users } from "lucide-react";
 
-// ── Konsylium ────────────────────────────────────────────────────────
+// ── e-Konsylium ────────────────────────────────────────────────────────
 // Narada dziesięciu ekspertów AI wokół jednego tematu/pytania/dylematu —
 // moduł DECYZYJNY, nie chat z ekspertami: wynik ma dać jednoznaczną
 // rekomendację, nie dziesięć osobnych esejów (patrz ResultsView.tsx po
@@ -41,7 +41,7 @@ export default function KonsyliumPage() {
       });
       if (!res.ok || !res.body) {
         const j = await res.json().catch(() => null);
-        throw new Error(j?.error || "Nie udało się zwołać Konsylium.");
+        throw new Error(j?.error || "Nie udało się zwołać e-Konsylium.");
       }
 
       const reader = res.body.getReader();
@@ -82,7 +82,7 @@ export default function KonsyliumPage() {
   return (
     <div className="min-h-screen bg-[#05070d]" style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "#e2e8f0" }}>
       <div className="mx-auto max-w-3xl px-5 py-8">
-      <PageHeader title="Konsylium" subtitle="Narada dziesięciu doradców politycznych wokół jednego tematu albo dylematu. Wynikiem nie jest dziesięć opinii, tylko jeden protokół decyzyjny: co robić, dlaczego i jakim językiem mówić." comet="konsylium" status="10 EKSPERTÓW" />
+      <PageHeader title="e-Konsylium" subtitle="Narada dziesięciu doradców politycznych wokół jednego tematu albo dylematu. Wynikiem nie jest dziesięć opinii, tylko jeden protokół decyzyjny: co robić, dlaczego i jakim językiem mówić." comet="konsylium" status="10 EKSPERTÓW" />
 
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <InputPanel onSubmit={runConsilium} running={running} />

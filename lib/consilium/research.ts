@@ -1,4 +1,4 @@
-// ── Warstwa researchu Konsylium ────────────────────────────────────────
+// ── Warstwa researchu e-Konsylium ────────────────────────────────────────
 // Zgodnie z instrukcją: reużywamy istniejący silnik wyszukiwania
 // (buildFeed z app/api/news/route.ts) i istniejącą ekstrakcję fraz
 // (extractPhrasesWithGemini z lib/extract-phrases.ts) zamiast budować
@@ -11,7 +11,7 @@ import { buildFeed } from "@/app/api/news/route";
 import { extractPhrasesWithGemini } from "@/lib/extract-phrases";
 import type { ConsiliumInput, ResearchContext, ResearchSource } from "./types";
 
-// Konsylium pracuje na dowolnym temacie/pytaniu/dylemacie, nie na gotowym
+// e-Konsylium pracuje na dowolnym temacie/pytaniu/dylemacie, nie na gotowym
 // cytacie — więc zanim wyciągniemy frazy, łączymy pola wejścia w jeden
 // tekst dający ekstrakcji jak najwięcej kontekstu.
 function buildResearchInputText(input: ConsiliumInput): string {

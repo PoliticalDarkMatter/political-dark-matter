@@ -10,8 +10,8 @@ import type { ApexStageId, ApexStageStatus } from "@/lib/apex-grid/types";
 
 const STAGE_ORDER: Array<{ id: ApexStageId; num: string; label: string }> = [
   { id: "signal", num: "1", label: "Sygnał · Narrative Scope" },
-  { id: "ground", num: "2", label: "Grunt · e-wyborcy" },
-  { id: "council", num: "3", label: "Narada · Konsylium" },
+  { id: "ground", num: "2", label: "Grunt · e-Wyborcy" },
+  { id: "council", num: "3", label: "Narada · e-Konsylium" },
   { id: "scenarios", num: "4", label: "Scenariusze" },
   { id: "decision", num: "5", label: "Decyzja" },
 ];

@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 
-// ── Prymitywy UI — Konsylium ────────────────────────────────────────────
+// ── Prymitywy UI — e-Konsylium ────────────────────────────────────────────
 // Własna, nieudostępniana między modułami kopia (tak jak reaction-lab i
 // image-lab mają swoje osobne primitives.tsx) — zgodnie z ustaloną
 // konwencją projektu, żeby moduły pozostały niezależne od siebie.

@@ -6,7 +6,7 @@ import type { StageId, StageStatus } from "@/lib/consilium/types";
 const STAGE_ORDER: Array<{ id: StageId; label: string }> = [
   { id: "research", label: "Research" },
   ...CONSILIUM_EXPERTS.map((e) => ({ id: e.id as StageId, label: e.name })),
-  { id: "synthesis", label: "Synteza Konsylium" },
+  { id: "synthesis", label: "Synteza e-Konsylium" },
 ];
 
 const STATUS_META: Record<StageStatus, { label: string; dotClass: string; color: string }> = {
@@ -26,7 +26,7 @@ export function AIAnalysisProgress(p: { statuses: Partial<Record<StageId, StageS
   return (
     <div className={`pdm-panel${p.running ? " pdm-scan-sweep" : ""}`} style={{ padding: "14px 16px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, position: "relative", zIndex: 1 }}>
-        <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "#94a3b8" }}>Narada Konsylium</span>
+        <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "#94a3b8" }}>Narada e-Konsylium</span>
         <span style={{ fontSize: 11, color: "#64748b" }}>{doneCount}/{STAGE_ORDER.length} etapów</span>
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 18px", position: "relative", zIndex: 1 }}>
