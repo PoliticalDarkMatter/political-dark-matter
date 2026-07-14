@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Wand2, User, Copy, Check } from "lucide-react";
 import { PETRU_MODES, type PetruMode } from "@/lib/petru";
+import PageHeader from "@/components/layout/PageHeader";
 
 export default function EPetruPage() {
   const [text, setText] = useState("");
@@ -38,19 +39,7 @@ export default function EPetruPage() {
     <div className="min-h-screen bg-[#05070d] text-slate-200">
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_15%_0%,rgba(56,189,248,0.06),transparent_35%),radial-gradient(circle_at_85%_100%,rgba(124,58,237,0.1),transparent_40%)]" />
       <div className="relative z-10 mx-auto max-w-2xl px-5 py-8">
-        <Link href="/" className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-white">
-          <ArrowLeft size={14} className="text-sky-400" /> Panel główny Political Dark Matter
-        </Link>
-
-        <div className="mt-5 flex items-start gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-violet-600 shadow-lg">
-            <User size={22} className="text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white">e-Petru</h1>
-            <p className="text-sm text-slate-400">Wirtualny polityk. Przerabia dowolny przekaz na język, dynamikę i sposób myślenia Ryszarda Petru.</p>
-          </div>
-        </div>
+        <PageHeader title="e-Petru" subtitle="Wirtualny polityk. Przerabia dowolny przekaz na język, dynamikę i sposób myślenia Ryszarda Petru." icon={<User size={22} className="text-white" />} accent="from-sky-500 to-violet-600" />
 
         <div className="mt-6">
           <label className="block text-sm font-semibold text-slate-100">Przekaz do przerobienia</label>

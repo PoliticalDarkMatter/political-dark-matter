@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Save, ShieldCheck, Loader2, History } from "lucide-react";
 import { ZALOZENIA_SLOTS, type ZalozeniaSlotKey } from "@/lib/zalozenia";
+import PageHeader from "@/components/layout/PageHeader";
 
 type Form = Record<ZalozeniaSlotKey, string> & { nota: string };
 
@@ -74,19 +75,7 @@ export default function ZalozeniaPage() {
     <div className="min-h-screen bg-[#05070d] text-slate-200">
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_15%_0%,rgba(56,189,248,0.06),transparent_35%),radial-gradient(circle_at_85%_100%,rgba(124,58,237,0.1),transparent_40%)]" />
       <div className="relative z-10 mx-auto max-w-3xl px-5 py-8">
-        <Link href="/" className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-white">
-          <ArrowLeft size={14} className="text-sky-400" /> Panel główny Political Dark Matter
-        </Link>
-
-        <div className="mt-5 flex items-start gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-violet-600 shadow-lg">
-            <ShieldCheck size={22} className="text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white">Założenia strategiczne</h1>
-            <p className="text-sm text-slate-400">Konstytucja systemu. Wstrzykiwana do każdego modułu jako nadrzędny kontekst pracy.</p>
-          </div>
-        </div>
+        <PageHeader title="Założenia strategiczne" subtitle="Konstytucja systemu. Wstrzykiwana do każdego modułu jako nadrzędny kontekst pracy." icon={<ShieldCheck size={22} className="text-white" />} accent="from-sky-500 to-violet-600" />
 
         <div className="mt-3 flex items-center gap-3 text-xs text-slate-500">
           {wersja !== null && (

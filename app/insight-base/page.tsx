@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
+import PageHeader from "@/components/layout/PageHeader";
 import { ArrowLeft, Search, Users, Layers, Sparkles, MessageCircle, TrendingUp } from "lucide-react";
 import AvatarChatTab from "@/components/insight/AvatarChatTab";
 import {
@@ -1099,18 +1100,7 @@ export default function InsightBasePage() {
       <div className="pointer-events-none absolute inset-0 opacity-70 [background-image:radial-gradient(1.4px_1.4px_at_60px_120px,#fff,transparent),radial-gradient(1.3px_1.3px_at_200px_40px,#fff,transparent),radial-gradient(1.5px_1.5px_at_320px_200px,#fff,transparent)] [background-size:460px_460px]" />
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 pb-16 pt-8 sm:px-6">
-        <Link href="/" className="mb-6 inline-flex items-center gap-2 text-xs text-slate-400 transition-colors hover:text-white">
-          <ArrowLeft size={14} />
-          Wróć do ekosystemu
-        </Link>
-
-        <div className="pdm-kicker">Warstwa danych · nie planeta, stały punkt obserwacji</div>
-        <h1 className="pdm-hero-title text-4xl sm:text-5xl">e-wyborcy</h1>
-        <div className="mt-1 text-lg font-semibold tracking-wide text-sky-300/90">awatary grup</div>
-        <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-slate-400">
-          Zagregowana wiedza o poglądach, reakcjach i zachowaniach polskich grup społecznych, budowana z realnych
-          badań, sondaży i danych behawioralnych. Aktualizowana automatycznie co noc.
-        </p>
+<PageHeader title="e-wyborcy" subtitle="Opinie społeczne i awatary grup. Zagregowana wiedza o poglądach polskich grup społecznych z realnych badań i sondaży, aktualizowana automatycznie co noc." icon={<Users size={22} className="text-white" />} accent="from-indigo-500 to-violet-600" ring="ring-indigo-300/40" />
 
         <div className="mt-8 flex flex-wrap gap-2">
           {TABS.map(({ key, label, icon: Icon }) => (

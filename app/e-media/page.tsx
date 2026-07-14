@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Radio, Newspaper, Crosshair, Frame } from "lucide-react";
+import PageHeader from "@/components/layout/PageHeader";
 
 interface Outlet { name: string; slug: string; typ: string; orientacja: string; }
 interface Coverage { slug: string; name: string; orientacja: string; naglowek: string; rama: string; wyciete: string; pytanie: string; }
@@ -55,19 +56,7 @@ export default function EMediaPage() {
     <div className="min-h-screen bg-[#05070d] text-slate-200">
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_15%_0%,rgba(56,189,248,0.06),transparent_35%),radial-gradient(circle_at_85%_100%,rgba(124,58,237,0.1),transparent_40%)]" />
       <div className="relative z-10 mx-auto max-w-3xl px-5 py-8">
-        <Link href="/" className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-white">
-          <ArrowLeft size={14} className="text-sky-400" /> Panel główny Political Dark Matter
-        </Link>
-
-        <div className="mt-5 flex items-start gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-orange-500 shadow-lg">
-            <Newspaper size={22} className="text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white">e-Media</h1>
-            <p className="text-sm text-slate-400">Wirtualna redakcja. Zanim wyemitujesz przekaz, zobacz, jak zatytułuje go i zrama każde medium, ze swoim przechyłem.</p>
-          </div>
-        </div>
+        <PageHeader title="e-Media" subtitle="Wirtualna redakcja. Zanim wyemitujesz przekaz, zobacz, jak zatytułuje go i zrama każde medium, ze swoim przechyłem." icon={<Newspaper size={22} className="text-white" />} accent="from-rose-500 to-orange-500" />
 
         <div className="mt-6">
           <label className="block text-sm font-semibold text-slate-100">Przekaz do wyemitowania</label>

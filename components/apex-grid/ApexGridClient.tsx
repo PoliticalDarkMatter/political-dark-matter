@@ -8,6 +8,7 @@ import type { ApexInput, ApexResult, ApexStageId, ApexStageStatus } from "@/lib/
 import { InputPanel } from "./InputPanel";
 import { PipelineProgress } from "./PipelineProgress";
 import { ResultsView } from "./ResultsView";
+import PageHeader from "@/components/layout/PageHeader";
 
 // ── Apex Grid — klient ─────────────────────────────────────────────────
 // Strona standalone (poza AppShell Narrative Scope, jak /insight-base):
@@ -91,25 +92,7 @@ export function ApexGridClient() {
       <div className="pointer-events-none absolute inset-0 opacity-40 [background-image:radial-gradient(0.6px_0.6px_at_20px_30px,#fff,transparent),radial-gradient(0.6px_0.6px_at_140px_80px,#fff,transparent),radial-gradient(0.6px_0.6px_at_90px_180px,#fff,transparent)] [background-size:340px_340px]" />
 
       <div className="relative z-10 mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-6" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
-        <Link href="/" className="mb-6 inline-flex items-center gap-2 text-xs text-slate-400 transition-colors hover:text-white">
-          <ArrowLeft size={14} />
-          Wróć do ekosystemu
-        </Link>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 6 }}>
-          <div className="rounded-2xl bg-white" style={{ padding: 6, width: 54, height: 54, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Image src="/logos/apex-grid.png" alt="Apex Grid" width={42} height={34} style={{ objectFit: "contain" }} />
-          </div>
-          <div>
-            <div className="pdm-kicker">Warstwa analizy · moduł drugi ekosystemu</div>
-            <h1 className="pdm-hero-title" style={{ fontSize: 32, lineHeight: 1.05 }}>Apex Grid</h1>
-          </div>
-        </div>
-        <p style={{ margin: "8px 0 20px", fontSize: 13, color: "#64748b", maxWidth: 760, lineHeight: 1.6 }}>
-          Od sygnału do decyzji w pięciu warstwach: monitoring z Narrative Scope, twarde dane o grupach z e-wyborcy,
-          narada ekspertów Konsylium, scenariusze z osią czasu i jedna jednoznaczna rekomendacja z mapą skutków.
-          Produktem tego modułu jest decyzja, nie raport.
-        </p>
+<PageHeader title="Apex Grid" subtitle="Od sygnału do decyzji w pięciu warstwach: monitoring z Narrative Scope, dane o grupach z e-wyborcy, narada Konsylium, scenariusze i jedna jednoznaczna rekomendacja. Produktem jest decyzja, nie raport." logo="/logos/apex-grid.png" status="AKTYWNY" />
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <InputPanel onSubmit={runAnalysis} running={running} />

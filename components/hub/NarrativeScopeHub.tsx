@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, FileSearch, ImageIcon, Radar, ScanSearch } from "lucide-react";
+import PageHeader from "@/components/layout/PageHeader";
 
 // ── Narrative Scope — hub wewnętrzny modułu ───────────────────────────
 // Ten sam język wizualny co components/hub/OrbitHub.tsx (top-level hub
@@ -105,39 +106,7 @@ export default function NarrativeScopeHub() {
       <div className="pointer-events-none absolute inset-0 opacity-70 [background-image:radial-gradient(1.4px_1.4px_at_40px_60px,#fff,transparent),radial-gradient(1.3px_1.3px_at_160px_20px,#fff,transparent),radial-gradient(1.5px_1.5px_at_100px_180px,#fff,transparent),radial-gradient(1.3px_1.3px_at_230px_120px,#fff,transparent),radial-gradient(1.4px_1.4px_at_300px_240px,#fff,transparent)] [background-size:460px_460px]" />
 
       <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 pb-14 pt-8 sm:px-8">
-        <div className="flex items-center justify-between">
-          <Link
-            href="/"
-            className="flex items-center gap-2 rounded-lg border border-sky-400/15 bg-slate-900/40 px-3 py-2 text-xs font-medium text-slate-300 transition-colors hover:border-sky-400/30 hover:bg-slate-900/80 hover:text-white"
-          >
-            <ArrowLeft size={13} className="text-sky-400" />
-            Panel główny Political Dark Matter
-          </Link>
-          <div className="flex items-center gap-2.5">
-            <div
-              className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_25%,#ffffff,#dbeafe_55%,#b8c7e8)] ring-1 ring-sky-300/70"
-              style={{ boxShadow: "0 0 16px rgba(56,189,248,.45)" }}
-            >
-              <Image src="/logos/narrative-scope.png" alt="NarrativeScope" width={30} height={30} className="h-[26px] w-[26px] object-contain" priority />
-            </div>
-            <span className="text-sm font-bold text-white tracking-tight">NarrativeScope</span>
-          </div>
-        </div>
-
-        <header className="mx-auto mt-14 max-w-3xl text-center">
-          <div className="mb-3 font-bold uppercase text-blue-300/80" style={{ fontSize: "12px", letterSpacing: "0.36em" }}>
-            Political Dark Matter · Moduł 1
-          </div>
-          <h1
-            className="bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(99,102,241,0.35)]"
-            style={{ fontFamily: "Inter, system-ui, sans-serif", fontWeight: 900, letterSpacing: "-0.03em", fontSize: "clamp(40px, 5vw, 60px)", lineHeight: 1.08, backgroundImage: "linear-gradient(90deg, #60a5fa, #93c5fd, #e879f9)" }}
-          >
-            Narrative Scope
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-slate-300/80">
-            Radar narracyjny: co NAPRAWDĘ już się wydarzyło w sieci i co MOŻE się wydarzyć, zanim cokolwiek zostanie opublikowane.
-          </p>
-        </header>
+        <PageHeader title="Narrative Scope" subtitle="Radar narracyjny: co NAPRAWDĘ już się wydarzyło w sieci i co MOŻE się wydarzyć, zanim cokolwiek zostanie opublikowane." logo="/logos/narrative-scope.png" status="AKTYWNY" />
 
         <div className="relative mx-auto mt-16 grid w-full max-w-3xl grid-cols-1 place-items-center gap-x-10 gap-y-12 sm:grid-cols-2">
           {TOOLS.map((tool) => (

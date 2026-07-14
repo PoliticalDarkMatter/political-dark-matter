@@ -5,6 +5,8 @@ import type { ConsiliumInput, ConsiliumResult, StageId, StageStatus } from "@/li
 import { InputPanel } from "@/components/consilium/InputPanel";
 import { AIAnalysisProgress } from "@/components/consilium/AIAnalysisProgress";
 import { ResultsView } from "@/components/consilium/ResultsView";
+import PageHeader from "@/components/layout/PageHeader";
+import { Users } from "lucide-react";
 
 // ── Konsylium ────────────────────────────────────────────────────────
 // Narada dziesięciu ekspertów AI wokół jednego tematu/pytania/dylematu —
@@ -79,19 +81,7 @@ export default function KonsyliumPage() {
 
   return (
     <div style={{ padding: "18px 24px 40px", minHeight: "100%", fontFamily: "'Inter', system-ui, sans-serif", color: "#e2e8f0" }}>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 6 }}>
-        <div>
-          <div className="pdm-kicker">Political Dark Matter</div>
-          <h1 className="pdm-hero-title" style={{ fontSize: 28, lineHeight: 1.1 }}>Konsylium</h1>
-        </div>
-        <div className="pdm-live-pill" style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 20 }}>
-          <span className="pdm-live-dot" />
-          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.08em", color: "#86efac" }}>10 EKSPERTÓW</span>
-        </div>
-      </div>
-      <p style={{ margin: "0 0 18px", fontSize: 12.5, color: "#64748b", maxWidth: 720 }}>
-        Narada dziesięciu doradców politycznych wokół jednego tematu, pytania, dylematu lub projektu wypowiedzi — strateg, socjolog, ekspert od narracji, spin doctor, fact-checker, prawnik, ekonomista, psycholog, ekspert social media i red team. Wynikiem nie jest dziesięć opinii do przeczytania, tylko jeden protokół decyzyjny: co robić, dlaczego i jakim językiem mówić.
-      </p>
+      <PageHeader title="Konsylium" subtitle="Narada dziesięciu doradców politycznych wokół jednego tematu albo dylematu. Wynikiem nie jest dziesięć opinii, tylko jeden protokół decyzyjny: co robić, dlaczego i jakim językiem mówić." icon={<Users size={22} className="text-white" />} accent="from-amber-500 to-orange-600" ring="ring-amber-300/40" status="10 EKSPERTÓW" />
 
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <InputPanel onSubmit={runConsilium} running={running} />

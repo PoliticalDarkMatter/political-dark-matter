@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Zap, ShieldCheck, Save, Copy, Check, Gauge, Swords, Wrench, Newspaper } from "lucide-react";
+import PageHeader from "@/components/layout/PageHeader";
 
 type Channel = "x" | "facebook" | "instagram" | "reel" | "oswiadczenie" | "media" | "newsletter" | "talking_points";
 const CHANNELS: { id: Channel; label: string }[] = [
@@ -80,14 +81,7 @@ export default function VoltStreamPage() {
     <div className="min-h-screen bg-[#05070d] text-slate-200">
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_15%_0%,rgba(56,189,248,0.07),transparent_35%),radial-gradient(circle_at_85%_100%,rgba(37,99,235,0.12),transparent_40%)]" />
       <div className="relative z-10 mx-auto max-w-3xl px-5 py-8">
-        <Link href="/" className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-white"><ArrowLeft size={14} className="text-sky-400" /> Panel główny Political Dark Matter</Link>
-        <div className="mt-5 flex items-start gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 shadow-lg"><Zap size={22} className="text-white" /></div>
-          <div>
-            <h1 className="text-2xl font-bold text-white">Volt Stream</h1>
-            <p className="text-sm text-slate-400">Fabryka przekazu. Z briefu robi komplet komunikatów w głosie Ryszarda Petru, testuje je przed publikacją i prowadzi przez akceptację do emisji.</p>
-          </div>
-        </div>
+        <PageHeader title="Volt Stream" subtitle="Fabryka przekazu. Z briefu robi komplet komunikatów w głosie Ryszarda Petru, testuje je przed publikacją i prowadzi przez akceptację do emisji." icon={<Zap size={22} className="text-white" />} accent="from-blue-500 to-violet-600" />
 
         {/* Brief */}
         <div className="mt-6 grid gap-3 sm:grid-cols-[1fr_1fr]">
