@@ -35,11 +35,16 @@ const USER_COOKIE = "ns_user";
 const MAX_AGE = 60 * 60 * 24 * 30; // 30 dni
 
 export async function POST(req: NextRequest) {
-  const { password } = await req.json();
+  const { login, password } = await req.json();
 
-  const account = ACCOUNTS.find((a) => a.password === password);
+  // Wymagamy pary login + hasło. Login porównujemy bez rozróżniania wielkości
+  // liter i z przycięciem spacji (wyrozumiale), hasło musi zgadzać się dokładnie.
+  const loginNorm = typeof login === "string" ? login.trim().toLowerCase() : "";
+  const account = ACCOUNTS.find(
+    (a) => a.name.trim().toLowerCase() === loginNorm && a.password === password
+  );
 
-  if (ACCOUNTS.length === 0 || !account) {
+  if (ACCOUNTS.length === 0 || !loginNorm || !account) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

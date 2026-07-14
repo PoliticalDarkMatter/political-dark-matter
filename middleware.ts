@@ -3,10 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 const COOKIE_NAME = "ns_auth";
 const COOKIE_VALUE = "narrativescope_authenticated";
 
+// Bramka obejmuje CAŁĄ aplikację. Publiczny jest tylko sam ekran logowania,
+// endpoint uwierzytelniania i pliki statyczne (żeby strona logowania mogła się
+// wyrenderować). Wszystko inne — łącznie z hubem "/" i każdym modułem — wymaga
+// zalogowania. Ekran logowania pojawia się zanim cokolwiek innego zostanie pokazane.
 const PUBLIC_PREFIXES = [
-  "/login", "/api/auth", "/api/news", "/api/snapshot",
-  "/_next", "/favicon.ico", "/logo.png", "/modules",
-  "/volt-stream", "/pulse-field",
+  "/login", "/api/auth",
+  "/_next", "/favicon.ico",
 ];
 
 // Dowolny statyczny plik z /public (obrazki, svg, itd.) ma być zawsze publiczny —
@@ -16,11 +19,6 @@ const STATIC_FILE_RE = /\.(png|jpe?g|svg|webp|gif|ico|avif|css|js|map|txt|json|w
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-
-  // Hub platformy jest publiczny — wizytówka, nie panel Narrative Scope
-  if (pathname === "/") {
-    return NextResponse.next();
-  }
 
   // Przepuść publiczne ścieżki i wszystkie statyczne pliki
   if (PUBLIC_PREFIXES.some((p) => pathname.startsWith(p)) || STATIC_FILE_RE.test(pathname)) {
