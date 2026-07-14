@@ -4,8 +4,8 @@ import { LangProvider } from "@/lib/lang-context";
 import AppShell from "@/components/layout/AppShell";
 
 export const metadata: Metadata = {
-  title: "NarrativeScope",
-  description: "Platforma monitoringu narracji i opinii w sieci",
+  title: { default: "Political Dark Matter", template: "%s · Political Dark Matter" },
+  description: "Ekosystem AI dla polityki",
 };
 
 export default function RootLayout({
