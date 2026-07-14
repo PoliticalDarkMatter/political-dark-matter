@@ -241,3 +241,15 @@
   border: 2px solid rgba(56,189,248,0.5); background: rgba(15,23,42,0.9);
 }
 .pdm-timeline-line { width: 2px; flex: 1; background: linear-gradient(180deg, rgba(56,189,248,0.4), rgba(167,139,250,0.15)); }
+
+/* ── Pulse Field — schemat "co będzie" ─────────────────────────────── */
+@keyframes pf-breathe { 0%,100% { transform: scale(1); opacity: .9; } 50% { transform: scale(1.06); opacity: 1; } }
+@keyframes pf-ring { 0% { transform: scale(.7); opacity: .6; } 100% { transform: scale(1.6); opacity: 0; } }
+@keyframes pf-flow { to { stroke-dashoffset: -240; } }
+@keyframes pf-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes pf-shine { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+.pf-core { animation: pf-breathe 3.2s ease-in-out infinite; }
+.pf-ring { animation: pf-ring 3s ease-out infinite; }
+.pf-flow { stroke-dasharray: 8 10; animation: pf-flow 3s linear infinite; }
+.pf-float { animation: pf-float 4s ease-in-out infinite; }
+.pf-shine { background-size: 200% auto; animation: pf-shine 4s linear infinite; }
