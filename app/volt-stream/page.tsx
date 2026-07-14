@@ -81,7 +81,7 @@ export default function VoltStreamPage() {
     <div className="min-h-screen bg-[#05070d] text-slate-200">
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_15%_0%,rgba(56,189,248,0.07),transparent_35%),radial-gradient(circle_at_85%_100%,rgba(37,99,235,0.12),transparent_40%)]" />
       <div className="relative z-10 mx-auto max-w-3xl px-5 py-8">
-        <PageHeader title="Volt Stream" subtitle="Fabryka przekazu. Z briefu robi komplet komunikatów w głosie Ryszarda Petru, testuje je przed publikacją i prowadzi przez akceptację do emisji." icon={<Zap size={22} className="text-white" />} accent="from-blue-500 to-violet-600" />
+        <PageHeader title="Volt Stream" subtitle="Fabryka przekazu. Z briefu robi komplet komunikatów w głosie Ryszarda Petru, testuje je przed publikacją i prowadzi przez akceptację do emisji." logo="/logos/volt-stream.png" status="AKTYWNY" />
 
         {/* Brief */}
         <div className="mt-6 grid gap-3 sm:grid-cols-[1fr_1fr]">

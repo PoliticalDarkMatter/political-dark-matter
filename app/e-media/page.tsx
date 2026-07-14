@@ -56,7 +56,7 @@ export default function EMediaPage() {
     <div className="min-h-screen bg-[#05070d] text-slate-200">
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_15%_0%,rgba(56,189,248,0.06),transparent_35%),radial-gradient(circle_at_85%_100%,rgba(124,58,237,0.1),transparent_40%)]" />
       <div className="relative z-10 mx-auto max-w-3xl px-5 py-8">
-        <PageHeader title="e-Media" subtitle="Wirtualna redakcja. Zanim wyemitujesz przekaz, zobacz, jak zatytułuje go i zrama każde medium, ze swoim przechyłem." icon={<Newspaper size={22} className="text-white" />} accent="from-rose-500 to-orange-500" />
+        <PageHeader title="e-Media" subtitle="Wirtualna redakcja. Zanim wyemitujesz przekaz, zobacz, jak zatytułuje go i zrama każde medium, ze swoim przechyłem." comet="emedia" />
 
         <div className="mt-6">
           <label className="block text-sm font-semibold text-slate-100">Przekaz do wyemitowania</label>

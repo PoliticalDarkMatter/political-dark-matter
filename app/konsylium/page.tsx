@@ -81,7 +81,7 @@ export default function KonsyliumPage() {
 
   return (
     <div style={{ padding: "18px 24px 40px", minHeight: "100%", fontFamily: "'Inter', system-ui, sans-serif", color: "#e2e8f0" }}>
-      <PageHeader title="Konsylium" subtitle="Narada dziesięciu doradców politycznych wokół jednego tematu albo dylematu. Wynikiem nie jest dziesięć opinii, tylko jeden protokół decyzyjny: co robić, dlaczego i jakim językiem mówić." icon={<Users size={22} className="text-white" />} accent="from-amber-500 to-orange-600" ring="ring-amber-300/40" status="10 EKSPERTÓW" />
+      <PageHeader title="Konsylium" subtitle="Narada dziesięciu doradców politycznych wokół jednego tematu albo dylematu. Wynikiem nie jest dziesięć opinii, tylko jeden protokół decyzyjny: co robić, dlaczego i jakim językiem mówić." comet="konsylium" status="10 EKSPERTÓW" />
 
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <InputPanel onSubmit={runConsilium} running={running} />

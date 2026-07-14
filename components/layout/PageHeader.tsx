@@ -1,22 +1,21 @@
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
+import { PlanetBadge, CometBadge, type CometKind } from "@/components/hub/badges";
 
 // ── Standardowy nagłówek modułu/submodułu ──────────────────────────────
-// Jeden układ dla wszystkich stron: powrót do huba, badge (logo dla modułów,
-// ikona dla submodułów), tytuł, podtytuł, opcjonalny status. Dzięki temu
-// każda strona ma identyczną główkę.
+// Moduł = planeta z logo (jak na hubie), submoduł = kometa z ikoną (jak na
+// hubie), warstwa wewnętrzna = ikona w gradiencie. Jeden układ dla wszystkich.
 export default function PageHeader({
-  title, subtitle, logo, icon,
-  accent = "from-sky-500 to-violet-600", ring = "ring-sky-300/40", status,
+  title, subtitle, logo, comet, icon,
+  accent = "from-sky-500 to-violet-600", status,
 }: {
   title: string;
   subtitle?: string;
-  logo?: string;
-  icon?: ReactNode;
+  logo?: string;          // moduł: planeta z logo
+  comet?: CometKind;      // submoduł: kometa z ikoną
+  icon?: ReactNode;       // warstwa wewnętrzna: ikona w gradiencie
   accent?: string;
-  ring?: string;
   status?: string;
 }) {
   return (
@@ -24,11 +23,13 @@ export default function PageHeader({
       <Link href="/" className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 transition-colors hover:text-white">
         <ArrowLeft size={14} className="text-sky-400" /> Panel główny Political Dark Matter
       </Link>
-      <div className="mt-5 flex items-start gap-3">
-        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl shadow-lg ring-1 ${ring} ${logo ? "bg-white" : `bg-gradient-to-br ${accent}`}`}>
-          {logo ? <Image src={logo} alt={title} width={32} height={32} className="h-8 w-8 object-contain" /> : icon}
+      <div className="mt-5 flex items-start gap-4">
+        <div className="shrink-0">
+          {logo ? <PlanetBadge logo={logo} alt={title} />
+            : comet ? <CometBadge kind={comet} />
+            : <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${accent} shadow-lg ring-1 ring-white/15`}>{icon}</div>}
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 pt-1">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-bold text-white">{title}</h1>
             {status && (

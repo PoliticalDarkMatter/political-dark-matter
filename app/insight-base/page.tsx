@@ -1100,7 +1100,7 @@ export default function InsightBasePage() {
       <div className="pointer-events-none absolute inset-0 opacity-70 [background-image:radial-gradient(1.4px_1.4px_at_60px_120px,#fff,transparent),radial-gradient(1.3px_1.3px_at_200px_40px,#fff,transparent),radial-gradient(1.5px_1.5px_at_320px_200px,#fff,transparent)] [background-size:460px_460px]" />
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 pb-16 pt-8 sm:px-6">
-<PageHeader title="e-wyborcy" subtitle="Opinie społeczne i awatary grup. Zagregowana wiedza o poglądach polskich grup społecznych z realnych badań i sondaży, aktualizowana automatycznie co noc." icon={<Users size={22} className="text-white" />} accent="from-indigo-500 to-violet-600" ring="ring-indigo-300/40" />
+<PageHeader title="e-wyborcy" subtitle="Opinie społeczne i awatary grup. Zagregowana wiedza o poglądach polskich grup społecznych z realnych badań i sondaży, aktualizowana automatycznie co noc." comet="ewyborcy" />
 
         <div className="mt-8 flex flex-wrap gap-2">
           {TABS.map(({ key, label, icon: Icon }) => (
