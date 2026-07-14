@@ -438,7 +438,7 @@ export async function runGroundedTurn(
   const raw = await provider.generateText(prompt, {
     maxTokens: 2048,
     temperature,
-    timeoutMs: 30000,
+    timeoutMs: 18000,
     json: true,
     thinking: true,
   });
@@ -451,7 +451,7 @@ export async function runGroundedTurn(
   const raw2 = await provider.generateText(prompt, {
     maxTokens: 1600,
     temperature: 0.2,
-    timeoutMs: 20000,
+    timeoutMs: 10000,
     json: true,
     thinking: false,
   });

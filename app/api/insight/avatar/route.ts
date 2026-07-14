@@ -8,7 +8,7 @@ import { queryInsightHybrid } from "@/lib/insight";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 // Warstwa opinii dociąga publicystykę z sieci, więc dajemy zapas czasu.
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
