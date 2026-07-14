@@ -436,11 +436,11 @@ export async function runGroundedTurn(
   if (!provider.isReal) return null;
 
   const raw = await provider.generateText(prompt, {
-    maxTokens: 2048,
+    maxTokens: 3000,
     temperature,
     timeoutMs: 18000,
     json: true,
-    thinking: true,
+    thinking: false,
   });
   const first = parseGrounded(raw, evidenceLen);
   if (first) return first;
@@ -449,9 +449,9 @@ export async function runGroundedTurn(
   // urwała na limicie tokenów albo model zamarudził (structured output i tak
   // wymusza poprawny JSON).
   const raw2 = await provider.generateText(prompt, {
-    maxTokens: 1600,
+    maxTokens: 3000,
     temperature: 0.2,
-    timeoutMs: 10000,
+    timeoutMs: 12000,
     json: true,
     thinking: false,
   });
