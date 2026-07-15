@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Loader2, Radio, Grid3x3, Megaphone, Send, Activity, ChevronRight } from "lucide-react";
+import { ArrowLeft, Loader2, Radio, Grid3x3, Megaphone, Send, Activity, ChevronRight, FileText, FileDown } from "lucide-react";
 import { TYP_LABEL, STATUS_LABEL, type Cockpit } from "@/lib/sprawy";
 
 const STAGE_ICON: Record<string, React.ReactNode> = {
@@ -58,6 +58,17 @@ export default function KokpitSprawy() {
                 <span>{STATUS_LABEL[cockpit.sprawa.status]}</span>
               </div>
               {cockpit.sprawa.opis && <p className="mt-2 max-w-2xl text-sm text-slate-400">{cockpit.sprawa.opis}</p>}
+            </div>
+
+            {/* Raport sprawy — wspólny renderer PDF/DOCX w stylu projektu, z nagłówkiem założeń */}
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] uppercase tracking-wider text-slate-500">Generuj raport</span>
+              <a href={`/api/sprawy/${id}/report?format=pdf`} className="inline-flex items-center gap-1.5 rounded-lg border border-sky-400/30 bg-sky-400/10 px-3 py-1.5 text-xs font-semibold text-sky-300 hover:bg-sky-400/20">
+                <FileText size={13} /> PDF
+              </a>
+              <a href={`/api/sprawy/${id}/report?format=docx`} className="inline-flex items-center gap-1.5 rounded-lg border border-violet-400/30 bg-violet-400/10 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-400/20">
+                <FileDown size={13} /> DOCX
+              </a>
             </div>
 
             {/* Oś: sygnał → decyzja → komunikat → publikacja → efekt */}
