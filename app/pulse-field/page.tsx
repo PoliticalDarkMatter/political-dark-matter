@@ -1,129 +1,217 @@
-import type { Metadata } from "next";
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
 import PageHeader from "@/components/layout/PageHeader";
 import {
-  Film, Newspaper, CalendarClock, Gauge, RefreshCw, ShieldCheck, Sparkles,
-  Youtube, Instagram, Facebook, Music2, Radio, Globe,
+  Loader2, Plus, Send, EyeOff, Eye, Trash2, RefreshCw, ExternalLink, Radio, Pencil, X,
 } from "lucide-react";
 
-export const metadata: Metadata = { title: "Pulse Field" };
+type Typ = "film" | "wpis" | "analiza" | "przekaz";
+interface Item {
+  id: string; typ: Typ; tytul: string; lead: string | null; tresc: string | null;
+  media_url: string | null; zrodlo_url: string | null; temat: string | null;
+  published: boolean; published_at: string;
+}
 
-const PLATFORMS = [
-  { name: "Własne medium", Icon: Globe, color: "#38bdf8" },
-  { name: "Newsletter", Icon: Newspaper, color: "#a78bfa" },
-  { name: "YouTube", Icon: Youtube, color: "#ff2d2d" },
-  { name: "TikTok", Icon: Music2, color: "#22d3ee" },
-  { name: "Instagram", Icon: Instagram, color: "#ec4899" },
-  { name: "Facebook", Icon: Facebook, color: "#3b82f6" },
+const PUBLIC_URL = "https://ryszard-petru.vercel.app";
+const TYPY: { id: Typ; label: string; emoji: string }[] = [
+  { id: "przekaz", label: "Przekaz", emoji: "📣" },
+  { id: "wpis", label: "Wpis", emoji: "📝" },
+  { id: "analiza", label: "Analiza", emoji: "📊" },
+  { id: "film", label: "Film", emoji: "🎬" },
 ];
+const EMOJI: Record<Typ, string> = { film: "🎬", wpis: "📝", analiza: "📊", przekaz: "📣" };
 
-const CAPS = [
-  { Icon: Film, title: "Generator multimediów", desc: "Reelsy, wideo pionowe, karty cytatowe i karuzele z zatwierdzonego przekazu, w formacie każdej platformy." },
-  { Icon: Globe, title: "Własne medium", desc: "Serwis pod własną domeną i newsletter. Kanał, którego nikt nie wyłączy i który nie zależy od cudzego algorytmu." },
-  { Icon: Radio, title: "Dystrybucja wielokanałowa", desc: "YouTube, TikTok, Instagram, Facebook. Pakiet skrojony pod każdy kanał, z podglądem przed emisją." },
-  { Icon: CalendarClock, title: "Kalendarz i reżyseria emisji", desc: "Teaser, przekaz główny, follow-up, riposta. Kolejność, kanały i najlepsze okna czasowe, per sprawa." },
-  { Icon: Gauge, title: "Panel skuteczności", desc: "Co zadziałało, a co nie: kanał, godzina, grupa. Zestawione z prognozą e-Media i reakcją z e-Wyborcy." },
-  { Icon: RefreshCw, title: "Pętla zwrotna", desc: "Efekt emisji wraca do Narrative Scope jako nowy sygnał i domyka kokpit sprawy: sygnał, decyzja, komunikat, publikacja, efekt." },
-];
+const empty = { id: "", typ: "przekaz" as Typ, tytul: "", lead: "", tresc: "", media_url: "", zrodlo_url: "", temat: "" };
 
 export default function PulseFieldPage() {
+  const [items, setItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ ...empty });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [previewKey, setPreviewKey] = useState(0);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const r = await fetch("/api/pulse/content", { cache: "no-store" });
+      const j = await r.json();
+      setItems(j.items ?? []);
+    } catch { setErr("Nie udało się pobrać treści."); }
+    setLoading(false);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const refreshPreview = () => setPreviewKey((k) => k + 1);
+
+  async function save(publish: boolean) {
+    if (!form.tytul.trim()) { setErr("Podaj tytuł."); return; }
+    setBusy(true); setErr(null);
+    try {
+      const r = await fetch("/api/pulse/content", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, id: form.id || null, published: publish }),
+      });
+      if (!r.ok) throw new Error((await r.json()).error || "błąd");
+      setForm({ ...empty });
+      await load(); refreshPreview();
+    } catch (e) { setErr(e instanceof Error ? e.message : "Nie udało się zapisać."); }
+    setBusy(false);
+  }
+
+  async function toggle(it: Item) {
+    setBusy(true);
+    try {
+      await fetch("/api/pulse/content", {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: it.id, published: !it.published }),
+      });
+      await load(); refreshPreview();
+    } finally { setBusy(false); }
+  }
+
+  async function remove(it: Item) {
+    if (!confirm(`Usunąć „${it.tytul}"?`)) return;
+    setBusy(true);
+    try { await fetch(`/api/pulse/content?id=${it.id}`, { method: "DELETE" }); await load(); refreshPreview(); }
+    finally { setBusy(false); }
+  }
+
+  function edit(it: Item) {
+    setForm({
+      id: it.id, typ: it.typ, tytul: it.tytul, lead: it.lead ?? "", tresc: it.tresc ?? "",
+      media_url: it.media_url ?? "", zrodlo_url: it.zrodlo_url ?? "", temat: it.temat ?? "",
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  const publishedCount = items.filter((i) => i.published).length;
+
   return (
-    <div className="min-h-screen bg-[#04060d] text-slate-200">
-      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_18%_0%,rgba(56,189,248,0.08),transparent_38%),radial-gradient(circle_at_82%_100%,rgba(124,58,237,0.14),transparent_42%)]" />
-      <div className="relative z-10 mx-auto max-w-5xl px-5 py-8">
+    <div className="min-h-screen bg-[#05070d] text-slate-200">
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_12%_0%,rgba(168,85,247,0.10),transparent_38%),radial-gradient(circle_at_88%_100%,rgba(56,189,248,0.10),transparent_42%)]" />
+      <div className="relative z-10 mx-auto max-w-6xl px-5 py-8">
         <PageHeader
           title="Pulse Field"
-          subtitle="Emisja i dystrybucja. Własne medium plus silnik multimediów, który zamienia zatwierdzony przekaz w wideo, grafiki i publikacje na wszystkich kanałach."
+          subtitle="Konsola emisji. Publikujesz filmy, wpisy, analizy i przekazy na publiczny hub ryszardpetru.pl i widzisz je na żywo."
           logo="/logos/pulse-field.png"
-          status="w budowie"
+          status="AKTYWNY"
         />
 
-        <div className="mt-2 text-center">
-          <h2 className="pf-shine bg-gradient-to-r from-sky-300 via-violet-300 to-fuchsia-300 bg-clip-text text-2xl font-black tracking-tight text-transparent sm:text-3xl">
-            Tu przekaz staje się emisją.
-          </h2>
-          <p className="mx-auto mt-2 max-w-2xl text-sm text-slate-400">
-            Ostatni moduł ekosystemu, w zaawansowanej fazie developerskiej. Oto co spina.
-          </p>
+        <div className="mb-5 flex flex-wrap items-center gap-3 text-xs text-slate-400">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-fuchsia-400/20 bg-fuchsia-500/5 px-3 py-1 font-semibold text-fuchsia-200">
+            <Radio size={13} /> {publishedCount} opublikowanych / {items.length} w bazie
+          </span>
+          <a href={PUBLIC_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-sky-400/20 bg-sky-500/5 px-3 py-1 font-semibold text-sky-200 hover:bg-sky-500/10">
+            <ExternalLink size={13} /> Otwórz publiczny hub
+          </a>
         </div>
 
-        <div className="mt-6 overflow-hidden rounded-2xl border border-sky-400/15 bg-slate-950/40 p-3 shadow-[0_0_60px_rgba(37,99,235,0.12)]">
-          <svg viewBox="0 0 1000 430" className="w-full" style={{ overflow: "visible" }}>
-            <defs>
-              <radialGradient id="pfCore" cx="38%" cy="32%" r="75%">
-                <stop offset="0%" stopColor="#ffffff" />
-                <stop offset="45%" stopColor="#7c3aed" />
-                <stop offset="100%" stopColor="#1e3a8a" />
-              </radialGradient>
-              <linearGradient id="pfLine" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0" stopColor="#38bdf8" />
-                <stop offset="1" stopColor="#a78bfa" />
-              </linearGradient>
-            </defs>
-
-            {PLATFORMS.map((p, i) => {
-              const y = 40 + i * 70;
-              return <path key={i} d={`M520 215 C 660 215, 700 ${y + 20}, 792 ${y + 20}`} fill="none" stroke={p.color} strokeOpacity="0.5" strokeWidth="2" className="pf-flow" />;
-            })}
-            <path d="M210 215 C 300 215, 360 215, 452 215" fill="none" stroke="url(#pfLine)" strokeWidth="3" className="pf-flow" />
-            <path d="M890 400 C 500 470, 120 430, 120 300" fill="none" stroke="#34d399" strokeOpacity="0.55" strokeWidth="2" strokeDasharray="2 8" />
-            <text x="150" y="295" fill="#6ee7b7" fontSize="12" fontWeight="700">pętla zwrotna → Narrative Scope</text>
-
-            <g>
-              <rect x="30" y="188" width="180" height="54" rx="12" fill="#0b1220" stroke="#38bdf8" strokeOpacity="0.5" />
-              <text x="120" y="212" textAnchor="middle" fill="#e2e8f0" fontSize="14" fontWeight="800">PRZEKAZ</text>
-              <text x="120" y="230" textAnchor="middle" fill="#94a3b8" fontSize="11">zatwierdzony z Volt Stream</text>
-            </g>
-
-            <circle cx="486" cy="215" r="66" fill="none" stroke="#7c3aed" strokeOpacity="0.4" strokeWidth="2" className="pf-ring" style={{ transformOrigin: "486px 215px" }} />
-            <circle cx="486" cy="215" r="58" fill="url(#pfCore)" className="pf-core" style={{ transformOrigin: "486px 215px", filter: "drop-shadow(0 0 26px rgba(124,58,237,0.7))" }} />
-            <text x="486" y="211" textAnchor="middle" fill="#ffffff" fontSize="15" fontWeight="900">PULSE FIELD</text>
-            <text x="486" y="229" textAnchor="middle" fill="#e9d5ff" fontSize="10.5">silnik multimediów</text>
-
-            {PLATFORMS.map((p, i) => {
-              const y = 40 + i * 70;
-              return (
-                <g key={i} className="pf-float" style={{ animationDelay: `${i * 0.35}s` }}>
-                  <rect x="792" y={y} width="188" height="40" rx="10" fill="#0b1220" stroke={p.color} strokeOpacity="0.55" />
-                  <circle cx="814" cy={y + 20} r="7" fill={p.color} />
-                  <text x="834" y={y + 25} fill="#e2e8f0" fontSize="13" fontWeight="700">{p.name}</text>
-                </g>
-              );
-            })}
-          </svg>
-        </div>
-
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
-          {PLATFORMS.map((p) => (
-            <span key={p.name} className="inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-semibold text-white" style={{ borderColor: p.color + "66", background: p.color + "14" }}>
-              <p.Icon size={15} style={{ color: p.color }} /> {p.name}
-            </span>
-          ))}
-        </div>
-
-        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {CAPS.map((c) => (
-            <div key={c.title} className="group rounded-xl border border-sky-400/15 bg-slate-900/50 p-4 transition-colors hover:border-sky-400/35">
-              <div className="mb-2 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-sky-500 to-violet-600 shadow-lg">
-                <c.Icon size={20} className="text-white" />
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* ── KONSOLA ── */}
+          <div className="space-y-5">
+            <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-5 backdrop-blur">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-fuchsia-200">
+                  {form.id ? <Pencil size={15} /> : <Plus size={15} />} {form.id ? "Edycja publikacji" : "Nowa publikacja"}
+                </h2>
+                {form.id && (
+                  <button onClick={() => setForm({ ...empty })} className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-white"><X size={13} /> Anuluj</button>
+                )}
               </div>
-              <div className="text-sm font-bold text-white">{c.title}</div>
-              <p className="mt-1 text-xs leading-relaxed text-slate-400">{c.desc}</p>
+
+              <div className="mb-3 flex flex-wrap gap-2">
+                {TYPY.map((t) => (
+                  <button key={t.id} onClick={() => setForm((f) => ({ ...f, typ: t.id }))}
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${form.typ === t.id ? "border-fuchsia-400/50 bg-fuchsia-500/15 text-fuchsia-100" : "border-white/10 bg-slate-950/40 text-slate-400 hover:text-white"}`}>
+                    {t.emoji} {t.label}
+                  </button>
+                ))}
+              </div>
+
+              <input value={form.tytul} onChange={(e) => setForm((f) => ({ ...f, tytul: e.target.value }))} placeholder="Tytuł"
+                className="mb-2 w-full rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2 text-[15px] text-slate-100 outline-none focus:border-fuchsia-400/40" />
+              <input value={form.lead} onChange={(e) => setForm((f) => ({ ...f, lead: e.target.value }))} placeholder="Lead (jedno zdanie zajawki)"
+                className="mb-2 w-full rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2 text-sm text-slate-100 outline-none focus:border-fuchsia-400/40" />
+              <textarea value={form.tresc} onChange={(e) => setForm((f) => ({ ...f, tresc: e.target.value }))} placeholder="Treść" rows={5}
+                className="mb-2 w-full rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2 text-sm leading-relaxed text-slate-100 outline-none focus:border-fuchsia-400/40" />
+              <div className="mb-2 grid gap-2 sm:grid-cols-2">
+                <input value={form.media_url} onChange={(e) => setForm((f) => ({ ...f, media_url: e.target.value }))} placeholder={form.typ === "film" ? "Link do wideo (YouTube itp.)" : "Link do grafiki/wideo (opcjonalnie)"}
+                  className="w-full rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2 text-xs text-slate-100 outline-none focus:border-fuchsia-400/40" />
+                <input value={form.temat} onChange={(e) => setForm((f) => ({ ...f, temat: e.target.value }))} placeholder="Temat / tag (opcjonalnie)"
+                  className="w-full rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2 text-xs text-slate-100 outline-none focus:border-fuchsia-400/40" />
+              </div>
+              <input value={form.zrodlo_url} onChange={(e) => setForm((f) => ({ ...f, zrodlo_url: e.target.value }))} placeholder="Źródło / link zewnętrzny (opcjonalnie)"
+                className="mb-3 w-full rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2 text-xs text-slate-100 outline-none focus:border-fuchsia-400/40" />
+
+              {err && <p className="mb-3 rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">{err}</p>}
+
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => save(true)} disabled={busy}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-fuchsia-600 px-4 py-2 text-sm font-semibold text-white hover:bg-fuchsia-500 disabled:opacity-50">
+                  {busy ? <Loader2 className="animate-spin" size={15} /> : <Send size={15} />} Publikuj na hub
+                </button>
+                <button onClick={() => save(false)} disabled={busy}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-700 disabled:opacity-50">
+                  Zapisz jako szkic
+                </button>
+              </div>
             </div>
-          ))}
-        </div>
 
-        <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/[0.04] p-4 sm:flex-row sm:items-center">
-          <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-sky-600 shadow-lg">
-            <ShieldCheck size={20} className="text-white" />
+            {/* lista */}
+            <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-5">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300">Treści</h2>
+                <button onClick={load} className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-white"><RefreshCw size={13} /> Odśwież</button>
+              </div>
+              {loading ? (
+                <div className="flex items-center gap-2 py-8 text-sm text-slate-400"><Loader2 className="animate-spin" size={16} /> Wczytuję…</div>
+              ) : items.length === 0 ? (
+                <p className="py-8 text-center text-sm text-slate-500">Brak treści. Opublikuj pierwszą pozycję.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {items.map((it) => (
+                    <li key={it.id} className="flex items-start gap-3 rounded-xl border border-white/10 bg-slate-950/40 p-3">
+                      <span className="mt-0.5 text-lg leading-none">{EMOJI[it.typ]}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="truncate text-sm font-semibold text-slate-100">{it.tytul}</span>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${it.published ? "bg-emerald-400/15 text-emerald-300" : "bg-slate-600/30 text-slate-400"}`}>
+                            {it.published ? "Opublikowane" : "Szkic"}
+                          </span>
+                        </div>
+                        {it.lead && <p className="mt-0.5 line-clamp-1 text-xs text-slate-400">{it.lead}</p>}
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button onClick={() => toggle(it)} disabled={busy} title={it.published ? "Cofnij z huba" : "Publikuj"}
+                          className="rounded-lg p-1.5 text-slate-400 hover:bg-white/5 hover:text-white disabled:opacity-50">
+                          {it.published ? <EyeOff size={15} /> : <Eye size={15} />}
+                        </button>
+                        <button onClick={() => edit(it)} title="Edytuj" className="rounded-lg p-1.5 text-slate-400 hover:bg-white/5 hover:text-white"><Pencil size={15} /></button>
+                        <button onClick={() => remove(it)} disabled={busy} title="Usuń" className="rounded-lg p-1.5 text-slate-400 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50"><Trash2 size={15} /></button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
-          <div className="text-sm text-slate-300">
-            <span className="font-bold text-white">Bramka człowieka i uczciwość.</span> Nic nie wychodzi bez zatwierdzenia. Żadnych botów, fałszywych kont ani syntetycznego głosu czy twarzy polityka. AI produkuje montaż, grafiki i napisy, publikuje człowiek.
-          </div>
-        </div>
 
-        <div className="mt-6 flex items-center justify-center gap-2 text-center text-xs text-slate-500">
-          <Sparkles size={13} className="text-violet-400" />
-          Moduł w zaawansowanej fazie developerskiej. Obecny etap: kalibracja i spięcie z Volt Stream oraz z pętlą zwrotną.
+          {/* ── PODGLĄD NA ŻYWO ── */}
+          <div className="lg:sticky lg:top-6 self-start">
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/40">
+              <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
+                <span className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" /> Podgląd na żywo · ryszardpetru.pl
+                </span>
+                <button onClick={refreshPreview} className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-white"><RefreshCw size={12} /> Odśwież</button>
+              </div>
+              <iframe key={previewKey} src={PUBLIC_URL} title="Podgląd publicznego huba"
+                className="h-[70vh] w-full bg-white" />
+            </div>
+            <p className="mt-2 text-center text-[11px] text-slate-500">To realny widok publicznej strony. Po publikacji odśwież podgląd.</p>
+          </div>
         </div>
       </div>
     </div>
