@@ -20,10 +20,11 @@ export interface AIGenerateOptions {
   // Wymusza structured output (application/json) — model zwraca poprawny JSON,
   // koniec z kruchym wyłuskiwaniem nawiasów z prozy.
   json?: boolean;
-  // Włącza wewnętrzne "myślenie" modelu (thinkingBudget dynamiczny). Domyślnie
-  // wyłączone dla szybkości/kosztu, ale przy zadaniach wymagających kojarzenia
-  // wielu dowodów (awatar) warto włączyć.
-  thinking?: boolean;
+  // Wewnętrzne "myślenie" modelu. false = wyłączone (szybko); true = dynamiczne
+  // (budżet -1, model sam decyduje, ryzyko zjedzenia limitu tokenów); LICZBA =
+  // ograniczony budżet tokenów myślenia (bezpieczny kompromis: realne
+  // rozumowanie bez ucinania odpowiedzi, byle maxTokens grubo je przekraczał).
+  thinking?: boolean | number;
 }
 
 export interface AIProvider {
@@ -39,12 +40,13 @@ export class GeminiProvider implements AIProvider {
 
   async generateText(prompt: string, opts: AIGenerateOptions = {}): Promise<string | null> {
     const { maxTokens = 2000, temperature = 0.5, timeoutMs = 25000, json = false, thinking = false } = opts;
+    // thinkingBudget: 0 = bez myślenia; -1 = dynamiczne; liczba = ograniczony budżet.
+    const thinkingBudget = typeof thinking === "number" ? thinking : thinking ? -1 : 0;
     try {
       const generationConfig: Record<string, unknown> = {
         temperature,
         maxOutputTokens: maxTokens,
-        // thinkingBudget: 0 = bez myślenia (szybko); -1 = dynamiczne myślenie.
-        thinkingConfig: { thinkingBudget: thinking ? -1 : 0 },
+        thinkingConfig: { thinkingBudget },
       };
       if (json) generationConfig.responseMimeType = "application/json";
       const res = await fetch(

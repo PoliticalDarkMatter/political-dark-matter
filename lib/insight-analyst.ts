@@ -27,16 +27,17 @@ function buildAnalystPrompt(label: string, question: string, evidence: AvatarEvi
     .map((e) => `[${e.nr}] (${e.rodzaj}) ${e.tekst} — źródło: ${e.zrodlo}${fmtDate(e.data)}`)
     .join("\n");
 
-  return `Jesteś analitykiem sztabu politycznego. Odpowiadasz na pytanie o polską grupę społeczną: ${label}. Piszesz zwięźle, konkretnie, po polsku, w trzeciej osobie ("ta grupa", "wśród nich"), bez korpomowy.
+  return `Jesteś doświadczonym analitykiem sztabu politycznego. Odpowiadasz na pytanie o polską grupę społeczną: ${label}. Piszesz po polsku, w trzeciej osobie ("ta grupa", "wśród nich"), zwięźle i konkretnie, bez korpomowy. Nie streszczasz dowodów po kolei — SYNTETYZUJESZ: łączysz sygnały, ważysz je, wyciągasz wniosek i mówisz, co z tego wynika dla sztabu Ryszarda Petru.
 
 ZASADA NACZELNA: opieraj się przede wszystkim na TWARDYCH danych (dowody typu dopasowane_do_pytania i synteza). Dopiero gdy ich brakuje, schodź niżej: kontekst ogólnopolski → opinie z publicystyki. Zawsze udziel odpowiedzi.
 
-STRUKTURA ODPOWIEDZI (zwięzła proza, nie nagłówki):
-1. Bezpośrednia odpowiedź na pytanie w 1-2 zdaniach, z najmocniejszym dostępnym dowodem.
-2. Twarde dane O TEJ GRUPIE - liczby dokładnie takie jak w dowodach, każda z numerem [n]. Porównuj do średniej wymiaru i innych grup, jeśli dowody to zawierają.
-3. Jeśli o grupie nie ma danych wprost, użyj dowodów kontekst_spoza_grupy (ogólnopolskie): przywołaj je JAWNIE jako "w całej populacji..." i z tego wnioskuj ("Wnioskowanie: ... (wnioskuję z [2], [7])"). Liczb ogólnopolskich nie przypisuj grupie.
-4. Jeśli i tego brak lub jest wątły, sięgnij po dowody opinia_z_sieci (realna publicystyka). Wprowadź je zwrotem typu "Trudno to rozstrzygnąć na twardych danych, ale w publicystyce pojawiają się opinie, że..." i ZAWSZE podaj źródło z numerem ("wg komentarza w Rzeczpospolitej [n]", "analitycy cytowani przez OKO.press [n]"). To cudze opinie, nie pomiar - tak je oznaczaj.
-5. Na końcu jedno zdanie o tym, czego w danych brakuje, żeby odpowiedzieć pewniej.
+STRUKTURA POLA "odpowiedz" — dokładnie trzy akapity oddzielone pustą linią (\n\n), z etykietami na początku:
+
+"Teza: " + jedno-dwa zdania ostrej, syntetycznej odpowiedzi wprost na pytanie. To ma być wniosek, nie zapowiedź. Najmocniejszy dowód od razu z numerem [n].
+
+(drugi akapit, BEZ etykiety) Uzasadnienie na dowodach: twarde dane O TEJ GRUPIE, liczby dokładnie jak w dowodach, każda z [n], porównania do średniej i innych grup jeśli są. Tu POKAŻ MYŚLENIE: jeśli danych o grupie brak, jawnie wnioskuj z kontekstu ogólnopolskiego ("W całej populacji... — Wnioskowanie: ... (wnioskuję z [2], [7])"), liczb ogólnopolskich nie przypisując grupie. Jeśli i tego mało, sięgnij po opinia_z_sieci zwrotem "Trudno to rozstrzygnąć twardymi danymi, ale w publicystyce..." zawsze z nazwą źródła i [n] (to opinie, nie pomiar). Gdy dowody się rozjeżdżają — powiedz to wprost i rozstrzygnij, który sygnał jest mocniejszy i dlaczego.
+
+"Wniosek dla sztabu: " + jedno-dwa zdania interpretacji: co ten obraz oznacza operacyjnie dla Ryszarda Petru (gdzie jest szansa, gdzie ryzyko, na co uważać). To ma być myśl strategiczna wyprowadzona z powyższych dowodów, nie powtórzenie liczb.
 
 ŻELAZNE ZASADY:
 - Liczby, wyniki badań i konkretne nazwiska/cytaty TYLKO z dowodów. W warstwie opinii wolno przytoczyć nazwę źródła i tytuł/tezę dokładnie tak, jak w dowodzie opinia_z_sieci - nie wymyślaj żadnego publicysty, eksperta, cytatu ani liczby, których tam nie ma.
@@ -49,8 +50,8 @@ ${evidenceBlock}
 
 PYTANIE: ${question}
 
-Odpowiedz TYLKO poprawnym JSON (bez markdown):
-{"odpowiedz":"...analiza; fakty z [n]; wnioskowania z prefiksem Wnioskowanie: i (wnioskuję z [n]); opinie z sieci z nazwą źródła i [n]...","uzyte_dowody":[1,2],"pewnosc":"wysoka|srednia|niska","zastrzezenia":"czego brakuje w danych albo null"}`;
+Odpowiedz TYLKO poprawnym JSON (bez markdown). Pole "odpowiedz" = trzy akapity oddzielone \n\n: "Teza: ...", akapit uzasadnienia na dowodach [n], "Wniosek dla sztabu: ...":
+{"odpowiedz":"Teza: ...[n]\n\n...uzasadnienie; fakty z [n]; Wnioskowanie: ... (wnioskuję z [n]); opinie z nazwą źródła i [n]...\n\nWniosek dla sztabu: ...","uzyte_dowody":[1,2],"pewnosc":"wysoka|srednia|niska","zastrzezenia":"czego brakuje w danych albo null"}`;
 }
 
 export async function askAnalyst(
@@ -74,7 +75,15 @@ export async function askAnalyst(
   let caveats: string | null = null;
 
   if (provider.isReal && evidence.length > 0) {
-    const g = await runGroundedTurn(buildAnalystPrompt(label, question, evidence), evidence.length, 0.3);
+    // Analityk dostaje realny (ograniczony) budżet myślenia + wyższy limit
+    // tokenów: struktura teza→uzasadnienie→wniosek wymaga rozumowania, a duży
+    // maxTokens gwarantuje, że myślenie nie utnie JSON-a (route maxDuration=60).
+    const g = await runGroundedTurn(
+      buildAnalystPrompt(label, question, evidence),
+      evidence.length,
+      0.35,
+      { thinking: 1024, maxTokens: 6000, timeoutMs: 40000 }
+    );
     if (g) {
       answer = g.answer;
       used = g.used;

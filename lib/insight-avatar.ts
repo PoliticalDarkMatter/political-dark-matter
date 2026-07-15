@@ -427,20 +427,32 @@ function parseGrounded(raw: string | null, evidenceLen: number): GroundedParsed 
 // myślenie, z jedną próbą ratunkową. Zwraca null dopiero, gdy model naprawdę
 // zawiódł (brak klucza, timeout, dwa razy nieparsowalny JSON) — dopiero wtedy
 // warstwa wyżej sięga po fallback. Dzieli go awatar i analityk ("Zapytaj grupę").
+export interface GroundedTurnOptions {
+  // Ograniczony budżet myślenia (liczba tokenów) albo false. Analityk
+  // ("Zapytaj grupę") włącza realne rozumowanie; awatar zostaje szybki.
+  thinking?: boolean | number;
+  // Wyższy limit dla odpowiedzi strukturalnej (teza+analiza+wniosek), żeby
+  // myślenie nie zjadło budżetu i nie ucięło JSON-a.
+  maxTokens?: number;
+  timeoutMs?: number;
+}
+
 export async function runGroundedTurn(
   prompt: string,
   evidenceLen: number,
-  temperature: number
+  temperature: number,
+  opts: GroundedTurnOptions = {}
 ): Promise<GroundedParsed | null> {
+  const { thinking = false, maxTokens = 3000, timeoutMs = 18000 } = opts;
   const provider = getAIProvider();
   if (!provider.isReal) return null;
 
   const raw = await provider.generateText(prompt, {
-    maxTokens: 3000,
+    maxTokens,
     temperature,
-    timeoutMs: 18000,
+    timeoutMs,
     json: true,
-    thinking: false,
+    thinking,
   });
   const first = parseGrounded(raw, evidenceLen);
   if (first) return first;
@@ -449,9 +461,9 @@ export async function runGroundedTurn(
   // urwała na limicie tokenów albo model zamarudził (structured output i tak
   // wymusza poprawny JSON).
   const raw2 = await provider.generateText(prompt, {
-    maxTokens: 3000,
+    maxTokens,
     temperature: 0.2,
-    timeoutMs: 12000,
+    timeoutMs: Math.min(timeoutMs, 12000),
     json: true,
     thinking: false,
   });
