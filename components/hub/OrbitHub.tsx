@@ -242,7 +242,7 @@ function InsightBaseComet() {
 // Inny kolor (bursztyn zamiast indygo), żeby dało się je rozróżnić na
 // pierwszy rzut oka. Ogon komety skierowany w lewo, tak jak w e-Wyborcy
 // — ten sam kierunek lotu dla obu komet, nie lustrzane odbicie.
-// e-Petru, jak e-Wyborcy i e-Konsylium, to warstwa pomocnicza (wzorzec języka i
+// e-Lider, jak e-Wyborcy i e-Konsylium, to warstwa pomocnicza (wzorzec języka i
 // sposobu myślenia Ryszarda Petru wspierający PRZEKAZ), nie piąta planeta.
 // Ten sam wzorzec komety, wisi nad TRZECIĄ kartą na dole (PRZEKAZ), kolor
 // szmaragdowy dla odróżnienia od indygo (e-Wyborcy) i bursztynu (e-Konsylium).
@@ -265,7 +265,7 @@ function PetruComet() {
           <PetruIcon />
         </div>
         <div className="mt-2 min-w-[92px] rounded-md border border-emerald-300/25 bg-slate-950/70 px-2.5 py-1 text-center backdrop-blur-md shadow-[0_0_20px_rgba(15,23,42,0.9)] sm:min-w-[104px]">
-          <div className="text-[10px] font-semibold text-white whitespace-nowrap sm:text-[11px]">e-Petru</div>
+          <div className="text-[10px] font-semibold text-white whitespace-nowrap sm:text-[11px]">e-Lider</div>
           <div className="mt-0.5 text-[7px] font-bold tracking-wide text-emerald-300 whitespace-nowrap sm:text-[8px]">
             wirtualny polityk
           </div>
@@ -395,7 +395,7 @@ export default function OrbitHub() {
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs sm:hidden">
             <Link href="/insight-base" className="rounded-lg border border-indigo-300/30 bg-slate-950/50 px-3 py-1.5 font-semibold text-slate-100">e-Wyborcy</Link>
             <Link href="/konsylium" className="rounded-lg border border-amber-300/30 bg-slate-950/50 px-3 py-1.5 font-semibold text-slate-100">e-Konsylium</Link>
-            <Link href="/e-petru" className="rounded-lg border border-emerald-300/30 bg-slate-950/50 px-3 py-1.5 font-semibold text-slate-100">e-Petru</Link>
+            <Link href="/e-petru" className="rounded-lg border border-emerald-300/30 bg-slate-950/50 px-3 py-1.5 font-semibold text-slate-100">e-Lider</Link>
             <Link href="/e-media" className="rounded-lg border border-rose-300/30 bg-slate-950/50 px-3 py-1.5 font-semibold text-slate-100">e-Media</Link>
           </div>
         </header>
@@ -476,8 +476,8 @@ export default function OrbitHub() {
             <div className="pdm-ping absolute -inset-3 sm:-inset-4 lg:-inset-5 rounded-full border border-violet-400/40" />
             <div className="pdm-ping absolute -inset-3 sm:-inset-4 lg:-inset-5 rounded-full border border-sky-400/30" style={{ animationDelay: "1.5s" }} />
             <div className="relative">
-              <div className="text-sm sm:text-base lg:text-lg font-bold text-white whitespace-nowrap">Ryszard</div>
-              <div className="text-[11px] sm:text-xs lg:text-sm text-slate-300/70 whitespace-nowrap">Petru</div>
+              <div className="text-sm sm:text-base lg:text-lg font-bold text-white whitespace-nowrap">Twój</div>
+              <div className="text-[11px] sm:text-xs lg:text-sm text-slate-300/70 whitespace-nowrap">Projekt</div>
             </div>
           </Link>
 

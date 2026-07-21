@@ -18,7 +18,7 @@ import { clsx } from "clsx";
 const NAV_ITEMS = [
   { href: "/sprawy",               icon: FolderKanban, label: "Sprawy" },
   { href: "/zalozenia",            icon: ShieldCheck, label: "Założenia strategiczne" },
-  { href: "/e-petru",              icon: UserRound, label: "e-Petru" },
+  { href: "/e-petru",              icon: UserRound, label: "e-Lider" },
   { href: "/e-media",              icon: Newspaper, label: "e-Media" },
   { href: "/reaction-check",       icon: FileSearch, label: "Reakcja na przekaz" },
   { href: "/image-reaction-check", icon: ScanSearch,  label: "Reakcja na zdjęcie/mem" },

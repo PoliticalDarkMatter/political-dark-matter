@@ -12,6 +12,6 @@ export async function GET() {
     return NextResponse.json({ profile, utterances, total });
   } catch (err) {
     console.error("[api/petru/profile]", err);
-    return NextResponse.json({ error: "Nie udało się pobrać bazy stylu e-Petru." }, { status: 500 });
+    return NextResponse.json({ error: "Nie udało się pobrać bazy stylu e-Lider." }, { status: 500 });
   }
 }
