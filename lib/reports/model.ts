@@ -10,7 +10,7 @@ import { ZALOZENIA_SLOTS, type Zalozenia } from "@/lib/zalozenia";
 // strategiczne (konstytucję), żeby dokument był osadzony w ich kontekście.
 
 export interface ReportMeta {
-  kicker: string;            // np. "Political Dark Matter"
+  kicker: string;            // np. "IMPACT CENTER"
   title: string;             // tytuł raportu
   subtitle?: string;         // kontekst (np. nazwa sprawy)
   typ?: string;              // typ sprawy (etykieta)

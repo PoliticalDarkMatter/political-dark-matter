@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import OrbitHub from "@/components/hub/OrbitHub";
 
 export const metadata: Metadata = {
-  title: "Political Dark Matter",
+  title: "IMPACT CENTER",
   description: "Cztery autonomiczne moduły. Jeden ekosystem.",
 };
 

@@ -72,7 +72,7 @@ export function buildSprawaReport(cockpit: Cockpit, zalozenia: Zalozenia | null)
 
   return {
     meta: {
-      kicker: "Political Dark Matter",
+      kicker: "IMPACT CENTER",
       title: "Raport sprawy",
       subtitle: sprawa.nazwa,
       typ: TYP_LABEL[sprawa.typ],

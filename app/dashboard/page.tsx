@@ -571,7 +571,7 @@ export default function DashboardPage() {
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
         <div>
           <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.32em", textTransform: "uppercase", color: "#5eb8f0aa", marginBottom: 3 }}>
-            Political Dark Matter · Moduł 1
+            IMPACT CENTER · Moduł 1
           </div>
           <h1
             style={{

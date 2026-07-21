@@ -33,7 +33,7 @@ export function buildPdmReportDocument(r: PdmReport) {
   if (r.meta.wersjaZalozen != null) metaLines.push(`Założenia: wersja ${r.meta.wersjaZalozen}`);
 
   return (
-    <Document title={r.meta.title} author="Political Dark Matter">
+    <Document title={r.meta.title} author="IMPACT CENTER">
       <Page size="A4" style={styles.page}>
         <ReportHeader kicker={r.meta.kicker} title={r.meta.title} meta={metaLines.join("\n")} />
         <ReportFooter confidentialityNote={WORKING_DOC_NOTE} />

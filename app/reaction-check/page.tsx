@@ -124,7 +124,7 @@ export default function ReactionCheckPage() {
     <div style={{ padding: "18px 24px 40px", minHeight: "100%", fontFamily: "'Inter', system-ui, sans-serif", color: "#e2e8f0" }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 6 }}>
         <div>
-          <div className="pdm-kicker">Political Dark Matter · Narrative Scope</div>
+          <div className="pdm-kicker">IMPACT CENTER · Narrative Scope</div>
           <h1 className="pdm-hero-title" style={{ fontSize: 28, lineHeight: 1.1 }}>Reakcja na przekaz/fakt</h1>
         </div>
         <div className="pdm-live-pill" style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 20 }}>

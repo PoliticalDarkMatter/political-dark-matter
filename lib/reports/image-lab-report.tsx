@@ -59,9 +59,9 @@ export function buildImageLabReportDocument(
   const verdictTone = VERDICT_TONE[result.verdict];
 
   return (
-    <Document title={`Raport — Political Image Reaction Simulator — ${input.who || "bez nazwy"}`} author="Political Dark Matter · Narrative Scope">
+    <Document title={`Raport — Political Image Reaction Simulator — ${input.who || "bez nazwy"}`} author="IMPACT CENTER · Narrative Scope">
       <Page size="A4" style={styles.page} wrap>
-        <ReportHeader kicker="Political Dark Matter · Narrative Scope" title="Political Image Reaction Simulator — raport" meta={`Wygenerowano: ${formatDate(result.generatedAt)}`} />
+        <ReportHeader kicker="IMPACT CENTER · Narrative Scope" title="Political Image Reaction Simulator — raport" meta={`Wygenerowano: ${formatDate(result.generatedAt)}`} />
         <ReportFooter />
 
         {/* ── Kontekst wejściowy ── */}

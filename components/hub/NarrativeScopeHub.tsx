@@ -7,7 +7,7 @@ import PageHeader from "@/components/layout/PageHeader";
 
 // ── Narrative Scope — hub wewnętrzny modułu ───────────────────────────
 // Ten sam język wizualny co components/hub/OrbitHub.tsx (top-level hub
-// Political Dark Matter): głęboki navy, gwiazdy, komety, poświata,
+// IMPACT CENTER): głęboki navy, gwiazdy, komety, poświata,
 // szklane karty. To NIE jest orbita 4 modułów PDM, tylko wejściowy
 // ekran samego Narrative Scope.
 //

@@ -21,7 +21,7 @@ export default function PageHeader({
   return (
     <div className="mb-6">
       <Link href="/" className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 transition-colors hover:text-white">
-        <ArrowLeft size={14} className="text-sky-400" /> Panel główny Political Dark Matter
+        <ArrowLeft size={14} className="text-sky-400" /> Panel główny IMPACT CENTER
       </Link>
       <div className="mt-5 flex items-start gap-4">
         <div className="shrink-0">

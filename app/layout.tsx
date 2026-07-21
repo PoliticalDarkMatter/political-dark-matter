@@ -4,7 +4,7 @@ import { LangProvider } from "@/lib/lang-context";
 import AppShell from "@/components/layout/AppShell";
 
 export const metadata: Metadata = {
-  title: { default: "Political Dark Matter", template: "%s · Political Dark Matter" },
+  title: { default: "IMPACT CENTER", template: "%s · IMPACT CENTER" },
   description: "Ekosystem AI dla polityki",
 };
 

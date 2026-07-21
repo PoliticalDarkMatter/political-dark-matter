@@ -126,7 +126,7 @@ export async function renderReportDocx(r: PdmReport): Promise<Buffer> {
   }
 
   const doc = new Document({
-    creator: "Political Dark Matter",
+    creator: "IMPACT CENTER",
     title: r.meta.title,
     styles: { default: { document: { run: { font: "Calibri", size: 22, color: BODY } } } },
     sections: [{

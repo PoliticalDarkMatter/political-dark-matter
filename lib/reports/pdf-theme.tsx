@@ -44,7 +44,7 @@ export function ensureFontsRegistered() {
   fontsRegistered = true;
 }
 
-// ── Paleta — jasna, drukowalna wersja brandu Political Dark Matter ───
+// ── Paleta — jasna, drukowalna wersja brandu IMPACT CENTER ───
 export const colors = {
   ink: "#0f172a",
   body: "#334155",

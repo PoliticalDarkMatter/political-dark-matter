@@ -49,9 +49,9 @@ export function buildReactionLabReportDocument(result: ReactionSimulationResult)
   const modeMeta = INPUT_MODES.find((m) => m.value === input.inputMode);
 
   return (
-    <Document title="Raport — Political Reaction Simulator" author="Political Dark Matter · Narrative Scope">
+    <Document title="Raport — Political Reaction Simulator" author="IMPACT CENTER · Narrative Scope">
       <Page size="A4" style={styles.page} wrap>
-        <ReportHeader kicker="Political Dark Matter · Narrative Scope" title="Political Reaction Simulator — raport" meta={`Wygenerowano: ${formatDate(result.generatedAt)}`} />
+        <ReportHeader kicker="IMPACT CENTER · Narrative Scope" title="Political Reaction Simulator — raport" meta={`Wygenerowano: ${formatDate(result.generatedAt)}`} />
         <ReportFooter />
 
         {/* ── Kontekst wejściowy ── */}

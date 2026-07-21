@@ -33,9 +33,9 @@ export function buildDashboardReportDocument(data: FeedData, meta: DashboardRepo
   const shownArticles = sortedArticles.slice(0, ARTICLE_LIMIT);
 
   return (
-    <Document title="Raport — Narrative Scope, bryfing sytuacyjny" author="Political Dark Matter · Narrative Scope">
+    <Document title="Raport — Narrative Scope, bryfing sytuacyjny" author="IMPACT CENTER · Narrative Scope">
       <Page size="A4" style={styles.page} wrap>
-        <ReportHeader kicker="Political Dark Matter · Narrative Scope" title="Bryfing sytuacyjny — raport" meta={`Wygenerowano: ${formatDate(new Date().toISOString())}`} />
+        <ReportHeader kicker="IMPACT CENTER · Narrative Scope" title="Bryfing sytuacyjny — raport" meta={`Wygenerowano: ${formatDate(new Date().toISOString())}`} />
         <ReportFooter />
 
         {/* ── Zakres zapytania ── */}

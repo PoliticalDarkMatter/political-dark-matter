@@ -126,7 +126,7 @@ export default function ReactionLabPage() {
       {/* Nagłówek modułu */}
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 6 }}>
         <div>
-          <div className="pdm-kicker">Political Dark Matter · Narrative Scope</div>
+          <div className="pdm-kicker">IMPACT CENTER · Narrative Scope</div>
           <h1 className="pdm-hero-title" style={{ fontSize: 28, lineHeight: 1.1 }}>Political Reaction Simulator</h1>
         </div>
         <div className="pdm-live-pill" style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 20 }}>

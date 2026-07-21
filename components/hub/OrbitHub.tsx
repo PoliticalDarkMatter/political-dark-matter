@@ -373,7 +373,7 @@ export default function OrbitHub() {
               backgroundImage: "linear-gradient(90deg, #60a5fa, #93c5fd, #e879f9)",
             }}
           >
-            Political Dark Matter
+            IMPACT CENTER
           </h1>
           <p className="mt-4 font-medium text-slate-100/90" style={{ fontSize: "22px" }}>
             Niewidoczna infrastruktura zwycięskiej komunikacji politycznej.
