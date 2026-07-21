@@ -1,6 +1,9 @@
 import { supabase } from "@/lib/supabase";
 import { getAIProvider } from "@/lib/reaction-simulator/ai-provider";
 
+// Aktywny lider (zasilenie dowolnym politykiem). Domyślnie tusk.
+const ACTIVE_LEADER = process.env.ACTIVE_LEADER ?? "tusk";
+
 // ── e-Petru: wzorzec przekazu, języka i sposobu myślenia Ryszarda Petru ──
 // Baza stylu (petru_utterances) + wersjonowany profil stylu
 // (petru_style_profile) służą JAKO WZORZEC GŁOSU. Efektem konwersji jest
@@ -38,6 +41,7 @@ export async function getStyleProfile(): Promise<PetruStyleProfile | null> {
   const { data, error } = await supabase
     .from("petru_style_profile")
     .select("version, based_on_count, profile, built_at")
+    .eq("leader", ACTIVE_LEADER)
     .eq("is_current", true).order("version", { ascending: false }).limit(1).maybeSingle();
   if (error) throw error;
   return (data as PetruStyleProfile) ?? null;
@@ -47,13 +51,14 @@ export async function listUtterances(limit = 40): Promise<PetruUtterance[]> {
   const { data, error } = await supabase
     .from("petru_utterances")
     .select("quote_text, context, channel, topic, source_name, source_url, published_date")
+    .eq("leader", ACTIVE_LEADER)
     .order("published_date", { ascending: false, nullsFirst: false }).limit(limit);
   if (error) throw error;
   return (data as PetruUtterance[]) ?? [];
 }
 
 export async function countUtterances(): Promise<number> {
-  const { count } = await supabase.from("petru_utterances").select("id", { count: "exact", head: true });
+  const { count } = await supabase.from("petru_utterances").select("id", { count: "exact", head: true }).eq("leader", ACTIVE_LEADER);
   return count ?? 0;
 }
 
@@ -73,14 +78,14 @@ function styleSeed(profile: PetruStyleProfile | null, examples: PetruUtterance[]
 }
 
 function buildPrompt(text: string, mode: PetruMode, seed: string): string {
-  return `Jesteś mistrzem stylizacji języka politycznego. Przepisz PONIŻSZY przekaz tak, żeby brzmiał, jakby powiedział go Ryszard Petru — jego stylem, rytmem, składnią, dynamiką i sposobem perswazji.
+  return `Jesteś mistrzem stylizacji języka politycznego. Przepisz PONIŻSZY przekaz tak, żeby brzmiał, jakby powiedział go ten konkretny lider — dokładnie jego stylem, rytmem, składnią, dynamiką i sposobem perswazji, odtworzonym z WZORCA STYLU i PRÓBEK GŁOSU poniżej.
 
 ${seed}
 
 JAK MASZ TO ZROBIĆ:
-- Odwzoruj jego styl i DYNAMIKĘ: krótkie kategoryczne sądy, antytezy „X, a nie Y", obrazowe metafory (często ekonomiczne), apele („apeluję", „uprzedzam", „przestańmy"), pytania retoryczne z pointą, ton eksperta z dystansem, chłodna pewność siebie.
-- Odwzoruj jego SPOSÓB PERSWAZJI: sprowadza sprawę do konkretu i konsekwencji, punktuje przeciwnika, stawia jasny kierunek, mówi „jako ekonomista/z doświadczenia".
-- TEMAT NIE MA ZNACZENIA. Nawet jeśli Ryszard Petru nigdy nie mówił o tej sprawie, i tak masz ją ubrać w jego styl i logikę. Nie oceniaj, czy o tym mówił. Zawsze zwróć gotowy, przekonujący tekst.
+- Odwzoruj styl, rytm i DYNAMIKĘ WYŁĄCZNIE na podstawie powyższego wzorca i próbek: tę samą budowę i długość zdań, te same tiki językowe, ten sam rejestr emocjonalny, te same chwyty retoryczne oraz sposób zwracania się do odbiorcy i przeciwnika.
+- Odwzoruj jego SPOSÓB PERSWAZJI widoczny w próbkach: jak buduje napięcie, jak punktuje przeciwnika, jak stawia kierunek, jakich haseł i słów-kluczy używa.
+- TEMAT NIE MA ZNACZENIA. Nawet jeśli ten lider nigdy nie mówił o tej sprawie, i tak masz ją ubrać w jego styl i logikę. Nie oceniaj, czy o tym mówił. Zawsze zwróć gotowy, przekonujący tekst.
 - Zachowaj sens i intencję wejścia. NIE dodawaj konkretnych liczb, danych, sondaży ani cudzych cytatów, których nie ma w wejściu (stylizujesz język i myślenie, nie fabrykujesz faktów).
 - Pisz po polsku, żywo, z polskimi znakami. Bez korpomowy.
 
